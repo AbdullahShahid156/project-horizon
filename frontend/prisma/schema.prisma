@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  firstName     String?
+  lastName      String?
+  imageUrl      String?
+  timezone      String   @default("UTC")
+  language      String   @default("en")
+  emailVerified Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  memberships   Membership[]
+  ownedOrgs     Organization[]     @relation("OrganizationOwner")
+  notifications Notification[]
+  settings      Settings?
+  sessions      Session[]
+  activities    ActivityLog[]
+  auditLogs     AuditLog[]
+
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model Organization {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  slug       String   @unique
+  logoUrl    String?
+  plan       String   @default("free")
+  ownerId    String   @db.Uuid
+  owner      User     @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  memberships Membership[]
+  workspaces  Workspace[]
+  activityLog ActivityLog[]
+  auditLogs   AuditLog[]
+
+  @@index([slug])
+  @@index([ownerId])
+  @@index([deletedAt])
+}
+
+model Membership {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @db.Uuid
+  organizationId String       @db.Uuid
+  role           String       @default("member")
+  joinedAt       DateTime     @default(now())
+  deletedAt      DateTime?
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([deletedAt])
+}
+
+model Workspace {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  slug           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  projects     Project[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([deletedAt])
+}
+
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String
+  slug        String
+  description String?
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  workspace Workspace           @relation(fields: [workspaceId], references: [id])
+  websites  GeneratedWebsite[]
+  landingPages LandingPage[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model GeneratedWebsite {
+  id           String   @id @default(uuid()) @db.Uuid
+  projectId    String   @db.Uuid
+  name         String
+  slug         String
+  status       String   @default("draft")
+  currentVersion Int    @default(1)
+  generationPrompt Json?
+  aiResponse   Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  project  Project          @relation(fields: [projectId], references: [id])
+  versions WebsiteVersion[]
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model WebsiteVersion {
+  id              String   @id @default(uuid()) @db.Uuid
+  websiteId       String   @db.Uuid
+  versionNumber   Int
+  content         Json
+  changeSummary   String?
+  isAutoSave      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  website GeneratedWebsite @relation(fields: [websiteId], references: [id])
+
+  @@unique([websiteId, versionNumber])
+  @@index([websiteId])
+  @@index([createdAt])
+}
+
+model LandingPage {
+  id              String   @id @default(uuid()) @db.Uuid
+  projectId       String   @db.Uuid
+  name            String
+  slug            String
+  status          String   @default("draft")
+  currentVersion  Int      @default(1)
+  generationPrompt Json?
+  aiResponse      Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  project  Project              @relation(fields: [projectId], references: [id])
+  versions LandingPageVersion[]
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model LandingPageVersion {
+  id              String   @id @default(uuid()) @db.Uuid
+  landingPageId   String   @db.Uuid
+  versionNumber   Int
+  content         Json
+  changeSummary   String?
+  isAutoSave      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  landingPage LandingPage @relation(fields: [landingPageId], references: [id])
+
+  @@unique([landingPageId, versionNumber])
+  @@index([landingPageId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  type      String   @default("info")
+  title     String
+  message   String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  organizationId String   @db.Uuid
+  action         String
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([userId])
+}
+
+model Settings {
+  id                 String  @id @default(uuid()) @db.Uuid
+  userId             String  @unique @db.Uuid
+  theme              String  @default("system")
+  timezone           String  @default("UTC")
+  language           String  @default("en")
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  ipAddress   String?
+  userAgent   String?
+  lastActiveAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([lastActiveAt])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String   @db.Uuid
+  action         String
+  resource       String
+  resourceId     String
+  changes        Json?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([resource, resourceId])
+}
