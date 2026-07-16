@@ -77,7 +77,7 @@ export default function UsageDashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">AI Usage Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">AI Usage Dashboard</h1>
           <p className="text-muted-foreground">
             Monitor AI generations, token usage, and performance.
           </p>

@@ -1,5 +1,5 @@
-export const APP_NAME = 'BuilderWeb';
-export const APP_DESCRIPTION = 'AI Business Website Builder & Optimization Platform';
+export const APP_NAME = 'Project Horizon';
+export const APP_DESCRIPTION = 'AI-powered business website builder and optimization platform';
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export const ROLES = ['owner', 'admin', 'member', 'viewer'] as const;

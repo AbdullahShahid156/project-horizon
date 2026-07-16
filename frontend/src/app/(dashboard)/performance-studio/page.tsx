@@ -71,10 +71,10 @@ export default function PerformanceStudioPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Performance Studio</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Performance Studio</h1>
           <p className="text-muted-foreground">
             Analyze and optimize website performance with AI-powered insights.
           </p>

@@ -120,7 +120,7 @@ export default function FoldersPage() {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="h-4 w-4" /></Button>
           <div>
-            <h1 className="text-3xl font-bold">Manage Folders</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Manage Folders</h1>
             <p className="text-muted-foreground mt-1">Organize your images into folders</p>
           </div>
         </div>

@@ -196,10 +196,10 @@ export default function ContentStudioPage() {
   const uniqueTypes = [...new Set(contentTypes.map(([, v]) => v.category))];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Content Studio</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Content Studio</h1>
           <p className="text-muted-foreground">
             Generate, edit, and manage all your marketing content with AI.
           </p>

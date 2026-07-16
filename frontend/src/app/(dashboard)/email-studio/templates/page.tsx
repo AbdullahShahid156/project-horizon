@@ -89,7 +89,7 @@ export default function EmailTemplatesPage() {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="h-4 w-4" /></Button>
           <div>
-            <h1 className="text-3xl font-bold">Email Templates</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Email Templates</h1>
             <p className="text-muted-foreground mt-1">Choose from pre-built templates or create your own</p>
           </div>
         </div>

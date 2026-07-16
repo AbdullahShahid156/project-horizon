@@ -96,11 +96,11 @@ export default function SEOStudioPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">SEO Studio</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight">SEO Studio</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Monitor, audit, and optimize SEO for your websites.
           </p>
         </div>

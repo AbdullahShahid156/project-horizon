@@ -162,7 +162,7 @@ export default function CreateLandingPagePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Create Landing Page</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Create Landing Page</h1>
           <p className="text-muted-foreground">
             Step {step + 1} of {steps.length}: {steps[step]}
           </p>

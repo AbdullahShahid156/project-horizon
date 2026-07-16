@@ -38,15 +38,15 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       {children}
-      <div className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:max-w-[420px]">
+      <div className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-3 p-4 sm:max-w-[420px]">
         {toasts.map((toast) => (
           <div
             key={toast.id}
             className={cn(
-              'group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-lg border p-4 pr-8 shadow-lg transition-all animate-in slide-in-from-right-full',
-              toast.variant === 'destructive' && 'border-destructive bg-destructive text-destructive-foreground',
+              'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-xl border p-4 pr-8 shadow-lg transition-all animate-in slide-in-from-right-full',
+              toast.variant === 'destructive' && 'border-destructive/20 bg-destructive text-destructive-foreground',
               toast.variant === 'success' && 'border-emerald-500/20 bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
-              (!toast.variant || toast.variant === 'default') && 'bg-background text-foreground',
+              (!toast.variant || toast.variant === 'default') && 'bg-card text-card-foreground border-border',
             )}
             role="alert"
           >
@@ -58,7 +58,7 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="absolute right-2 top-2 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100"
+              className="absolute right-2 top-2 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-foreground/10"
               aria-label="Close"
             >
               <span className="sr-only">Close</span>

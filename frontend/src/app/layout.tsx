@@ -7,12 +7,13 @@ import '@/styles/globals.css';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: {
-    default: 'BuilderWeb - AI Business Website Builder',
-    template: '%s | BuilderWeb',
+    default: 'Project Horizon',
+    template: '%s | Project Horizon',
   },
   description: 'AI-powered business website builder and optimization platform',
 };
@@ -23,11 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full bg-background font-sans text-foreground">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full`}>
+      <body className="min-h-full bg-background font-sans text-foreground antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

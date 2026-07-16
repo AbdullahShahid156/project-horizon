@@ -29,9 +29,9 @@ import { landingPagesService } from "@/services/landing-pages";
 import type { LandingPage } from "@/types";
 
 const statusColors = {
-  draft: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  published: "bg-green-100 text-green-800 border-green-200",
-  archived: "bg-gray-100 text-gray-800 border-gray-200",
+  draft: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  published: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  archived: "bg-muted text-muted-foreground",
 };
 
 export default function LandingPagesPage() {
@@ -65,11 +65,11 @@ export default function LandingPagesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Landing Pages</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight">Landing Pages</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Create high-converting landing pages with AI assistance.
           </p>
         </div>
@@ -86,26 +86,26 @@ export default function LandingPagesPage() {
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader className="space-y-2">
-                <div className="h-5 w-32 bg-muted rounded" />
-                <div className="h-4 w-48 bg-muted rounded" />
+                <div className="h-5 w-32 bg-muted rounded-md" />
+                <div className="h-4 w-48 bg-muted rounded-md" />
               </CardHeader>
               <CardContent>
-                <div className="h-4 w-24 bg-muted rounded" />
+                <div className="h-4 w-24 bg-muted rounded-md" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : landingPages.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center py-12">
+        <Card className="flex flex-col items-center justify-center py-20">
           <CardContent className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <Plus className="h-6 w-6 text-muted-foreground" />
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Plus className="h-6 w-6 text-primary" />
             </div>
             <h3 className="text-lg font-semibold">No landing pages yet</h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mt-1.5">
               Create your first AI-powered landing page.
             </p>
-            <Link href="/landing-pages/create">
+            <Link href="/landing-pages/create" className="mt-6 inline-block">
               <Button>Create Landing Page</Button>
             </Link>
           </CardContent>
@@ -116,46 +116,43 @@ export default function LandingPagesPage() {
             {landingPages.map((lp) => (
               <motion.div
                 key={lp.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <Card className="h-full">
+                <Card className="h-full group hover:border-border/80 transition-all duration-200">
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{lp.name}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base font-semibold truncate">{lp.name}</CardTitle>
+                        <CardDescription className="flex items-center gap-1.5 mt-1.5">
                           <Calendar className="h-3 w-3" />
                           {new Date(lp.createdAt).toLocaleDateString()}
                         </CardDescription>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ml-2">
                         <Badge
                           variant="outline"
-                          className={statusColors[lp.status as keyof typeof statusColors] ?? ""}
+                          className={`${statusColors[lp.status as keyof typeof statusColors] ?? ""} text-[10px] font-semibold uppercase tracking-wider`}
                         >
                           {lp.status}
                         </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
+                            <Button variant="ghost" size="icon-sm" aria-label="More options">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() =>
-                                router.push(`/landing-pages/${lp.id}/editor`)
-                              }
+                              onClick={() => router.push(`/landing-pages/${lp.id}/editor`)}
                             >
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() =>
-                                router.push(`/landing-pages/${lp.id}/preview`)
-                              }
+                              onClick={() => router.push(`/landing-pages/${lp.id}/preview`)}
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               Preview
@@ -202,21 +199,17 @@ export default function LandingPagesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        router.push(`/landing-pages/${lp.id}/editor`)
-                      }
+                      onClick={() => router.push(`/landing-pages/${lp.id}/editor`)}
                     >
-                      <Pencil className="mr-1 h-3 w-3" />
+                      <Pencil className="mr-1.5 h-3 w-3" />
                       Edit
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        router.push(`/landing-pages/${lp.id}/preview`)
-                      }
+                      onClick={() => router.push(`/landing-pages/${lp.id}/preview`)}
                     >
-                      <Eye className="mr-1 h-3 w-3" />
+                      <Eye className="mr-1.5 h-3 w-3" />
                       Preview
                     </Button>
                   </CardFooter>

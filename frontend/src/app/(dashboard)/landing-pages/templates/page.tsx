@@ -43,7 +43,7 @@ export default function TemplatesPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Templates</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Templates</h1>
           <p className="text-muted-foreground">
             Start with a pre-built template and customize it.
           </p>

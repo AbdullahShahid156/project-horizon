@@ -195,7 +195,7 @@ export default function CreateEmailCampaignPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Create Email Campaign</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Create Email Campaign</h1>
           <p className="text-muted-foreground mt-1">Set up your campaign and generate content with AI</p>
         </div>
       </div>

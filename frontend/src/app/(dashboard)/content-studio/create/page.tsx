@@ -139,7 +139,7 @@ export default function ContentCreatePage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Create Content</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Create Content</h1>
           <p className="text-muted-foreground">
             Generate AI-powered marketing content in seconds.
           </p>
