@@ -9,19 +9,22 @@ type RequestOptions = {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options;
 
+  const isFormData = body instanceof FormData;
   const config: RequestInit = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
+    headers: isFormData ? { ...headers } : { 'Content-Type': 'application/json', ...headers },
   };
 
   if (body) {
-    config.body = JSON.stringify(body);
+    config.body = isFormData ? body : JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, config);
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, config);
+  } catch (err) {
+    throw new Error('Unable to connect to the server. Please ensure the backend is running.');
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'An error occurred' }));

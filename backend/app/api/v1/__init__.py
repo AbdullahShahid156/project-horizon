@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import health, users, projects, websites, ai, landing_pages, templates, ai_engine, content_studio, seo_studio, performance_studio, brand_studio, image_studio, social_studio, email_studio
+from app.api.v1.endpoints import health, users, projects, websites, ai, landing_pages, templates, ai_engine, content_studio, seo_studio, performance_studio, brand_studio, image_studio, social_studio, email_studio, organizations, workspaces
 
 api_router = APIRouter()
 
@@ -19,3 +19,5 @@ api_router.include_router(brand_studio.router, prefix="/brands", tags=["brand-st
 api_router.include_router(image_studio.router, prefix="/images", tags=["image-studio"])
 api_router.include_router(social_studio.router, prefix="/social", tags=["social-studio"])
 api_router.include_router(email_studio.router, prefix="/email", tags=["email-studio"])
+api_router.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
+api_router.include_router(workspaces.router, prefix="/workspaces", tags=["workspaces"])

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, AlertCircle } from "lucide-react";
 import { landingPageGenerationSchema, type LandingPageGenerationFormData } from "@/validators/landing-page";
 import {
   LANDING_PAGE_SECTIONS,
@@ -35,6 +35,7 @@ export default function CreateLandingPagePage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -87,6 +88,7 @@ export default function CreateLandingPagePage() {
 
   const onSubmit = async (data: LandingPageGenerationFormData) => {
     setGenerating(true);
+    setError(null);
     try {
       const prompt: any = {
         project_id: "default-project",
@@ -147,6 +149,8 @@ export default function CreateLandingPagePage() {
 
       router.push(`/landing-pages/${lp.id}/editor`);
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create landing page";
+      setError(message);
       console.error("Failed to create:", err);
     } finally {
       setGenerating(false);
@@ -181,6 +185,14 @@ export default function CreateLandingPagePage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        {error && (
+          <Card className="border-destructive/50 bg-destructive/5 mb-4">
+            <CardContent className="flex items-center gap-3 py-3">
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+              <p className="text-sm text-destructive flex-1">{error}</p>
+            </CardContent>
+          </Card>
+        )}
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.div

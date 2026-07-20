@@ -1,79 +1,75 @@
 'use client';
 
-import { Activity, BarChart3, FileText, Globe, Users, ArrowUpRight, ArrowRight, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Activity, BarChart3, FileText, Globe, Users, ArrowUpRight, ArrowRight, Sparkles, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-const stats = [
-  {
-    title: 'Total Projects',
-    value: '12',
-    change: '+2 this month',
-    trend: 'up',
-    icon: FileText,
-    color: 'text-violet-500',
-    bg: 'bg-violet-500/10',
-  },
-  {
-    title: 'Active Websites',
-    value: '8',
-    change: '3 published',
-    trend: 'up',
-    icon: Globe,
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-  },
-  {
-    title: 'Team Members',
-    value: '5',
-    change: '2 online',
-    trend: 'neutral',
-    icon: Users,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-500/10',
-  },
-  {
-    title: 'Monthly Visitors',
-    value: '12.4k',
-    change: '+18% vs last month',
-    trend: 'up',
-    icon: BarChart3,
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
-  },
-];
-
-const recentActivity = [
-  { action: 'Project "Landing Page" was updated', time: '2 hours ago', color: 'bg-violet-500' },
-  { action: 'New member "Sarah" joined the workspace', time: '5 hours ago', color: 'bg-blue-500' },
-  { action: 'Website "Acme Corp" was published', time: '1 day ago', color: 'bg-emerald-500' },
-  { action: 'Template "Portfolio" was customized', time: '2 days ago', color: 'bg-amber-500' },
-  { action: 'Analytics report was generated', time: '3 days ago', color: 'bg-pink-500' },
-];
-
-const quickActions = [
-  { title: 'Create a new project', description: 'Start building your next website with AI assistance.', icon: Sparkles },
-  { title: 'Invite team members', description: 'Collaborate with your team in real-time.', icon: Users },
-  { title: 'Explore templates', description: 'Choose from our library of premium templates.', icon: FileText },
-];
+import { projectsService } from '@/services/projects';
+import type { Project } from '@/types';
 
 export default function DashboardPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = async () => {
+    setError(null);
+    try {
+      const data = await projectsService.list();
+      setProjects(data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const totalProjects = projects.length;
+  const publishedProjects = projects.filter((p) => p.status === 'published').length;
+  const recentProjects = [...projects].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5);
+
+  const stats = [
+    { title: 'Total Projects', value: String(totalProjects), change: `${publishedProjects} published`, icon: FileText, color: 'text-violet-500', bg: 'bg-violet-500/10' },
+    { title: 'Active Websites', value: String(publishedProjects), change: 'Live sites', icon: Globe, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { title: 'Team Members', value: '—', change: 'N/A', icon: Users, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { title: 'Monthly Visitors', value: '—', change: 'Analytics coming soon', icon: BarChart3, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  ];
+
+  const quickActions = [
+    { title: 'Create a new project', description: 'Start building your next website with AI assistance.', icon: Sparkles, href: '/engine' },
+    { title: 'Invite team members', description: 'Collaborate with your team in real-time.', icon: Users, href: '/organizations' },
+    { title: 'Explore templates', description: 'Choose from our library of premium templates.', icon: FileText, href: '/templates' },
+  ];
+
+  if (loading) {
+    return <div className="flex h-[calc(100vh-4rem)] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
   return (
     <div className="space-y-8 p-4 md:p-6 lg:p-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Welcome back! Here&apos;s what&apos;s happening with your projects.
-        </p>
+        <p className="mt-1.5 text-sm text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your projects.</p>
       </div>
 
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+            <p className="text-sm text-destructive flex-1">{error}</p>
+            <Button variant="outline" size="sm" onClick={loadData}><RefreshCw className="h-4 w-4" /></Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
-          <Card key={stat.title} className="group hover:border-border/80 transition-all duration-200" style={{ animationDelay: `${i * 50}ms` }}>
+        {stats.map((stat) => (
+          <Card key={stat.title} className="group hover:border-border/80 transition-all duration-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {stat.title}
-              </CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.title}</CardTitle>
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${stat.bg}`}>
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </div>
@@ -91,27 +87,31 @@ export default function DashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
-                View all <ArrowRight className="ml-1 h-3 w-3" />
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" asChild>
+                <Link href="/projects">View all <ArrowRight className="ml-1 h-3 w-3" /></Link>
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-0">
-              {recentActivity.map((activity, i) => (
-                <div key={i} className="group flex items-center gap-4 py-3 border-b border-border/50 last:border-0 last:pb-0 first:pt-0">
-                  <div className="relative">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${activity.color}/10`}>
-                      <Activity className={`h-3.5 w-3.5 ${activity.color}`} />
+              {recentProjects.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">No projects yet. Create your first one!</p>
+              ) : (
+                recentProjects.map((project, i) => (
+                  <div key={project.id} className="group flex items-center gap-4 py-3 border-b border-border/50 last:border-0 last:pb-0 first:pt-0">
+                    <div className="relative">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/10">
+                        <Activity className="h-3.5 w-3.5 text-violet-500" />
+                      </div>
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">&quot;{project.name}&quot; was updated</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{new Date(project.updatedAt).toLocaleDateString()}</p>
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{activity.time}</p>
-                  </div>
-                  <ArrowUpRight className="h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -123,22 +123,19 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-3">
               {quickActions.map((action, i) => (
-                <button
-                  key={i}
-                  className="group w-full rounded-lg border border-border/50 p-4 text-left transition-all duration-200 hover:border-border hover:bg-accent/50"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <action.icon className="h-4 w-4" />
+                <Link key={i} href={action.href}>
+                  <button className="group w-full rounded-lg border border-border/50 p-4 text-left transition-all duration-200 hover:border-border hover:bg-accent/50">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <action.icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{action.title}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{action.description}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{action.title}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {action.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                </Link>
               ))}
             </div>
           </CardContent>

@@ -28,8 +28,10 @@ export default function UsageDashboardPage() {
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
+    setError(null);
     try {
       const [s, d, h, c] = await Promise.all([
         engineService.getUsageSummary(30),
@@ -42,6 +44,8 @@ export default function UsageDashboardPage() {
       setHistory(h ?? []);
       setCacheStats(c ?? null);
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load usage data";
+      setError(message);
       console.error("Failed to load usage data:", err);
     } finally {
       setLoading(false);
@@ -87,6 +91,23 @@ export default function UsageDashboardPage() {
           Refresh
         </Button>
       </div>
+
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <XCircle className="h-5 w-5 text-destructive shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive">{error}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Make sure the backend server is running at {process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {summary && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

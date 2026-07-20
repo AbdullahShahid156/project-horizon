@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MoreHorizontal, Eye, Pencil, Trash2, Calendar } from "lucide-react";
+import { Plus, MoreHorizontal, Eye, Pencil, Trash2, Calendar, AlertCircle, RefreshCw } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,13 +38,17 @@ export default function LandingPagesPage() {
   const router = useRouter();
   const [landingPages, setLandingPages] = useState<LandingPage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const projectId = "default-project";
 
   const loadLandingPages = useCallback(async () => {
+    setError(null);
     try {
       const data = await landingPagesService.listByProject(projectId);
       setLandingPages(data ?? []);
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load landing pages";
+      setError(message);
       console.error("Failed to load landing pages:", err);
     } finally {
       setLoading(false);
@@ -80,6 +84,23 @@ export default function LandingPagesPage() {
           </Button>
         </Link>
       </div>
+
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive">{error}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Make sure the backend server is running.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadLandingPages}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

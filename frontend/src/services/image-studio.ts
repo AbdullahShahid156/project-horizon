@@ -60,15 +60,22 @@ const API_PREFIX = `${API_BASE}/api/v1/images`;
 
 class ImageStudioService {
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_PREFIX}${path}`, {
-      ...options,
-      headers: { "Content-Type": "application/json", ...options?.headers },
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: "Request failed" }));
-      throw new Error(error.detail || "Request failed");
+    try {
+      const response = await fetch(`${API_PREFIX}${path}`, {
+        ...options,
+        headers: { "Content-Type": "application/json", ...options?.headers },
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: "Request failed" }));
+        throw new Error(error.detail || "Request failed");
+      }
+      return response.json();
+    } catch (err) {
+      if (err instanceof Error && err.message !== "Request failed") {
+        throw new Error("Unable to connect to the server. Please ensure the backend is running.");
+      }
+      throw err;
     }
-    return response.json();
   }
 
   async listImages(workspaceId: string, params: { search?: string; image_type?: string; folder_id?: string; is_favorite?: boolean; is_deleted?: boolean; sort_by?: string; sort_order?: string; page?: number; page_size?: number } = {}): Promise<{ items: ImageItem[]; total: number; page: number; page_size: number; total_pages: number }> {
@@ -137,9 +144,19 @@ class ImageStudioService {
     if (imageType) formData.append("image_type", imageType);
     if (folderId) formData.append("folder_id", folderId);
     if (tags) formData.append("tags", JSON.stringify(tags));
-    const response = await fetch(`${API_PREFIX}/upload`, { method: "POST", body: formData });
-    if (!response.ok) throw new Error("Upload failed");
-    return response.json();
+    try {
+      const response = await fetch(`${API_PREFIX}/upload`, { method: "POST", body: formData });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: "Upload failed" }));
+        throw new Error(error.detail || "Upload failed");
+      }
+      return response.json();
+    } catch (err) {
+      if (err instanceof Error && err.message !== "Upload failed") {
+        throw new Error("Unable to connect to the server. Please ensure the backend is running.");
+      }
+      throw err;
+    }
   }
 
   async listFolders(workspaceId: string): Promise<ImageFolder[]> {

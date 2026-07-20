@@ -1,17 +1,19 @@
 import { api } from './api';
 import type { Workspace } from '@/types';
 
+const API_PREFIX = '/api/v1';
+
 export const workspacesService = {
   list: (organizationId: string) =>
-    api.get<Workspace[]>(`/organizations/${organizationId}/workspaces`),
+    api.get<Workspace[]>(`${API_PREFIX}/workspaces/org/${organizationId}`),
 
-  get: (id: string) => api.get<Workspace>(`/workspaces/${id}`),
+  get: (id: string) => api.get<Workspace>(`${API_PREFIX}/workspaces/${id}`),
 
   create: (organizationId: string, data: { name: string; description?: string }) =>
-    api.post<Workspace>(`/organizations/${organizationId}/workspaces`, data),
+    api.post<Workspace>(`${API_PREFIX}/workspaces/org/${organizationId}`, data),
 
   update: (id: string, data: Partial<Workspace>) =>
-    api.put<Workspace>(`/workspaces/${id}`, data),
+    api.put<Workspace>(`${API_PREFIX}/workspaces/${id}`, data),
 
-  delete: (id: string) => api.delete<void>(`/workspaces/${id}`),
+  delete: (id: string) => api.delete<void>(`${API_PREFIX}/workspaces/${id}`),
 };

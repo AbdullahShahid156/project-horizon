@@ -1,24 +1,26 @@
 import { api } from './api';
 import type { Organization, Membership } from '@/types';
 
-export const organizationsService = {
-  list: () => api.get<Organization[]>('/organizations'),
+const API_PREFIX = '/api/v1';
 
-  get: (id: string) => api.get<Organization>(`/organizations/${id}`),
+export const organizationsService = {
+  list: () => api.get<Organization[]>(`${API_PREFIX}/organizations`),
+
+  get: (id: string) => api.get<Organization>(`${API_PREFIX}/organizations/${id}`),
 
   create: (data: { name: string; slug: string }) =>
-    api.post<Organization>('/organizations', data),
+    api.post<Organization>(`${API_PREFIX}/organizations`, data),
 
   update: (id: string, data: Partial<Organization>) =>
-    api.put<Organization>(`/organizations/${id}`, data),
+    api.put<Organization>(`${API_PREFIX}/organizations/${id}`, data),
 
-  delete: (id: string) => api.delete<void>(`/organizations/${id}`),
+  delete: (id: string) => api.delete<void>(`${API_PREFIX}/organizations/${id}`),
 
-  getMembers: (id: string) => api.get<Membership[]>(`/organizations/${id}/members`),
+  getMembers: (id: string) => api.get<Membership[]>(`${API_PREFIX}/organizations/${id}/members`),
 
   inviteMember: (id: string, data: { email: string; role: string }) =>
-    api.post<void>(`/organizations/${id}/invite`, data),
+    api.post<void>(`${API_PREFIX}/organizations/${id}/invite`, data),
 
   removeMember: (orgId: string, memberId: string) =>
-    api.delete<void>(`/organizations/${orgId}/members/${memberId}`),
+    api.delete<void>(`${API_PREFIX}/organizations/${orgId}/members/${memberId}`),
 };
