@@ -1,6 +1,7 @@
 import json
 import time
 import re
+import base64
 from typing import Any
 
 from app.engine.providers.base import AIProvider, ProviderConfig, ProviderResponse, TokenUsage
@@ -80,6 +81,46 @@ class GeminiProvider(AIProvider):
                 success=False,
                 error=str(e),
             )
+
+    async def generate_image(
+        self,
+        prompt: str,
+        width: int = 1024,
+        height: int = 1024,
+    ) -> tuple[bool, list[str], str]:
+        """Generate images using Gemini's native image generation.
+        Returns (success, list_of_base64_image_data, error_message)."""
+        start = time.time()
+        try:
+            from google.generativeai.types import GenerationConfig
+            import google.generativeai as genai
+            genai.configure(api_key=self.config.api_key)
+
+            model = genai.GenerativeModel(self.config.model)
+            response = await model.generate_content_async(
+                prompt,
+                generation_config=GenerationConfig(
+                    response_modalities=["IMAGE", "TEXT"],
+                ),
+            )
+
+            images = []
+            if response.candidates:
+                for part in response.candidates[0].content.parts:
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        img_data = part.inline_data.data
+                        if isinstance(img_data, bytes):
+                            images.append(base64.b64encode(img_data).decode())
+                        elif isinstance(img_data, str):
+                            images.append(img_data)
+
+            latency = (time.time() - start) * 1000
+            if images:
+                return True, images, ""
+            return False, [], "No images generated in response"
+        except Exception as e:
+            latency = (time.time() - start) * 1000
+            return False, [], str(e)
 
     async def generate_json(
         self,

@@ -77,7 +77,7 @@ export default function ImageGeneratePage() {
         style: style || undefined,
         image_type: imageType || undefined,
       });
-      setPrompt(result.enhanced);
+      setPrompt(result.enhanced_prompt);
       addToast({ title: "Prompt enhanced", description: "AI has improved your prompt" });
     } catch {
       addToast({ title: "Error", description: "Failed to enhance prompt", variant: "destructive" });

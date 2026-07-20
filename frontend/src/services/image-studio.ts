@@ -120,7 +120,7 @@ class ImageStudioService {
     return this.request("/generate", { method: "POST", body: JSON.stringify(data) });
   }
 
-  async enhancePrompt(data: { prompt: string; style?: string; image_type?: string }): Promise<{ original: string; enhanced: string; provider: string; latency_ms: number }> {
+  async enhancePrompt(data: { prompt: string; style?: string; image_type?: string }): Promise<{ enhanced_prompt: string; suggestions: string[]; negative_prompt: string; provider: string; latency_ms: number }> {
     return this.request("/ai/enhance-prompt", { method: "POST", body: JSON.stringify(data) });
   }
 

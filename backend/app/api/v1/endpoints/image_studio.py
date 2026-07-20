@@ -228,7 +228,7 @@ def _get_image_dimensions(file_bytes: bytes, filename: str) -> tuple[int | None,
 # ─── LIST IMAGES ─────────────────────────────────────────────────────────────
 
 
-@router.get("/", response_model=list[ImageResponse])
+@router.get("/")
 async def list_images(
     workspace_id: str = Query(default="dev-workspace"),
     search: str | None = None,
@@ -275,11 +275,18 @@ async def list_images(
         images.sort(key=lambda x: x["updatedAt"], reverse=reverse)
 
     total = len(images)
+    total_pages = (total + page_size - 1) // page_size
     start = (page - 1) * page_size
     end = start + page_size
     page_images = images[start:end]
 
-    return [_to_response(i) for i in page_images]
+    return {
+        "items": [_to_response(i) for i in page_images],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 # ─── UPLOAD IMAGE ────────────────────────────────────────────────────────────
@@ -531,7 +538,21 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
         }
         bg_color, text_color = style_colors.get(data.style or "", ("#1e293b", "#f8fafc"))
 
-        for i in range(max(1, min(data.num_variations, 4))):
+        num_images = max(1, min(data.num_variations, 4))
+
+        ai_success = False
+        ai_images_b64 = []
+
+        try:
+            ai_success, ai_images_b64, ai_error = await engine.generate_image(
+                prompt=full_prompt,
+                width=data.width or 1024,
+                height=data.height or 1024,
+            )
+        except Exception:
+            ai_success = False
+
+        for i in range(num_images):
             img_id = str(uuid.uuid4())
             now = datetime.now(timezone.utc).isoformat()
             width = data.width
@@ -539,22 +560,33 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
             fmt = "png"
             file_size = int(width * height * 3 * 0.3)
 
-            label = (data.prompt[:60] + "...") if len(data.prompt) > 60 else data.prompt
-            label_lines = [label[j:j+30] for j in range(0, len(label), 30)]
-            text_svg = "\n".join(
-                f'<text x="50%" y="{45 + idx*8}%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="14">{line}</text>'
-                for idx, line in enumerate(label_lines[:3])
-            )
-            style_label = (data.style or "default").replace("-", " ").title()
-            svg = (
-                f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">'
-                f'<rect width="100%" height="100%" fill="{bg_color}"/>'
-                f'<text x="50%" y="35%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="20" font-weight="bold">{style_label}</text>'
-                f'{text_svg}'
-                f'<text x="50%" y="85%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="10" opacity="0.5">Variation {i+1} of {data.num_variations}</text>'
-                f'</svg>'
-            )
-            data_url = f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
+            if ai_success and i < len(ai_images_b64):
+                img_bytes = base64.b64decode(ai_images_b64[i])
+                file_size = len(img_bytes)
+                data_url = f"data:image/png;base64,{ai_images_b64[i]}"
+                mime_type = "image/png"
+                generated_by = "ai"
+                provider_name = response.provider
+            else:
+                label = (data.prompt[:60] + "...") if len(data.prompt) > 60 else data.prompt
+                label_lines = [label[j:j+30] for j in range(0, len(label), 30)]
+                text_svg = "\n".join(
+                    f'<text x="50%" y="{45 + idx*8}%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="14">{line}</text>'
+                    for idx, line in enumerate(label_lines[:3])
+                )
+                style_label = (data.style or "default").replace("-", " ").title()
+                svg = (
+                    f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">'
+                    f'<rect width="100%" height="100%" fill="{bg_color}"/>'
+                    f'<text x="50%" y="35%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="20" font-weight="bold">{style_label}</text>'
+                    f'{text_svg}'
+                    f'<text x="50%" y="85%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="10" opacity="0.5">Variation {i+1} of {num_images}</text>'
+                    f'</svg>'
+                )
+                data_url = f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
+                mime_type = "image/svg+xml"
+                generated_by = "placeholder"
+                provider_name = "svg-generator"
 
             img_record = {
                 "id": img_id,
@@ -573,10 +605,10 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
                 "width": width,
                 "height": height,
                 "format": fmt,
-                "mimeType": "image/svg+xml",
+                "mimeType": mime_type,
                 "metadata": {
-                    "generated_by": "ai" if response.success else "placeholder",
-                    "provider": response.provider if response.success else "svg-generator",
+                    "generated_by": generated_by,
+                    "provider": provider_name,
                     "variation_index": i,
                 },
                 "generationParams": {
@@ -606,7 +638,7 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
                     "width": width,
                     "height": height,
                 },
-                provider=response.provider if response.success else "svg-generator",
+                provider=provider_name,
                 latency_ms=response.latency_ms if response.success else 0,
             )
 
@@ -615,7 +647,7 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
         return ImageGenerateResponse(
             images=generated_images,
             enhanced_prompt=enhanced,
-            provider=response.provider if response.success else "svg-generator",
+            provider=provider_name if generated_images else "svg-generator",
             latency_ms=latency_ms,
         )
     except HTTPException:

@@ -113,6 +113,20 @@ class AIEngine:
 
         return response
 
+    async def generate_image(
+        self,
+        prompt: str,
+        width: int = 1024,
+        height: int = 1024,
+        provider: str | None = None,
+    ) -> tuple[bool, list[str], str]:
+        """Generate images using the AI provider.
+        Returns (success, list_of_base64_image_data, error_message)."""
+        ai_provider = self._get_provider(provider)
+        if hasattr(ai_provider, 'generate_image'):
+            return await ai_provider.generate_image(prompt, width, height)
+        return False, [], f"Provider {ai_provider.name} does not support image generation"
+
     async def generate_json(
         self,
         prompt: str,
