@@ -88,18 +88,18 @@ class GeminiProvider(AIProvider):
         width: int = 1024,
         height: int = 1024,
     ) -> tuple[bool, list[str], str]:
-        """Generate images using Gemini's native image generation.
+        """Generate images using Gemini's native image generation via google-genai SDK.
         Returns (success, list_of_base64_image_data, error_message)."""
         start = time.time()
         try:
-            from google.generativeai.types import GenerationConfig
-            import google.generativeai as genai
-            genai.configure(api_key=self.config.api_key)
+            from google import genai
+            from google.genai import types
 
-            model = genai.GenerativeModel(self.config.model)
-            response = await model.generate_content_async(
-                prompt,
-                generation_config=GenerationConfig(
+            client = genai.Client(api_key=self.config.api_key)
+            response = await client.aio.models.generate_content(
+                model="gemini-2.5-flash-image",
+                contents=prompt,
+                config=types.GenerateContentConfig(
                     response_modalities=["IMAGE", "TEXT"],
                 ),
             )
@@ -107,7 +107,7 @@ class GeminiProvider(AIProvider):
             images = []
             if response.candidates:
                 for part in response.candidates[0].content.parts:
-                    if hasattr(part, 'inline_data') and part.inline_data:
+                    if part.inline_data is not None:
                         img_data = part.inline_data.data
                         if isinstance(img_data, bytes):
                             images.append(base64.b64encode(img_data).decode())
