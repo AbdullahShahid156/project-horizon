@@ -549,9 +549,7 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
                 width=data.width or 1024,
                 height=data.height or 1024,
             )
-            print(f"IMAGE GEN RESULT: success={ai_success}, images={len(ai_images_b64)}, error={ai_error[:200] if ai_error else 'none'}")
         except Exception as e:
-            print(f"IMAGE GEN EXCEPTION: {e}")
             ai_success = False
 
         for i in range(num_images):
