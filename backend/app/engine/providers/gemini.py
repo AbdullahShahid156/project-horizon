@@ -88,36 +88,34 @@ class GeminiProvider(AIProvider):
         width: int = 1024,
         height: int = 1024,
     ) -> tuple[bool, list[str], str]:
-        """Generate images using Gemini's native image generation via google-genai SDK.
+        """Generate images using Hugging Face free inference API.
         Returns (success, list_of_base64_image_data, error_message)."""
         start = time.time()
         try:
-            from google import genai
-            from google.genai import types
+            from app.core.config import settings
+            from huggingface_hub import InferenceClient
 
-            client = genai.Client(api_key=self.config.api_key)
-            response = await client.aio.models.generate_content(
-                model="gemini-2.5-flash-image",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"],
-                ),
+            api_key = settings.HF_API_KEY
+            if not api_key:
+                return False, [], "HF_API_KEY not configured. Get free key from https://huggingface.co/settings/tokens"
+
+            model = settings.HF_IMAGE_MODEL or "stabilityai/stable-diffusion-xl-base-1.0"
+            client = InferenceClient(token=api_key)
+
+            image = client.text_to_image(
+                prompt,
+                model=model,
+                width=width,
+                height=height,
             )
 
-            images = []
-            if response.candidates:
-                for part in response.candidates[0].content.parts:
-                    if part.inline_data is not None:
-                        img_data = part.inline_data.data
-                        if isinstance(img_data, bytes):
-                            images.append(base64.b64encode(img_data).decode())
-                        elif isinstance(img_data, str):
-                            images.append(img_data)
+            import io
+            buf = io.BytesIO()
+            image.save(buf, format="PNG")
+            img_b64 = base64.b64encode(buf.getvalue()).decode()
 
             latency = (time.time() - start) * 1000
-            if images:
-                return True, images, ""
-            return False, [], "No images generated in response"
+            return True, [img_b64], ""
         except Exception as e:
             latency = (time.time() - start) * 1000
             return False, [], str(e)

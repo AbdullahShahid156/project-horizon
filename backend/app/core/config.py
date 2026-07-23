@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     CLAUDE_API_KEY: str = ""
     CLAUDE_MODEL: str = "claude-3-opus-20240229"
 
+    # Hugging Face (free image generation)
+    HF_API_KEY: str = ""
+    HF_IMAGE_MODEL: str = "stabilityai/stable-diffusion-xl-base-1.0"
+
     # AI Engine settings
     AI_DEFAULT_TEMPERATURE: float = 0.7
     AI_DEFAULT_MAX_TOKENS: int = 4096
