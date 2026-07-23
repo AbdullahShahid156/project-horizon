@@ -88,32 +88,45 @@ class GeminiProvider(AIProvider):
         width: int = 1024,
         height: int = 1024,
     ) -> tuple[bool, list[str], str]:
-        """Generate images using Hugging Face free inference API.
+        """Generate images using Hugging Face free inference API, with Pollinations.ai fallback.
         Returns (success, list_of_base64_image_data, error_message)."""
         start = time.time()
+
+        # Try Hugging Face first
         try:
             from app.core.config import settings
             from huggingface_hub import InferenceClient
 
             api_key = settings.HF_API_KEY
-            if not api_key:
-                return False, [], "HF_API_KEY not configured. Get free key from https://huggingface.co/settings/tokens"
+            if api_key:
+                model = settings.HF_IMAGE_MODEL or "stabilityai/stable-diffusion-xl-base-1.0"
+                client = InferenceClient(token=api_key)
+                image = client.text_to_image(prompt, model=model, width=width, height=height)
 
-            model = settings.HF_IMAGE_MODEL or "stabilityai/stable-diffusion-xl-base-1.0"
-            client = InferenceClient(token=api_key)
+                import io
+                buf = io.BytesIO()
+                image.save(buf, format="PNG")
+                img_b64 = base64.b64encode(buf.getvalue()).decode()
+                latency = (time.time() - start) * 1000
+                return True, [img_b64], ""
+        except Exception:
+            pass  # Fall through to Pollinations
 
-            image = client.text_to_image(
-                prompt,
-                model=model,
-                width=width,
-                height=height,
+        # Fallback: Pollinations.ai (free, no API key needed)
+        try:
+            import requests as http_requests
+            import urllib.parse
+
+            encoded_prompt = urllib.parse.quote(prompt)
+            pollinations_url = (
+                f"https://image.pollinations.ai/prompt/{encoded_prompt}"
+                f"?width={width}&height={height}&nologo=true"
             )
+            resp = http_requests.get(pollinations_url, timeout=90, headers={"User-Agent": "BuilderWeb/1.0"})
+            resp.raise_for_status()
 
-            import io
-            buf = io.BytesIO()
-            image.save(buf, format="PNG")
-            img_b64 = base64.b64encode(buf.getvalue()).decode()
-
+            img_b64 = base64.b64encode(resp.content).decode()
+            content_type = resp.headers.get("content-type", "image/jpeg")
             latency = (time.time() - start) * 1000
             return True, [img_b64], ""
         except Exception as e:
