@@ -108,6 +108,7 @@ class ContentSEOAnalysis(BaseModel):
     keyword_density: dict[str, float]
     readability: dict[str, Any]
     heading_analysis: dict[str, Any]
+    links: dict[str, Any] = {}
     suggestions: list[str]
 
 
@@ -218,6 +219,8 @@ class ContentTemplateResponse(BaseModel):
 
 class ContentExportRequest(BaseModel):
     format: str = "html"
+    content: str = ""
+    item_id: str | None = None
 
 
 class ContentExportResponse(BaseModel):

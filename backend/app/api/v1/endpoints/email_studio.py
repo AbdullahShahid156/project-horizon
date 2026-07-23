@@ -512,7 +512,15 @@ async def list_campaigns(
 
     start = (page - 1) * page_size
     end = start + page_size
-    return [_to_campaign_response(c) for c in campaigns[start:end]]
+    total = len(campaigns)
+    total_pages = (total + page_size - 1) // page_size
+    return {
+        "items": [_to_campaign_response(c) for c in campaigns[start:end]],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 @router.post("/campaigns", response_model=EmailCampaignResponse)
@@ -715,7 +723,7 @@ async def get_campaign_history(campaign_id: str, user: str = Depends(get_current
     if campaign_id not in _campaigns:
         raise HTTPException(status_code=404, detail="Campaign not found")
     history = _history.get(campaign_id, [])
-    return {"campaign_id": campaign_id, "history": history}
+    return history
 
 
 # ─── AI GENERATE ─────────────────────────────────────────────────────────────

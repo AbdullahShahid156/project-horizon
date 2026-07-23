@@ -158,8 +158,16 @@ async def list_brands(
     start = (page - 1) * page_size
     end = start + page_size
     page_brands = brands[start:end]
+    total = len(brands)
+    total_pages = (total + page_size - 1) // page_size
 
-    return [_to_response(b) for b in page_brands]
+    return {
+        "items": [_to_response(b) for b in page_brands],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 @router.post("/", response_model=BrandResponse)

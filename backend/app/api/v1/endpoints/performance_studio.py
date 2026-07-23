@@ -423,8 +423,8 @@ async def get_dashboard(project_id: str = Query(default="dev-project"), user: st
     for a in sorted(project_audits, key=lambda x: x["created_at"]):
         trend.append({
             "date": a["created_at"],
-            "overall_score": a["overall_score"],
-            "performance_score": a["performance_score"],
+            "score": a["overall_score"],
+            "performance": a["performance_score"],
         })
 
     return PerformanceDashboardResponse(

@@ -127,22 +127,20 @@ const API_PREFIX = `${API_BASE}/api/v1/performance`;
 
 class PerformanceStudioService {
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
+    let response: Response;
     try {
-      const response = await fetch(`${API_PREFIX}${path}`, {
+      response = await fetch(`${API_PREFIX}${path}`, {
         ...options,
         headers: { "Content-Type": "application/json", ...options?.headers },
       });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: "Request failed" }));
-        throw new Error(error.detail || "Request failed");
-      }
-      return response.json();
-    } catch (err) {
-      if (err instanceof Error && err.message !== "Request failed") {
-        throw new Error("Unable to connect to the server. Please ensure the backend is running.");
-      }
-      throw err;
+    } catch {
+      throw new Error("Unable to connect to the server. Please ensure the backend is running.");
     }
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Request failed" }));
+      throw new Error(error.detail || `Request failed with status ${response.status}`);
+    }
+    return response.json();
   }
 
   async getDashboard(projectId: string): Promise<PerformanceDashboard> {

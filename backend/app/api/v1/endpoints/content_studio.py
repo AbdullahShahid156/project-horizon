@@ -604,7 +604,7 @@ async def export_content(data: ContentExportRequest, user: str = Depends(get_cur
     check_rate_limit(f"export:{user}")
     if data.format not in ("txt", "markdown", "html", "json"):
         raise HTTPException(status_code=400, detail="Unsupported format. Use txt, markdown, html, or json.")
-    return {"content": "", "format": data.format, "filename": "export"}
+    return {"content": data.content or "", "format": data.format, "filename": f"export.{data.format}"}
 
 
 @router.get("/folders", response_model=list[ContentFolderResponse])

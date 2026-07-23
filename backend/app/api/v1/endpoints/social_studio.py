@@ -241,7 +241,15 @@ async def list_posts(
 
     start = (page - 1) * page_size
     end = start + page_size
-    return [_to_post_response(p) for p in posts[start:end]]
+    total = len(posts)
+    total_pages = (total + page_size - 1) // page_size
+    return {
+        "items": [_to_post_response(p) for p in posts[start:end]],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 @router.post("/posts", response_model=SocialPostResponse)
@@ -453,7 +461,7 @@ async def get_post_history(post_id: str, user: str = Depends(get_current_user)):
     if post_id not in _posts:
         raise HTTPException(status_code=404, detail="Post not found")
     history = _history.get(post_id, [])
-    return {"post_id": post_id, "history": history}
+    return history
 
 
 # ─── AI GENERATE ─────────────────────────────────────────────────────────────
@@ -757,7 +765,11 @@ async def list_campaigns(
             if p.get("campaignId") == c["id"] and not p.get("deletedAt")
         )
 
-    return [_to_campaign_response(c) for c in campaigns]
+    total = len(campaigns)
+    return {
+        "items": [_to_campaign_response(c) for c in campaigns],
+        "total": total,
+    }
 
 
 @router.post("/campaigns", response_model=SocialCampaignResponse)
@@ -1040,13 +1052,15 @@ async def list_hashtags(
 
 @router.post("/hashtags")
 async def create_hashtag(
-    tag: str,
-    workspace_id: str = Query(default="dev-workspace"),
-    category: str | None = None,
-    description: str | None = None,
+    data: dict,
     user: str = Depends(get_current_user),
 ):
     check_rate_limit(f"create:{user}")
+
+    tag = data.get("tag", "")
+    workspace_id = data.get("workspace_id", "dev-workspace")
+    category = data.get("category")
+    description = data.get("description")
 
     tag_clean = tag.strip().lstrip("#").lower()
     if not tag_clean:
