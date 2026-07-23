@@ -62,7 +62,7 @@ export default function ImageGeneratePage() {
   const [name, setName] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<Array<{ id: string; name: string; width: number; height: number }>>([]);
+  const [generatedImages, setGeneratedImages] = useState<Array<{ id: string; name: string; url: string | null; width: number; height: number }>>([]);
 
   useEffect(() => {
     imageStudioService.listFolders("ws-default").then((f) => setFolders(f ?? [])).catch(() => {});
@@ -106,7 +106,7 @@ export default function ImageGeneratePage() {
         name: name || undefined,
         num_variations: numVariations,
       });
-      setGeneratedImages((result?.images ?? []).map((img) => ({ id: img.id, name: img.name, width: img.width || 1024, height: img.height || 1024 })));
+      setGeneratedImages((result?.images ?? []).map((img) => ({ id: img.id, name: img.name, url: img.url || null, width: img.width || 1024, height: img.height || 1024 })));
       addToast({ title: "Images generated", description: `${(result?.images ?? []).length} image(s) created in ${result?.latency_ms?.toFixed(0) ?? "0"}ms` });
     } catch {
       addToast({ title: "Error", description: "Failed to generate images", variant: "destructive" });
@@ -217,7 +217,11 @@ export default function ImageGeneratePage() {
               <CardContent className="space-y-2">
                 {generatedImages.map((img) => (
                   <div key={img.id} className="p-2 border rounded flex items-center gap-2 cursor-pointer hover:bg-muted" onClick={() => router.push(`/image-studio/${img.id}`)}>
-                    <div className="w-12 h-12 bg-muted rounded flex items-center justify-center"><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>
+                    {img.url ? (
+                      <img src={img.url} alt={img.name} className="w-12 h-12 rounded object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center"><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{img.name}</p>
                       <p className="text-xs text-muted-foreground">{img.width}×{img.height}</p>

@@ -208,9 +208,13 @@ export default function ImageStudioPage() {
               {images.map((image) => (
                 <Card key={image.id} className="group hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => router.push(`/image-studio/${image.id}`)}>
                   <div className="aspect-square bg-muted relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
-                    </div>
+                    {image.url ? (
+                      <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
+                      </div>
+                    )}
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                       <Button variant="secondary" size="sm" className="h-7 w-7 p-0" onClick={() => handleAction(image.id, "favorite")}>
                         <Heart className={`h-3 w-3 ${image.is_favorite ? "fill-red-500 text-red-500" : ""}`} />
@@ -237,8 +241,12 @@ export default function ImageStudioPage() {
               {images.map((image) => (
                 <Card key={image.id} className="hover:shadow-sm transition-shadow cursor-pointer" onClick={() => router.push(`/image-studio/${image.id}`)}>
                   <CardContent className="p-3 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {image.url ? (
+                        <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{image.name}</p>
@@ -277,7 +285,11 @@ export default function ImageStudioPage() {
               {images.filter((i) => i.is_favorite).map((image) => (
                 <Card key={image.id} className="hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => router.push(`/image-studio/${image.id}`)}>
                   <div className="aspect-square bg-muted relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center"><ImageIcon className="h-12 w-12 text-muted-foreground/50" /></div>
+                    {image.url ? (
+                      <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center"><ImageIcon className="h-12 w-12 text-muted-foreground/50" /></div>
+                    )}
                   </div>
                   <CardContent className="p-3">
                     <p className="text-sm font-medium truncate">{image.name}</p>
@@ -297,7 +309,11 @@ export default function ImageStudioPage() {
               {images.filter((i) => i.is_deleted).map((image) => (
                 <Card key={image.id} className="hover:shadow-md transition-shadow overflow-hidden opacity-60" onClick={() => router.push(`/image-studio/${image.id}`)}>
                   <div className="aspect-square bg-muted relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center"><ImageIcon className="h-12 w-12 text-muted-foreground/50" /></div>
+                    {image.url ? (
+                      <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center"><ImageIcon className="h-12 w-12 text-muted-foreground/50" /></div>
+                    )}
                   </div>
                   <CardContent className="p-3 flex justify-between items-center">
                     <p className="text-sm font-medium truncate">{image.name}</p>

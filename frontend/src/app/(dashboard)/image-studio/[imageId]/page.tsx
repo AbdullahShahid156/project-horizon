@@ -233,7 +233,11 @@ export default function ImageDetailPage() {
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <div className="aspect-video bg-muted rounded-t-lg flex items-center justify-center relative overflow-hidden">
-              <ImageIcon className="h-24 w-24 text-muted-foreground/30" />
+              {image.url ? (
+                <img src={image.url} alt={image.name} className="w-full h-full object-contain" />
+              ) : (
+                <ImageIcon className="h-24 w-24 text-muted-foreground/30" />
+              )}
               <div className="absolute top-2 right-2 flex gap-1">
                 <Badge variant="secondary">{image.image_type}</Badge>
                 {image.style && <Badge variant="outline">{image.style}</Badge>}
