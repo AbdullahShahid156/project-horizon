@@ -467,6 +467,94 @@ async def get_post_history(post_id: str, user: str = Depends(get_current_user)):
 # ─── AI GENERATE ─────────────────────────────────────────────────────────────
 
 
+def _fallback_generate_posts(data: SocialGenerateRequest, num: int) -> list[dict]:
+    """Generate social media posts when AI is unavailable."""
+    import random
+
+    platform = data.platform.lower()
+    topic = data.topic or data.brand or data.business or "our product"
+    brand = data.brand or data.business or "We"
+    tone = data.tone or "Professional"
+    audience = data.target_audience or "our audience"
+    goal = data.goal or "Engagement"
+    cta = data.cta or "Learn More"
+    keywords = data.keywords or []
+
+    templates = {
+        "instagram": [
+            f"✨ {topic.title()} ✨\n\nDiscover what makes {brand} stand out. {topic} is at the heart of everything we do.\n\n🎯 Designed for {audience}\n💡 Driven by innovation\n📈 Built for results\n\n{cta} 👉 Link in bio!\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:5]) + ' ' if keywords else '')}#{topic.replace(' ','')[:20]} #socialmedia",
+            f"🚀 Let's talk about {topic}.\n\nAt {brand}, we believe in creating value for {audience}. Here's what you need to know:\n\n1️⃣ Quality matters\n2️⃣ Innovation drives growth\n3️⃣ {brand} is here for you\n\n{cta} today! 💪\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:5]) + ' ' if keywords else '')}#{brand.replace(' ','')}",
+            f"💡 Did you know?\n\n{topic} is changing the game for {audience}. And {brand} is leading the way.\n\nDrop a 🔥 if you're ready to level up!\n\n{cta} → Link in bio\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:5]) + ' ' if keywords else '')}#{topic.replace(' ','')[:20]}",
+        ],
+        "twitter": [
+            f"🧵 {topic}\n\nHere's why {audience} should care:\n\n→ It transforms how we work\n→ {brand} is making it accessible\n→ The results speak for themselves\n\n{cta} 👇",
+            f"Hot take on {topic}: 🌶️\n\n{brand} is building something special for {audience}.\n\nStay tuned. {cta}.\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:3]) if keywords else '')}",
+            f"Quick update on {topic}:\n\n✅ Better for {audience}\n✅ Built by {brand}\n✅ Ready when you are\n\n{cta} →",
+        ],
+        "linkedin": [
+            f"I've been thinking a lot about {topic} lately.\n\nHere's what I've learned building {brand}:\n\n→ {audience} deserve better solutions\n→ Innovation isn't optional — it's essential\n→ The best results come from consistency\n\nWe're committed to making {topic} work for {audience}.\n\n{cta} to learn more.\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:5]) + ' ' if keywords else '')}#{topic.replace(' ','')}",
+            f"The future of {topic} is here.\n\nAt {brand}, we're helping {audience} navigate this change with:\n\n📊 Data-driven insights\n🎯 Tailored solutions\n🤝 Dedicated support\n\n{cta} — link in comments.\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:3]) + ' ' if keywords else '')}",
+        ],
+        "facebook": [
+            f"Hey everyone! 👋\n\nWe're excited to share some news about {topic}.\n\nAt {brand}, we've been working hard to bring {audience} the best experience possible.\n\nHere's what's new:\n✨ Improved features\n🎯 Better results\n💪 Stronger community\n\n{cta} and let us know what you think in the comments! 💬\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:3]) if keywords else '')}",
+            f"📢 {topic} just got an upgrade!\n\nWe asked {audience} what they needed, and we listened.\n\nNew at {brand}:\n→ Better performance\n→ More features\n→ Greater value\n\n{cta} today! 🎉",
+        ],
+        "tiktok": [
+            f"POV: You just discovered {topic} 👀\n\n{brand} has entered the chat 🚀\n\n{audience} are you ready?\n\n{cta} #fyp #viral {topic.replace(' ','')}",
+            f"Things that just make sense: {topic} + {brand} ✨\n\n{audience}, this one's for you!\n\n{cta} 💯\n\n#trending #fyp #{topic.replace(' ','')[:15]}",
+        ],
+        "threads": [
+            f"Real talk about {topic}:\n\n{brand} is doing something different for {audience} and I'm here for it.\n\n{cta} 👇",
+            f"{topic} hits different when {brand} is involved 🔥\n\n{audience}, you know what to do.\n\n{cta}",
+        ],
+        "pinterest": [
+            f"📌 {topic.title()}\n\nDiscover the best of {topic} with {brand}.\n\nPerfect for {audience} looking for inspiration.\n\n{cta} → Visit our profile\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:5]) + ' ' if keywords else '')}#{topic.replace(' ','')[:20]}",
+        ],
+        "youtube": [
+            f"🎬 {topic.title()} | {brand}\n\nIn this video, we explore {topic} and why it matters for {audience}.\n\n🔔 Subscribe for more\n👍 Like if you found this helpful\n💬 Comment your thoughts\n\n{cta}!\n\n{(' '.join('#' + k.replace(' ','') for k in keywords[:5]) + ' ' if keywords else '')}#{topic.replace(' ','')[:20]}",
+        ],
+    }
+
+    platform_templates = templates.get(platform, templates["instagram"])
+    posts = []
+
+    for i in range(num):
+        base = platform_templates[i % len(platform_templates)]
+        tone_map = {
+            "Casual": "Hey! ",
+            "Friendly": "Hi there! ",
+            "Humorous": "Okay but hear me out... ",
+            "Inspirational": "Believe in something greater. ",
+            "Urgent": "Act NOW! ",
+            "Bold": "No holding back. ",
+            "Witty": "Plot twist: ",
+            "Empathetic": "We understand. ",
+            "Educational": "Pro tip: ",
+            "Professional": "",
+        }
+        prefix = tone_map.get(tone, "")
+        post_content = prefix + base
+
+        post_hashtags = keywords[:8] if keywords else [topic.replace(" ", ""), brand.replace(" ", ""), "socialmedia"]
+        post_emojis = ["✨", "🚀", "💡", "🎯", "💪", "🔥", "📈"]
+
+        posts.append({
+            "content": post_content,
+            "headline": f"{topic.title()} with {brand}",
+            "caption": f"Discover {topic} — brought to you by {brand}. {cta}!",
+            "hashtags": post_hashtags,
+            "cta": cta,
+            "emojis": post_emojis,
+            "image_suggestions": [
+                f"Professional photo of {topic}",
+                f"Branded graphic for {brand}",
+                f"Lifestyle image featuring {topic}",
+            ],
+        })
+
+    return posts
+
+
 @router.post("/generate", response_model=SocialGenerateResponse)
 async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends(get_current_user)):
     check_rate_limit(f"ai:{user}", AI_RATE_LIMIT_MAX)
@@ -529,6 +617,7 @@ async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends
 
     full_prompt = "\n".join(prompt_parts)
 
+    response = None
     try:
         response = await engine.generate_json(
             prompt=full_prompt,
@@ -547,60 +636,62 @@ async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends
         if not raw_posts:
             raw_posts = [json_data]
 
-        now = datetime.now(timezone.utc).isoformat()
-        created_posts: list[dict] = []
+        provider_name = response.provider or "none"
 
-        for raw in raw_posts[:num]:
-            post_id = str(uuid.uuid4())
-            post = {
-                "id": post_id,
-                "workspaceId": data.workspace_id,
-                "campaignId": data.campaign_id,
-                "platform": data.platform.lower(),
-                "postType": data.post_type.lower(),
-                "content": raw.get("content", ""),
-                "headline": raw.get("headline"),
-                "caption": raw.get("caption"),
-                "hashtags": raw.get("hashtags", []),
-                "cta": raw.get("cta"),
-                "emojis": raw.get("emojis", []),
-                "imageSuggestions": raw.get("image_suggestions", []),
-                "imageIds": [],
-                "carouselContent": None,
-                "storyContent": None,
-                "reelScript": None,
-                "pollIdeas": None,
-                "business": data.business,
-                "brand": data.brand,
-                "targetAudience": data.target_audience,
-                "goal": data.goal,
-                "tone": data.tone,
-                "keywords": data.keywords or [],
-                "status": "draft",
-                "scheduledDate": None,
-                "publishedAt": None,
-                "performanceScore": None,
-                "aiGenerated": True,
-                "aiProvider": response.provider or "none",
-                "aiLatencyMs": round(response.latency_ms or 0, 2),
-                "deletedAt": None,
-                "createdAt": now,
-                "updatedAt": now,
-            }
-            _posts[post_id] = post
-            created_posts.append(_to_post_response(post).model_dump())
-
-        return SocialGenerateResponse(
-            posts=created_posts,
-            provider=response.provider or "none",
-            latency_ms=round(response.latency_ms or 0, 2),
-        )
     except HTTPException:
         raise
     except Exception:
-        return SocialGenerateResponse(
-            posts=[], provider="none", latency_ms=0,
-        )
+        raw_posts = _fallback_generate_posts(data, num)
+        provider_name = "fallback"
+
+    now = datetime.now(timezone.utc).isoformat()
+    created_posts: list[dict] = []
+
+    for raw in raw_posts[:num]:
+        post_id = str(uuid.uuid4())
+        post = {
+            "id": post_id,
+            "workspaceId": data.workspace_id,
+            "campaignId": data.campaign_id,
+            "platform": data.platform.lower(),
+            "postType": data.post_type.lower(),
+            "content": raw.get("content", ""),
+            "headline": raw.get("headline"),
+            "caption": raw.get("caption"),
+            "hashtags": raw.get("hashtags", []),
+            "cta": raw.get("cta"),
+            "emojis": raw.get("emojis", []),
+            "imageSuggestions": raw.get("image_suggestions", []),
+            "imageIds": [],
+            "carouselContent": None,
+            "storyContent": None,
+            "reelScript": None,
+            "pollIdeas": None,
+            "business": data.business,
+            "brand": data.brand,
+            "targetAudience": data.target_audience,
+            "goal": data.goal,
+            "tone": data.tone,
+            "keywords": data.keywords or [],
+            "status": "draft",
+            "scheduledDate": None,
+            "publishedAt": None,
+            "performanceScore": None,
+            "aiGenerated": True,
+            "aiProvider": provider_name,
+            "aiLatencyMs": round(response.latency_ms or 0, 2) if response else 0,
+            "deletedAt": None,
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        _posts[post_id] = post
+        created_posts.append(_to_post_response(post).model_dump())
+
+    return SocialGenerateResponse(
+        posts=created_posts,
+        provider=provider_name,
+        latency_ms=round(response.latency_ms or 0, 2) if response else 0,
+    )
 
 
 # ─── AI ACTION ───────────────────────────────────────────────────────────────
