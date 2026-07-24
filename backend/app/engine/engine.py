@@ -43,6 +43,12 @@ class AIEngine:
                 temperature=0.7,
                 max_tokens=4096,
             ),
+            "groq": ProviderConfig(
+                api_key=settings.GROQ_API_KEY,
+                model=settings.GROQ_MODEL,
+                temperature=0.7,
+                max_tokens=4096,
+            ),
         }
         return config_map.get(name, ProviderConfig(api_key="", model=""))
 

@@ -1,9 +1,9 @@
 
 from app.engine.providers.base import AIProvider, ProviderConfig
 from app.engine.providers.gemini import GeminiProvider
+from app.engine.providers.groq import GroqProvider
 from app.engine.providers.stubs import (
     ClaudeProvider,
-    GroqProvider,
     LocalProvider,
     OpenAIProvider,
     OpenRouterProvider,

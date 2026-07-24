@@ -20,9 +20,11 @@ class Settings(BaseSettings):
     DISABLE_AUTH: bool = True
 
     # AI Provider settings
-    AI_PROVIDER: str = "gemini"
+    AI_PROVIDER: str = "groq"
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash"
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4"
     CLAUDE_API_KEY: str = ""
