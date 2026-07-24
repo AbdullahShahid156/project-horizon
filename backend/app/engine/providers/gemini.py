@@ -104,7 +104,7 @@ class GeminiProvider(AIProvider):
             encoded_prompt = urllib.parse.quote(prompt)
             pollinations_url = (
                 f"https://image.pollinations.ai/prompt/{encoded_prompt}"
-                f"?width={width}&height={height}&nologo=true"
+                f"?width={width}&height={height}&nologo=true&model=flux&enhance=true"
             )
             resp = http_requests.get(pollinations_url, timeout=120, headers={"User-Agent": "BuilderWeb/1.0"})
             resp.raise_for_status()
