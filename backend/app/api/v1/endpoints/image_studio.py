@@ -506,6 +506,8 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
     full_prompt = ". ".join(prompt_parts)
     full_prompt += ". Create a high-quality image matching this description."
 
+    enhanced = data.prompt
+
     try:
         response = await engine.generate(
             prompt=full_prompt,
@@ -517,10 +519,11 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
             user_id=user,
         )
 
+        enhanced = response.text if response.success else data.prompt
+
+        image_prompt = enhanced if len(enhanced) > 10 else f"{data.prompt}, {data.style or 'high quality'}"
         start_time = time.time()
         generated_images = []
-
-        enhanced = response.text if response.success else data.prompt
 
         style_colors = {
             "photorealistic": ("#1a1a2e", "#e94560"),
@@ -545,7 +548,7 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
 
         try:
             ai_success, ai_images_b64, ai_error = await engine.generate_image(
-                prompt=full_prompt,
+                prompt=image_prompt,
                 width=data.width or 1024,
                 height=data.height or 1024,
             )
@@ -739,108 +742,102 @@ async def generate_variations(data: ImageVariationRequest, user: str = Depends(g
 
     original_prompt = img.get("prompt") or img.get("name", "image")
 
-    prompt_parts = [
-        f"Generate {data.num_variations} variations of this image concept.",
-        f"Original concept: {original_prompt}",
-        f"Variation strength: {data.strength}",
-        "Create distinct variations while maintaining the core theme.",
-    ]
+    variation_images = []
+    start_time = time.time()
 
-    full_prompt = ". ".join(prompt_parts)
+    for i in range(max(1, min(data.num_variations, 4))):
+        var_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        width = img.get("width") or 1024
+        height = img.get("height") or 1024
 
-    try:
-        response = await engine.generate(
-            prompt=full_prompt,
-            system_instruction=(
-                "You are an expert at generating creative variations of images. "
-                "Describe each variation in detail."
-            ),
-            operation="image_variations",
-            user_id=user,
+        strength_labels = {"low": "slightly different", "medium": "distinctly different", "high": "very different"}
+        strength_desc = strength_labels.get(data.strength or "medium", "different")
+        var_prompt = f"{original_prompt}, {strength_desc} variation, creative reinterpretation"
+
+        ai_success = False
+        ai_images_b64 = []
+        try:
+            ai_success, ai_images_b64, _ = await engine.generate_image(
+                prompt=var_prompt, width=width, height=height,
+            )
+        except Exception:
+            pass
+
+        if ai_success and ai_images_b64:
+            img_bytes = base64.b64decode(ai_images_b64[0])
+            file_size = len(img_bytes)
+            data_url = f"data:image/png;base64,{ai_images_b64[0]}"
+            mime_type = "image/png"
+            generated_by = "ai"
+            provider_name = "pollinations"
+        else:
+            data_url = img.get("url", "")
+            file_size = img.get("fileSize", 0)
+            mime_type = img.get("mimeType", "image/png")
+            generated_by = "copy"
+            provider_name = "original"
+
+        var_record = {
+            "id": var_id,
+            "workspaceId": img["workspaceId"],
+            "folderId": img.get("folderId"),
+            "name": f"Variation {i + 1} of {img['name']}",
+            "description": f"Variation of {img['name']}",
+            "imageType": img["imageType"],
+            "prompt": var_prompt,
+            "negativePrompt": img.get("negativePrompt"),
+            "style": img.get("style"),
+            "url": data_url,
+            "thumbnailUrl": data_url,
+            "localPath": None,
+            "fileSize": file_size,
+            "width": width,
+            "height": height,
+            "format": "png",
+            "mimeType": mime_type,
+            "metadata": {
+                "generated_by": generated_by,
+                "provider": provider_name,
+                "variation_index": i,
+                "source_image_id": data.image_id,
+                "strength": data.strength,
+            },
+            "generationParams": {
+                "prompt": var_prompt,
+                "source_image_id": data.image_id,
+                "strength": data.strength,
+            },
+            "isFavorite": False,
+            "isDeleted": False,
+            "downloadCount": 0,
+            "tags": [],
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        _images[var_id] = var_record
+        variation_images.append(_to_response(var_record))
+
+        _record_history(
+            var_id,
+            "variation",
+            params={
+                "source_image_id": data.image_id,
+                "strength": data.strength,
+                "variation_index": i,
+            },
+            provider=provider_name,
+            latency_ms=0,
         )
 
-        start_time = time.time()
-        variation_images = []
+    latency_ms = (time.time() - start_time) * 1000
 
-        for i in range(max(1, min(data.num_variations, 8))):
-            var_id = str(uuid.uuid4())
-            now = datetime.now(timezone.utc).isoformat()
-            width = img.get("width") or 1024
-            height = img.get("height") or 1024
-            style = img.get("style") or "default"
-
-            bg_colors = ["#1e293b", "#0f3460", "#2c1810", "#16213e"]
-            bg = bg_colors[i % len(bg_colors)]
-            svg = (
-                f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">'
-                f'<rect width="100%" height="100%" fill="{bg}"/>'
-                f'<text x="50%" y="40%" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-size="20" font-weight="bold">{style.replace("-"," ").title()}</text>'
-                f'<text x="50%" y="55%" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="14">Variation {i+1} of {data.num_variations}</text>'
-                f'<text x="50%" y="70%" text-anchor="middle" fill="#64748b" font-family="sans-serif" font-size="10">of: {img["name"][:40]}</text>'
-                f'</svg>'
-            )
-            data_url = f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
-
-            var_record = {
-                "id": var_id,
-                "workspaceId": img["workspaceId"],
-                "folderId": img.get("folderId"),
-                "name": f"Variation {i + 1} of {img['name']}",
-                "description": f"Variation of {img['name']}",
-                "imageType": img["imageType"],
-                "prompt": original_prompt,
-                "negativePrompt": img.get("negativePrompt"),
-                "style": img.get("style"),
-                "url": data_url,
-                "thumbnailUrl": data_url,
-                "localPath": None,
-                "fileSize": int(width * height * 3 * 0.3),
-                "width": width,
-                "height": height,
-                "format": "png",
-                "mimeType": "image/svg+xml",
-                "metadata": {
-                    "generated_by": "placeholder",
-                    "provider": "svg-generator",
-                    "variation_index": i,
-                    "source_image_id": data.image_id,
-                    "strength": data.strength,
-                },
-                "generationParams": {
-                    "prompt": original_prompt,
-                    "source_image_id": data.image_id,
-                    "strength": data.strength,
-                },
-                "isFavorite": False,
-                "isDeleted": False,
-                "downloadCount": 0,
-                "tags": [],
-                "createdAt": now,
-                "updatedAt": now,
-            }
-            _images[var_id] = var_record
-            variation_images.append(_to_response(var_record))
-
-            _record_history(
-                var_id,
-                "variation",
-                params={
-                    "source_image_id": data.image_id,
-                    "strength": data.strength,
-                    "variation_index": i,
-                },
-                provider="svg-generator",
-                latency_ms=0,
-            )
-
-        latency_ms = (time.time() - start_time) * 1000
-
-        return ImageGenerateResponse(
-            images=variation_images,
-            enhanced_prompt=f"Generated {data.num_variations} variations of '{img['name']}'",
-            provider="svg-generator",
-            latency_ms=latency_ms,
-        )
+    return ImageGenerateResponse(
+        images=variation_images,
+        enhanced_prompt=f"Generated {data.num_variations} variations of '{img['name']}'",
+        provider="pollinations",
+        latency_ms=latency_ms,
+    )
     except HTTPException:
         raise
     except Exception as e:
@@ -853,9 +850,7 @@ async def generate_variations(data: ImageVariationRequest, user: str = Depends(g
 @router.post("/ai/upscale", response_model=ImageGenerateResponse)
 async def upscale_image(data: ImageUpscaleRequest, user: str = Depends(get_current_user)):
     check_rate_limit(f"ai:{user}", AI_RATE_LIMIT_MAX)
-    from app.engine import get_ai_engine
 
-    engine = get_ai_engine()
     img = _get_image_or_404(data.image_id)
 
     original_width = img.get("width") or 512
@@ -863,29 +858,36 @@ async def upscale_image(data: ImageUpscaleRequest, user: str = Depends(get_curre
     new_width = original_width * data.scale
     new_height = original_height * data.scale
 
-    prompt_parts = [
-        f"Upscale this image from {original_width}x{original_height} to {new_width}x{new_height}.",
-        f"Scale factor: {data.scale}x",
-        "Enhance details, sharpness, and quality while upscaling.",
-        f"Original image: {img.get('prompt') or img['name']}",
-    ]
-
-    full_prompt = ". ".join(prompt_parts)
-
     try:
         upscaled_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
-        file_size = int(new_width * new_height * 3 * 0.3)
 
-        svg = (
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="{new_width}" height="{new_height}">'
-            f'<rect width="100%" height="100%" fill="#1e293b"/>'
-            f'<text x="50%" y="40%" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-size="20" font-weight="bold">Upscaled {data.scale}x</text>'
-            f'<text x="50%" y="55%" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="14">{new_width}x{new_height}</text>'
-            f'<text x="50%" y="70%" text-anchor="middle" fill="#64748b" font-family="sans-serif" font-size="10">From: {img["name"][:40]}</text>'
-            f'</svg>'
-        )
-        data_url = f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
+        url = img.get("url", "")
+        pil_img = None
+
+        if url.startswith("data:image"):
+            header, b64data = url.split(",", 1)
+            img_bytes = base64.b64decode(b64data)
+            pil_img = PILImage.open(io.BytesIO(img_bytes))
+        elif img.get("localPath") and os.path.exists(img["localPath"]):
+            pil_img = PILImage.open(img["localPath"])
+
+        if pil_img:
+            pil_img = pil_img.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
+            if pil_img.mode == "RGBA":
+                background = PILImage.new("RGB", pil_img.size, (255, 255, 255))
+                background.paste(pil_img, mask=pil_img.split()[3])
+                pil_img = background
+            buf = io.BytesIO()
+            pil_img.save(buf, format="PNG", optimize=True)
+            img_b64 = base64.b64encode(buf.getvalue()).decode()
+            data_url = f"data:image/png;base64,{img_b64}"
+            file_size = len(buf.getvalue())
+            mime_type = "image/png"
+        else:
+            data_url = url
+            file_size = img.get("fileSize", 0)
+            mime_type = img.get("mimeType", "image/png")
 
         upscaled_record = {
             "id": upscaled_id,
@@ -904,10 +906,10 @@ async def upscale_image(data: ImageUpscaleRequest, user: str = Depends(get_curre
             "width": new_width,
             "height": new_height,
             "format": "png",
-            "mimeType": "image/svg+xml",
+            "mimeType": mime_type,
             "metadata": {
-                "generated_by": "placeholder",
-                "provider": "svg-generator",
+                "generated_by": "ai" if pil_img else "copy",
+                "provider": "pillow-lanczos" if pil_img else "original",
                 "source_image_id": data.image_id,
                 "scale": data.scale,
                 "original_dimensions": f"{original_width}x{original_height}",
@@ -936,14 +938,14 @@ async def upscale_image(data: ImageUpscaleRequest, user: str = Depends(get_curre
                 "original_dimensions": f"{original_width}x{original_height}",
                 "new_dimensions": f"{new_width}x{new_height}",
             },
-            provider="svg-generator",
+            provider="pillow-lanczos" if pil_img else "original",
             latency_ms=0,
         )
 
         return ImageGenerateResponse(
             images=[_to_response(upscaled_record)],
             enhanced_prompt=f"Upscaled {img['name']} by {data.scale}x",
-            provider="svg-generator",
+            provider="pillow-lanczos" if pil_img else "original",
             latency_ms=0,
         )
     except HTTPException:
@@ -962,15 +964,29 @@ async def edit_image(data: ImageEditRequest, user: str = Depends(get_current_use
     img = _get_image_or_404(data.image_id)
     start_time = time.time()
 
-    local_path = img.get("localPath")
-    if not local_path or not os.path.exists(local_path):
+    pil_img = None
+    url = img.get("url", "")
+
+    if url.startswith("data:image"):
+        try:
+            header, b64data = url.split(",", 1)
+            img_bytes = base64.b64decode(b64data)
+            pil_img = PILImage.open(io.BytesIO(img_bytes))
+        except Exception:
+            pass
+    elif img.get("localPath") and os.path.exists(img["localPath"]):
+        try:
+            pil_img = PILImage.open(img["localPath"])
+        except Exception:
+            pass
+
+    if pil_img is None:
         raise HTTPException(
             status_code=400,
-            detail="Image file not available for editing. Only uploaded images can be edited directly.",
+            detail="Image data not available for editing.",
         )
 
     try:
-        pil_img = PILImage.open(local_path)
         original_fmt = img.get("format", "png")
         output_format = data.output_format or original_fmt
 
@@ -1075,14 +1091,18 @@ async def edit_image(data: ImageEditRequest, user: str = Depends(get_current_use
             "bmp": "image/bmp",
         }
 
-        img["url"] = edited_path
-        img["thumbnailUrl"] = thumb_path
-        img["localPath"] = edited_path
+        mime_type = mime_map.get(output_format, "image/png")
+        edited_b64 = base64.b64encode(edited_bytes).decode()
+        edited_data_url = f"data:{mime_type};base64,{edited_b64}"
+
+        img["url"] = edited_data_url
+        img["thumbnailUrl"] = edited_data_url
+        img["localPath"] = None
         img["fileSize"] = len(edited_bytes)
         img["width"] = pil_img.width
         img["height"] = pil_img.height
         img["format"] = output_format
-        img["mimeType"] = mime_map.get(output_format, "image/png")
+        img["mimeType"] = mime_type
         img["updatedAt"] = datetime.now(timezone.utc).isoformat()
 
         _record_history(
