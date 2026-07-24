@@ -588,7 +588,7 @@ async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends
                 "updatedAt": now,
             }
             _posts[post_id] = post
-            created_posts.append(raw)
+            created_posts.append(_to_post_response(post).model_dump())
 
         return SocialGenerateResponse(
             posts=created_posts,
