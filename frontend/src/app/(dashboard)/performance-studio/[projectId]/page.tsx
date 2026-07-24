@@ -23,6 +23,7 @@ import {
   XCircle,
   TrendingUp,
   Timer,
+  Download,
 } from "lucide-react";
 import {
   performanceStudioService,
@@ -178,19 +179,159 @@ export default function PerformanceDetailPage() {
     }
   };
 
-  const _handleExport = async (format: string) => {
-    try {
-      const result = await performanceStudioService.exportProject(projectId, format);
-      const blob = new Blob([result.content], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = result.filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Export failed:", err);
-    }
+  const generateReport = () => {
+    if (!selectedAudit || !dashboard) return;
+
+    const scoreColor = (s: number) => s >= 90 ? "#16a34a" : s >= 50 ? "#d97706" : "#dc2626";
+    const scoreBg = (s: number) => s >= 90 ? "#dcfce7" : s >= 50 ? "#fef3c7" : "#fecaca";
+    const vitalStatus = (s: string) => s === "good" ? '<span style="color:#16a34a;font-weight:600">Good</span>' : s === "needs-improvement" ? '<span style="color:#d97706;font-weight:600">Needs Improvement</span>' : '<span style="color:#dc2626;font-weight:600">Poor</span>';
+
+    const now = new Date().toLocaleString();
+    const url = selectedAudit.url;
+
+    const imgRows = images.length > 0 ? images.map(img => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${img.url}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${img.format}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${(img.original_size / 1024).toFixed(1)} KB</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${img.optimized_size ? (img.optimized_size / 1024).toFixed(1) + " KB" : "-"}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${img.has_lazy_loading ? "✓" : "✗"}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${img.has_alt_text ? "✓" : "✗"}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#2563eb">${img.recommended_format || "-"}</td>
+      </tr>`).join("") : '<tr><td colspan="7" style="padding:16px;text-align:center;color:#6b7280">No image data available</td></tr>';
+
+    const assetRows = assets.length > 0 ? assets.sort((a, b) => b.size - a.size).map(a => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.url}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${a.asset_type}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${(a.size / 1024).toFixed(1)} KB</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${a.gzipped_size ? (a.gzipped_size / 1024).toFixed(1) + " KB" : "-"}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${a.is_minified ? "✓" : "✗"}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${a.is_render_blocking ? "⚠ Yes" : "No"}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${a.is_unused ? "⚠ Yes" : "No"}</td>
+      </tr>`).join("") : '<tr><td colspan="7" style="padding:16px;text-align:center;color:#6b7280">No asset data available</td></tr>';
+
+    const recRows = recommendations.length > 0 ? recommendations.map(r => `
+      <div style="padding:12px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;${r.priority === "critical" ? "border-left:4px solid #dc2626;" : r.priority === "high" ? "border-left:4px solid #f59e0b;" : "border-left:4px solid #3b82f6;"}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;${r.priority === "critical" ? "background:#fecaca;color:#991b1b;" : r.priority === "high" ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#1e40af;"}">${r.priority.toUpperCase()}</span>
+          <span style="font-size:12px;color:#6b7280">${r.category}</span>
+        </div>
+        <div style="font-weight:600;margin-bottom:4px">${r.title}</div>
+        ${r.problem ? `<div style="font-size:13px;color:#4b5563;margin-bottom:4px">${r.problem}</div>` : ""}
+        ${r.impact ? `<div style="font-size:12px;color:#6b7280">Impact: ${r.impact}</div>` : ""}
+        ${r.estimated_improvement ? `<div style="font-size:12px;color:#6b7280">Est. Improvement: ${r.estimated_improvement}</div>` : ""}
+        ${r.implementation_guide ? `<div style="margin-top:8px;padding:8px;background:#f9fafb;border-radius:6px;font-size:12px;color:#374151"><strong>How to fix:</strong> ${r.implementation_guide}</div>` : ""}
+      </div>`).join("") : '<div style="padding:16px;text-align:center;color:#6b7280">No recommendations available</div>';
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Performance Report - ${url}</title>
+<style>
+  @media print { body { margin: 0; } .no-print { display: none !important; } }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111827; background: #fff; line-height: 1.6; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { color: #6b7280; font-size: 14px; }
+  h2 { font-size: 20px; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
+  .score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0; }
+  .score-card { text-align: center; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
+  .score-card .number { font-size: 36px; font-weight: 700; }
+  .score-card .label { font-size: 13px; color: #6b7280; margin-top: 4px; }
+  .vital-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .vital-card { padding: 12px; border-radius: 8px; background: #f9fafb; border: 1px solid #e5e7eb; }
+  .vital-card .label { font-size: 12px; color: #6b7280; }
+  .vital-card .value { font-size: 20px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+  th { text-align: left; padding: 8px; border-bottom: 2px solid #e5e7eb; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta { font-size: 12px; color: #9ca3af; margin-top: 40px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Performance Audit Report</h1>
+    <p><strong>${url}</strong></p>
+    <p>Generated: ${now}</p>
+  </div>
+
+  <h2>Overall Scores</h2>
+  <div class="score-grid">
+    <div class="score-card" style="background:${scoreBg(dashboard.overall_score)}">
+      <div class="number" style="color:${scoreColor(dashboard.overall_score)}">${dashboard.overall_score}</div>
+      <div class="label">Overall</div>
+    </div>
+    <div class="score-card" style="background:${scoreBg(dashboard.performance_score)}">
+      <div class="number" style="color:${scoreColor(dashboard.performance_score)}">${dashboard.performance_score}</div>
+      <div class="label">Performance</div>
+    </div>
+    <div class="score-card" style="background:${scoreBg(dashboard.accessibility_score)}">
+      <div class="number" style="color:${scoreColor(dashboard.accessibility_score)}">${dashboard.accessibility_score}</div>
+      <div class="label">Accessibility</div>
+    </div>
+    <div class="score-card" style="background:${scoreBg(dashboard.best_practices_score)}">
+      <div class="number" style="color:${scoreColor(dashboard.best_practices_score)}">${dashboard.best_practices_score}</div>
+      <div class="label">Best Practices</div>
+    </div>
+  </div>
+
+  <h2>Core Web Vitals</h2>
+  ${vitals ? `
+  <div class="vital-grid">
+    <div class="vital-card"><div class="label">LCP (Largest Contentful Paint)</div><div class="value">${vitals.lcp}s</div><div>${vitalStatus(vitals.lcp_status)}</div></div>
+    <div class="vital-card"><div class="label">INP (Interaction to Next Paint)</div><div class="value">${vitals.inp}ms</div><div>${vitalStatus(vitals.inp_status)}</div></div>
+    <div class="vital-card"><div class="label">CLS (Cumulative Layout Shift)</div><div class="value">${vitals.cls}</div><div>${vitalStatus(vitals.cls_status)}</div></div>
+    <div class="vital-card"><div class="label">FCP (First Contentful Paint)</div><div class="value">${vitals.fcp}s</div><div>${vitalStatus(vitals.fcp_status)}</div></div>
+    <div class="vital-card"><div class="label">TTFB (Time to First Byte)</div><div class="value">${vitals.ttfb}ms</div><div>${vitalStatus(vitals.ttfb_status)}</div></div>
+    <div class="vital-card"><div class="label">Speed Index</div><div class="value">${vitals.speed_index}s</div><div>${vitalStatus(vitals.speed_index_status)}</div></div>
+  </div>` : '<p style="color:#6b7280">No Core Web Vitals data available for this audit.</p>'}
+
+  <h2>Resource Summary</h2>
+  ${selectedAudit.metrics ? `
+  <table>
+    <tr><th>Metric</th><th style="text-align:right">Value</th></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Total Page Size</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${((selectedAudit.metrics as Record<string, number>).total_bytes / 1024 / 1024).toFixed(2)} MB</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Total Requests</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${(selectedAudit.metrics as Record<string, number>).total_requests}</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">DOM Size</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${(selectedAudit.metrics as Record<string, number>).dom_size} elements</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">JavaScript</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${((selectedAudit.metrics as Record<string, number>).js_size / 1024).toFixed(1)} KB (${(selectedAudit.metrics as Record<string, number>).js_requests} files)</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">CSS</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${((selectedAudit.metrics as Record<string, number>).css_size / 1024).toFixed(1)} KB (${(selectedAudit.metrics as Record<string, number>).css_requests} files)</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Images</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${((selectedAudit.metrics as Record<string, number>).image_size / 1024).toFixed(1)} KB (${(selectedAudit.metrics as Record<string, number>).image_requests} files)</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Fonts</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${((selectedAudit.metrics as Record<string, number>).font_size / 1024).toFixed(1)} KB (${(selectedAudit.metrics as Record<string, number>).font_requests} files)</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">HTML</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${((selectedAudit.metrics as Record<string, number>).html_size / 1024).toFixed(1)} KB</td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Third-Party Size</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${((selectedAudit.metrics as Record<string, number>).third_party_size / 1024).toFixed(1)} KB</td></tr>
+  </table>` : '<p style="color:#6b7280">No metrics data available.</p>'}
+
+  <h2>Recommendations (${recommendations.length})</h2>
+  ${recRows}
+
+  <h2>Image Audit (${images.length} images)</h2>
+  <table>
+    <tr><th>URL</th><th>Format</th><th style="text-align:right">Original</th><th style="text-align:right">Optimized</th><th style="text-align:center">Lazy</th><th style="text-align:center">Alt Text</th><th>Recommend</th></tr>
+    ${imgRows}
+  </table>
+
+  <h2>Asset Audit (${assets.length} assets)</h2>
+  <table>
+    <tr><th>URL</th><th>Type</th><th style="text-align:right">Size</th><th style="text-align:right">Gzipped</th><th style="text-align:center">Minified</th><th style="text-align:center">Render Block</th><th style="text-align:center">Unused</th></tr>
+    ${assetRows}
+  </table>
+
+  <div class="meta">
+    <p>Performance Audit Report &mdash; Generated by BuilderWeb Performance Studio</p>
+    <p>${now}</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const reportUrl = URL.createObjectURL(blob);
+    window.open(reportUrl, "_blank");
+    URL.revokeObjectURL(reportUrl);
   };
 
   if (loading) {
@@ -589,9 +730,12 @@ export default function PerformanceDetailPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Reports</CardTitle>
-                <Button size="sm" onClick={handleCreateReport}>
-                  <Plus className="h-4 w-4 mr-1" /> Generate Report
-                </Button>
+                <div className="flex gap-2">
+                  {selectedAudit && <Button size="sm" variant="outline" onClick={generateReport}><Download className="h-4 w-4 mr-1" /> Download Report</Button>}
+                  <Button size="sm" onClick={handleCreateReport}>
+                    <Plus className="h-4 w-4 mr-1" /> Generate Report
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

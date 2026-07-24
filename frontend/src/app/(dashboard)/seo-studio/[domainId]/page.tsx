@@ -35,6 +35,7 @@ import {
   Sparkles,
   Plus,
   Trash2,
+  Download,
 } from "lucide-react";
 import {
   seoStudioService,
@@ -321,6 +322,163 @@ export default function SEODomainDashboard() {
     } catch (err) {
       console.error("Export failed:", err);
     }
+  };
+
+  const generateSEOReport = () => {
+    if (!domain || !dashboard) return;
+
+    const scoreColor = (s: number) => s >= 80 ? "#16a34a" : s >= 50 ? "#d97706" : "#dc2626";
+    const scoreBg = (s: number) => s >= 80 ? "#dcfce7" : s >= 50 ? "#fef3c7" : "#fecaca";
+    const now = new Date().toLocaleString();
+
+    const kwRows = keywords.length > 0 ? keywords.slice(0, 30).map(k => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:500">${k.keyword}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${k.search_volume.toLocaleString()}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;${k.difficulty > 70 ? "background:#fecaca;color:#991b1b" : k.difficulty > 40 ? "background:#fef3c7;color:#92400e" : "background:#dcfce7;color:#166534"}">${k.difficulty}</span></td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">$${k.cpc.toFixed(2)}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${k.intent}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${k.keyword_type}</td>
+      </tr>`).join("") : '<tr><td colspan="6" style="padding:16px;text-align:center;color:#6b7280">No keywords tracked yet</td></tr>';
+
+    const recRows = recommendations.length > 0 ? recommendations.map(r => `
+      <div style="padding:12px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;${r.priority === "critical" ? "border-left:4px solid #dc2626;" : r.priority === "high" ? "border-left:4px solid #f59e0b;" : "border-left:4px solid #3b82f6;"}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;${r.priority === "critical" ? "background:#fecaca;color:#991b1b;" : r.priority === "high" ? "background:#fef3c7;color:#92400e;" : "background:#dbeafe;color:#1e40af;"}">${r.priority.toUpperCase()}</span>
+          <span style="font-size:12px;color:#6b7280">${r.category}</span>
+          <span style="font-size:12px;color:${r.status === "resolved" ? "#16a34a" : "#d97706"}">${r.status}</span>
+        </div>
+        <div style="font-weight:600;margin-bottom:4px">${r.title}</div>
+        ${r.description ? `<div style="font-size:13px;color:#4b5563;margin-bottom:4px">${r.description}</div>` : ""}
+        ${r.impact ? `<div style="font-size:12px;color:#6b7280">Impact: ${r.impact}</div>` : ""}
+        ${r.effort ? `<div style="font-size:12px;color:#6b7280">Effort: ${r.effort}</div>` : ""}
+      </div>`).join("") : '<div style="padding:16px;text-align:center;color:#6b7280">No recommendations yet. Run an audit first.</div>';
+
+    const auditRows = audits.length > 0 ? audits.map(a => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${new Date(a.created_at).toLocaleDateString()}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;color:${scoreColor(a.overall_score)}">${a.overall_score}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${a.technical_score}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${a.content_score}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">${a.on_page_score}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${a.url}</td>
+      </tr>`).join("") : '<tr><td colspan="6" style="padding:16px;text-align:center;color:#6b7280">No audits yet</td></tr>';
+
+    const schemaRows = schemas.length > 0 ? schemas.map(s => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${s.schema_type}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:500">${s.name}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb"><pre style="font-size:11px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0">${JSON.stringify(s.json_ld)}</pre></td>
+      </tr>`).join("") : '<tr><td colspan="3" style="padding:16px;text-align:center;color:#6b7280">No schemas generated</td></tr>';
+
+    const compRows = competitors.length > 0 ? competitors.map(c => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:500">${c.competitor_name}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${c.competitor_url}</td>
+      </tr>`).join("") : '<tr><td colspan="2" style="padding:16px;text-align:center;color:#6b7280">No competitors tracked</td></tr>';
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SEO Report - ${domain.name}</title>
+<style>
+  @media print { body { margin: 0; } .no-print { display: none !important; } }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111827; background: #fff; line-height: 1.6; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { color: #6b7280; font-size: 14px; }
+  h2 { font-size: 20px; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
+  .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+  .score-card { text-align: center; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
+  .score-card .number { font-size: 36px; font-weight: 700; }
+  .score-card .label { font-size: 13px; color: #6b7280; margin-top: 4px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+  .stat-card { text-align: center; padding: 12px; border-radius: 8px; background: #f9fafb; border: 1px solid #e5e7eb; }
+  .stat-card .number { font-size: 24px; font-weight: 700; }
+  .stat-card .label { font-size: 12px; color: #6b7280; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+  th { text-align: left; padding: 8px; border-bottom: 2px solid #e5e7eb; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta { font-size: 12px; color: #9ca3af; margin-top: 40px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>SEO Audit Report</h1>
+    <p><strong>${domain.name}</strong> &mdash; ${domain.url}</p>
+    <p>Generated: ${now}</p>
+  </div>
+
+  <h2>SEO Scores</h2>
+  <div class="score-grid">
+    <div class="score-card" style="background:${scoreBg(dashboard.health_score)}">
+      <div class="number" style="color:${scoreColor(dashboard.health_score)}">${dashboard.health_score}</div>
+      <div class="label">Health Score</div>
+    </div>
+    <div class="score-card" style="background:${scoreBg(dashboard.technical_score)}">
+      <div class="number" style="color:${scoreColor(dashboard.technical_score)}">${dashboard.technical_score}</div>
+      <div class="label">Technical Score</div>
+    </div>
+    <div class="score-card" style="background:${scoreBg(dashboard.content_score)}">
+      <div class="number" style="color:${scoreColor(dashboard.content_score)}">${dashboard.content_score}</div>
+      <div class="label">Content Score</div>
+    </div>
+  </div>
+
+  <h2>Quick Stats</h2>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="number">${dashboard.total_keywords}</div><div class="label">Keywords</div></div>
+    <div class="stat-card"><div class="number">${dashboard.total_audits}</div><div class="label">Audits</div></div>
+    <div class="stat-card"><div class="number">${dashboard.schema_coverage}</div><div class="label">Schemas</div></div>
+    <div class="stat-card"><div class="number">${dashboard.indexability}%</div><div class="label">Indexability</div></div>
+    <div class="stat-card"><div class="number" style="color:#dc2626">${dashboard.broken_links}</div><div class="label">Broken Links</div></div>
+    <div class="stat-card"><div class="number" style="color:#d97706">${dashboard.missing_meta_tags}</div><div class="label">Missing Meta</div></div>
+    <div class="stat-card"><div class="number">${dashboard.issues_summary?.critical || 0}</div><div class="label">Critical Issues</div></div>
+    <div class="stat-card"><div class="number">${dashboard.issues_summary?.warning || 0}</div><div class="label">Warnings</div></div>
+  </div>
+
+  <h2>Audit History (${audits.length})</h2>
+  <table>
+    <tr><th>Date</th><th style="text-align:center">Score</th><th style="text-align:center">Technical</th><th style="text-align:center">Content</th><th style="text-align:center">On-Page</th><th>URL</th></tr>
+    ${auditRows}
+  </table>
+
+  <h2>Keywords (${Math.min(keywords.length, 30)}${keywords.length > 30 ? " of " + keywords.length : ""})</h2>
+  <table>
+    <tr><th>Keyword</th><th style="text-align:right">Volume</th><th style="text-align:center">Difficulty</th><th style="text-align:right">CPC</th><th style="text-align:center">Intent</th><th style="text-align:center">Type</th></tr>
+    ${kwRows}
+  </table>
+
+  <h2>Recommendations (${recommendations.length})</h2>
+  ${recRows}
+
+  <h2>Schema Markup (${schemas.length})</h2>
+  <table>
+    <tr><th>Type</th><th>Name</th><th>JSON-LD</th></tr>
+    ${schemaRows}
+  </table>
+
+  <h2>Competitors (${competitors.length})</h2>
+  <table>
+    <tr><th>Name</th><th>URL</th></tr>
+    ${compRows}
+  </table>
+
+  <div class="meta">
+    <p>SEO Audit Report &mdash; Generated by BuilderWeb SEO Studio</p>
+    <p>${now}</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const reportUrl = URL.createObjectURL(blob);
+    window.open(reportUrl, "_blank");
+    URL.revokeObjectURL(reportUrl);
   };
 
   if (loading) {
@@ -890,10 +1048,15 @@ export default function SEODomainDashboard() {
               <CardTitle className="flex items-center gap-2"><BarChart3 className="h-5 w-5" /> SEO Reports</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button onClick={handleCreateReport} disabled={reportLoading}>
-                {reportLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                Generate Report
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={generateSEOReport} disabled={!domain || !dashboard}>
+                  <Download className="h-4 w-4 mr-1" /> Download Report
+                </Button>
+                <Button onClick={handleCreateReport} disabled={reportLoading}>
+                  {reportLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+                  Generate Report
+                </Button>
+              </div>
               {reports.length > 0 ? (
                 <div className="space-y-2">
                   {reports.map((r) => (
