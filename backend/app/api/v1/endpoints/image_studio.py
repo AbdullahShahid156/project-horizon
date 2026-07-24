@@ -1060,7 +1060,8 @@ async def edit_image(data: ImageEditRequest, user: str = Depends(get_current_use
             if pil_img.mode != "P":
                 pil_img = pil_img.convert("P", palette=PILImage.Palette.ADAPTIVE)
 
-        pil_img.save(buf, format=output_format.upper(), **save_kwargs)
+        pil_format = {"jpg": "JPEG", "jpeg": "JPEG", "png": "PNG", "webp": "WEBP", "gif": "GIF", "bmp": "BMP"}.get(output_format, output_format.upper())
+        pil_img.save(buf, format=pil_format, **save_kwargs)
         edited_bytes = buf.getvalue()
 
         ext_map = {

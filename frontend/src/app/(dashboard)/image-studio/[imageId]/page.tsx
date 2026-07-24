@@ -144,7 +144,7 @@ export default function ImageDetailPage() {
     }
   };
 
-  const handleEdit = async (operation: string) => {
+  const handleEdit = async (operation: string, outputFormat?: string) => {
     if (!image) return;
     try {
       setEditing(true);
@@ -153,6 +153,7 @@ export default function ImageDetailPage() {
       if (operation === "resize") { editParams.width = resizeWidth; editParams.height = resizeHeight; }
       if (operation === "compress") { editParams.quality = compressQuality; }
       if (operation === "filter") { editParams.filter_name = selectedFilter; }
+      if (operation === "convert" && outputFormat) { editParams.output_format = outputFormat; }
       await imageStudioService.editImage(editParams);
       addToast({ title: "Edit applied", description: `${operation} completed` });
       fetchImage();
@@ -347,7 +348,7 @@ export default function ImageDetailPage() {
                 <CardHeader><CardTitle className="text-sm">Convert</CardTitle></CardHeader>
                 <CardContent className="flex gap-2">
                   {["webp", "png", "jpg"].map((fmt) => (
-                    <Button key={fmt} variant="outline" size="sm" className="flex-1" onClick={() => handleEdit("convert")} disabled={editing}>
+                    <Button key={fmt} variant="outline" size="sm" className="flex-1" onClick={() => handleEdit("convert", fmt)} disabled={editing}>
                       {editing && editOperation === "convert" ? <Loader2 className="h-3 w-3 animate-spin" /> : `to ${fmt.toUpperCase()}`}
                     </Button>
                   ))}
