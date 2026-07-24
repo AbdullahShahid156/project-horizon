@@ -156,3 +156,11 @@ class BrandStatsResponse(BaseModel):
     favorites: int
     archived: int
     by_industry: dict[str, int]
+
+
+class BrandPaginatedResponse(BaseModel):
+    items: list[BrandResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

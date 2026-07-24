@@ -13,6 +13,7 @@ from app.schemas.brand import (
     BrandCreateRequest,
     BrandGenerateRequest,
     BrandGenerateResponse,
+    BrandPaginatedResponse,
     BrandResponse,
     BrandStatsResponse,
     BrandUpdateRequest,
@@ -110,7 +111,7 @@ async def get_brand_stats(workspace_id: str = Query(default="dev-workspace"), us
 # ─── LIST / CREATE ──────────────────────────────────────────────────────────
 
 
-@router.get("/", response_model=list[BrandResponse])
+@router.get("/", response_model=BrandPaginatedResponse)
 async def list_brands(
     workspace_id: str = Query(default="dev-workspace"),
     search: str | None = None,
