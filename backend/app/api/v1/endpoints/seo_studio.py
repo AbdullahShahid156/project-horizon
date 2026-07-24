@@ -1,4 +1,3 @@
-import math
 import re
 import time
 import uuid
@@ -8,40 +7,39 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.security import get_current_user
 from app.schemas.seo import (
-    SEODomainCreateRequest,
-    SEODomainResponse,
-    SEOAuditRequest,
-    SEOAuditResponse,
-    SEOAuditPageResponse,
-    SEOKeywordCreateRequest,
-    SEOKeywordResponse,
-    SEOKeywordGenerateRequest,
-    SEOKeywordClusterCreateRequest,
-    SEOKeywordClusterResponse,
-    SEOOnPageRequest,
-    SEOOnPageResponse,
-    SEOTechnicalRequest,
-    SEOTechnicalResponse,
-    SEOTechnicalIssue,
-    SEOContentOptimizeRequest,
-    SEOContentOptimizeResponse,
-    SEOSchemaCreateRequest,
-    SEOSchemaResponse,
-    SEOInternalLinkResponse,
-    SEOInternalLinkSuggestRequest,
-    SEOReportCreateRequest,
-    SEOReportResponse,
-    SEORecommendationResponse,
-    SEOCompetitorCreateRequest,
-    SEOCompetitorResponse,
-    SEOCompetitorAnalyzeRequest,
-    SEOCompetitorAnalysis,
-    SEOHistoryResponse,
-    SEOExportRequest,
-    SEOExportResponse,
     SEOAISuggestRequest,
     SEOAISuggestResponse,
+    SEOAuditRequest,
+    SEOAuditResponse,
+    SEOCompetitorAnalysis,
+    SEOCompetitorAnalyzeRequest,
+    SEOCompetitorCreateRequest,
+    SEOCompetitorResponse,
+    SEOContentOptimizeRequest,
+    SEOContentOptimizeResponse,
     SEODashboardResponse,
+    SEODomainCreateRequest,
+    SEODomainResponse,
+    SEOExportRequest,
+    SEOExportResponse,
+    SEOHistoryResponse,
+    SEOInternalLinkResponse,
+    SEOInternalLinkSuggestRequest,
+    SEOKeywordClusterCreateRequest,
+    SEOKeywordClusterResponse,
+    SEOKeywordCreateRequest,
+    SEOKeywordGenerateRequest,
+    SEOKeywordResponse,
+    SEOOnPageRequest,
+    SEOOnPageResponse,
+    SEORecommendationResponse,
+    SEOReportCreateRequest,
+    SEOReportResponse,
+    SEOSchemaCreateRequest,
+    SEOSchemaResponse,
+    SEOTechnicalIssue,
+    SEOTechnicalRequest,
+    SEOTechnicalResponse,
 )
 
 router = APIRouter()
@@ -428,7 +426,6 @@ async def analyze_on_page(data: SEOOnPageRequest, user: str = Depends(get_curren
     check_rate_limit(f"seo:{user}")
     from app.engine import get_ai_engine
     engine = get_ai_engine()
-    now = datetime.now(timezone.utc).isoformat()
 
     try:
         prompt = (
@@ -586,7 +583,7 @@ async def generate_schema(data: SEOSchemaCreateRequest, user: str = Depends(get_
         prompt = (
             f"Generate a {data.schema_type} Schema.org JSON-LD for: {data.name}\n"
             f"URL: {data.url or 'Not provided'}\n"
-            f"Additional data: {str(data.data)}\n\n"
+            f"Additional data: {data.data!s}\n\n"
             "Return the complete JSON-LD object with @context and @type fields."
         )
         response = await engine.generate_json(prompt=prompt, operation="seo_schema_generation", user_id=user)
@@ -639,12 +636,12 @@ async def delete_schema(schema_id: str, user: str = Depends(get_current_user)):
 @router.get("/internal-links", response_model=list[SEOInternalLinkResponse])
 async def list_internal_links(domain_id: str = Query(default="dev-domain"), user: str = Depends(get_current_user)):
     check_rate_limit(f"list:{user}")
-    links = [l for l in _internal_links if l["domainId"] == domain_id]
+    links = [link for link in _internal_links if link["domainId"] == domain_id]
     return [SEOInternalLinkResponse(
-        id=l["id"], source_url=l["sourceUrl"], target_url=l["targetUrl"],
-        anchor_text=l.get("anchorText"), suggestion_type=l.get("suggestionType", "related"),
-        is_implemented=l.get("isImplemented", False), created_at=l["createdAt"],
-    ) for l in links]
+        id=link["id"], source_url=link["sourceUrl"], target_url=link["targetUrl"],
+        anchor_text=link.get("anchorText"), suggestion_type=link.get("suggestionType", "related"),
+        is_implemented=link.get("isImplemented", False), created_at=link["createdAt"],
+    ) for link in links]
 
 
 @router.post("/internal-links/suggest", response_model=list[SEOInternalLinkResponse])

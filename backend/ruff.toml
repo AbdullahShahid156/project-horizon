@@ -1,0 +1,8 @@
+[lint]
+ignore = [
+    "BLE001",   # blind Exception catches - intentional fallback patterns
+    "B008",     # FastAPI File()/Depends() in defaults - standard FastAPI pattern
+    "S110",     # try-except-pass - intentional fallback patterns
+    "ASYNC230", # async file open - acceptable for small writes
+    "SIM102",   # nested if - readability preference
+]

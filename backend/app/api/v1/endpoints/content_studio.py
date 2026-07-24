@@ -20,7 +20,6 @@ from app.schemas.content import (
     ContentGenerateResponse,
     ContentItemResponse,
     ContentListResponse,
-    ContentRestoreRequest,
     ContentSEOAnalysis,
     ContentSEOAnalyzeRequest,
     ContentStatsResponse,
@@ -140,8 +139,8 @@ def analyze_seo(title: str, body: str, meta_title: str | None, meta_description:
         suggestions.append("Add more headings to improve content structure")
 
     links = re.findall(r'<a\s+[^>]*href="([^"]*)"', body)
-    internal = [l for l in links if not l.startswith("http")]
-    external = [l for l in links if l.startswith("http")]
+    internal = [link for link in links if not link.startswith("http")]
+    external = [link for link in links if link.startswith("http")]
     if len(links) == 0:
         suggestions.append("Add internal and external links to improve SEO")
 

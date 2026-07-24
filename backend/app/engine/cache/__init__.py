@@ -1,6 +1,6 @@
 import time
-from typing import Any
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -90,7 +90,6 @@ class AICache:
     @staticmethod
     def make_key(*args: Any, **kwargs: Any) -> str:
         import hashlib
-        import json
         parts = [str(a) for a in args]
         parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
         raw = "|".join(parts)

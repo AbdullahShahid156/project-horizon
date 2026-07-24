@@ -1,41 +1,41 @@
-from typing import Any, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class ContentCreateRequest(BaseModel):
     workspace_id: str
-    folder_id: Optional[str] = None
+    folder_id: str | None = None
     title: str
     content_type: str
-    body: Optional[dict[str, Any]] = None
-    html_body: Optional[str] = None
-    plain_body: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
-    seo_data: Optional[dict[str, Any]] = None
-    prompt_data: Optional[dict[str, Any]] = None
-    generation_settings: Optional[dict[str, Any]] = None
-    tags: Optional[list[str]] = None
+    body: dict[str, Any] | None = None
+    html_body: str | None = None
+    plain_body: str | None = None
+    metadata: dict[str, Any] | None = None
+    seo_data: dict[str, Any] | None = None
+    prompt_data: dict[str, Any] | None = None
+    generation_settings: dict[str, Any] | None = None
+    tags: list[str] | None = None
 
 
 class ContentUpdateRequest(BaseModel):
-    title: Optional[str] = None
-    folder_id: Optional[str] = None
-    body: Optional[dict[str, Any]] = None
-    html_body: Optional[str] = None
-    plain_body: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
-    seo_data: Optional[dict[str, Any]] = None
-    status: Optional[str] = None
-    tags: Optional[list[str]] = None
-    change_summary: Optional[str] = None
+    title: str | None = None
+    folder_id: str | None = None
+    body: dict[str, Any] | None = None
+    html_body: str | None = None
+    plain_body: str | None = None
+    metadata: dict[str, Any] | None = None
+    seo_data: dict[str, Any] | None = None
+    status: str | None = None
+    tags: list[str] | None = None
+    change_summary: str | None = None
 
 
 class ContentBulkUpdateRequest(BaseModel):
     ids: list[str]
-    folder_id: Optional[str] = None
-    status: Optional[str] = None
-    is_archived: Optional[bool] = None
+    folder_id: str | None = None
+    status: str | None = None
+    is_archived: bool | None = None
 
 
 class ContentRestoreRequest(BaseModel):
@@ -45,21 +45,21 @@ class ContentRestoreRequest(BaseModel):
 class ContentGenerateRequest(BaseModel):
     workspace_id: str
     content_type: str
-    title: Optional[str] = None
-    business_name: Optional[str] = None
-    product: Optional[str] = None
-    industry: Optional[str] = None
-    target_audience: Optional[str] = None
+    title: str | None = None
+    business_name: str | None = None
+    product: str | None = None
+    industry: str | None = None
+    target_audience: str | None = None
     language: str = "English"
     country: str = "US"
     tone: str = "professional"
     content_goal: str = "inform"
     length: str = "medium"
-    keywords: Optional[list[str]] = None
-    competitors: Optional[list[str]] = None
-    call_to_action: Optional[str] = None
-    additional_instructions: Optional[str] = None
-    system_prompt: Optional[str] = None
+    keywords: list[str] | None = None
+    competitors: list[str] | None = None
+    call_to_action: str | None = None
+    additional_instructions: str | None = None
+    system_prompt: str | None = None
 
 
 class ContentGenerateResponse(BaseModel):
@@ -79,10 +79,10 @@ class ContentGenerateResponse(BaseModel):
 class ContentAIOptimizeRequest(BaseModel):
     text: str
     action: str
-    tone: Optional[str] = None
-    context: Optional[str] = None
-    content_type: Optional[str] = None
-    keywords: Optional[list[str]] = None
+    tone: str | None = None
+    context: str | None = None
+    content_type: str | None = None
+    keywords: list[str] | None = None
 
 
 class ContentAIOptimizeResponse(BaseModel):
@@ -96,10 +96,10 @@ class ContentAIOptimizeResponse(BaseModel):
 class ContentSEOAnalyzeRequest(BaseModel):
     title: str
     body: str
-    meta_title: Optional[str] = None
-    meta_description: Optional[str] = None
-    keywords: Optional[list[str]] = None
-    url: Optional[str] = None
+    meta_title: str | None = None
+    meta_description: str | None = None
+    keywords: list[str] | None = None
+    url: str | None = None
 
 
 class ContentSEOAnalysis(BaseModel):
@@ -116,11 +116,11 @@ class ContentVersionResponse(BaseModel):
     id: str
     version_number: int
     title: str
-    body: Optional[dict[str, Any]] = None
-    html_body: Optional[str] = None
-    plain_body: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
-    change_summary: Optional[str] = None
+    body: dict[str, Any] | None = None
+    html_body: str | None = None
+    plain_body: str | None = None
+    metadata: dict[str, Any] | None = None
+    change_summary: str | None = None
     is_auto_save: bool
     created_at: str
 
@@ -128,23 +128,23 @@ class ContentVersionResponse(BaseModel):
 class ContentItemResponse(BaseModel):
     id: str
     workspace_id: str
-    folder_id: Optional[str] = None
+    folder_id: str | None = None
     title: str
     slug: str
     content_type: str
     status: str
-    body: Optional[dict[str, Any]] = None
-    html_body: Optional[str] = None
-    plain_body: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
-    seo_data: Optional[dict[str, Any]] = None
-    prompt_data: Optional[dict[str, Any]] = None
-    generation_settings: Optional[dict[str, Any]] = None
+    body: dict[str, Any] | None = None
+    html_body: str | None = None
+    plain_body: str | None = None
+    metadata: dict[str, Any] | None = None
+    seo_data: dict[str, Any] | None = None
+    prompt_data: dict[str, Any] | None = None
+    generation_settings: dict[str, Any] | None = None
     current_version: int
     word_count: int
     is_favorite: bool
     is_archived: bool
-    tags: Optional[list[str]] = None
+    tags: list[str] | None = None
     created_at: str
     updated_at: str
 
@@ -160,14 +160,14 @@ class ContentListResponse(BaseModel):
 class ContentFolderCreateRequest(BaseModel):
     workspace_id: str
     name: str
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
 
 
 class ContentFolderResponse(BaseModel):
     id: str
     workspace_id: str
     name: str
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     item_count: int = 0
     created_at: str
     updated_at: str
@@ -191,12 +191,12 @@ class ContentTagResponse(BaseModel):
 class ContentTemplateCreateRequest(BaseModel):
     workspace_id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     content_type: str
     category: str = "general"
     body: dict[str, Any]
-    system_prompt: Optional[str] = None
-    generation_settings: Optional[dict[str, Any]] = None
+    system_prompt: str | None = None
+    generation_settings: dict[str, Any] | None = None
 
 
 class ContentTemplateResponse(BaseModel):
@@ -204,12 +204,12 @@ class ContentTemplateResponse(BaseModel):
     workspace_id: str
     name: str
     slug: str
-    description: Optional[str] = None
+    description: str | None = None
     content_type: str
     category: str
     body: dict[str, Any]
-    system_prompt: Optional[str] = None
-    generation_settings: Optional[dict[str, Any]] = None
+    system_prompt: str | None = None
+    generation_settings: dict[str, Any] | None = None
     is_shared: bool
     is_favorite: bool
     use_count: int

@@ -1,4 +1,3 @@
-from typing import List
 
 from pydantic_settings import BaseSettings
 
@@ -8,7 +7,7 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
 
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:8000",
         "https://localhost:3000",

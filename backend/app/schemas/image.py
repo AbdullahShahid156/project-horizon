@@ -1,38 +1,39 @@
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
 class ImageGenerateRequest(BaseModel):
     workspace_id: str
     prompt: str
-    negative_prompt: Optional[str] = None
-    style: Optional[str] = None
+    negative_prompt: str | None = None
+    style: str | None = None
     width: int = 1024
     height: int = 1024
     image_type: str = "general"
-    folder_id: Optional[str] = None
-    name: Optional[str] = None
+    folder_id: str | None = None
+    name: str | None = None
     num_variations: int = 1
 
 
 class ImageEditRequest(BaseModel):
     image_id: str
     operation: str
-    width: Optional[int] = None
-    height: Optional[int] = None
+    width: int | None = None
+    height: int | None = None
     quality: int = 85
-    output_format: Optional[str] = None
-    crop_x: Optional[int] = None
-    crop_y: Optional[int] = None
-    crop_width: Optional[int] = None
-    crop_height: Optional[int] = None
-    filter_name: Optional[str] = None
+    output_format: str | None = None
+    crop_x: int | None = None
+    crop_y: int | None = None
+    crop_width: int | None = None
+    crop_height: int | None = None
+    filter_name: str | None = None
 
 
 class ImagePromptEnhanceRequest(BaseModel):
     prompt: str
-    style: Optional[str] = None
-    image_type: Optional[str] = None
+    style: str | None = None
+    image_type: str | None = None
 
 
 class ImageVariationRequest(BaseModel):
@@ -49,25 +50,25 @@ class ImageUpscaleRequest(BaseModel):
 class ImageResponse(BaseModel):
     id: str
     workspace_id: str
-    folder_id: Optional[str] = None
+    folder_id: str | None = None
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     image_type: str
-    prompt: Optional[str] = None
-    negative_prompt: Optional[str] = None
-    style: Optional[str] = None
-    url: Optional[str] = None
-    thumbnail_url: Optional[str] = None
-    file_size: Optional[int] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
+    prompt: str | None = None
+    negative_prompt: str | None = None
+    style: str | None = None
+    url: str | None = None
+    thumbnail_url: str | None = None
+    file_size: int | None = None
+    width: int | None = None
+    height: int | None = None
     format: str
-    mime_type: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
-    generation_params: Optional[dict[str, Any]] = None
+    mime_type: str | None = None
+    metadata: dict[str, Any] | None = None
+    generation_params: dict[str, Any] | None = None
     is_favorite: bool
     is_deleted: bool
-    tags: Optional[list[str]] = None
+    tags: list[str] | None = None
     created_at: str
     updated_at: str
 
@@ -75,10 +76,10 @@ class ImageResponse(BaseModel):
 class ImageFolderResponse(BaseModel):
     id: str
     workspace_id: str
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     name: str
-    description: Optional[str] = None
-    color: Optional[str] = None
+    description: str | None = None
+    color: str | None = None
     image_count: int = 0
     created_at: str
     updated_at: str
@@ -88,10 +89,10 @@ class ImageHistoryResponse(BaseModel):
     id: str
     image_id: str
     action: str
-    params: Optional[dict[str, Any]] = None
-    result_url: Optional[str] = None
-    provider: Optional[str] = None
-    latency_ms: Optional[float] = None
+    params: dict[str, Any] | None = None
+    result_url: str | None = None
+    provider: str | None = None
+    latency_ms: float | None = None
     created_at: str
 
 
@@ -105,17 +106,17 @@ class ImageStatsResponse(BaseModel):
 
 class ImageGenerateResponse(BaseModel):
     images: list[ImageResponse]
-    enhanced_prompt: Optional[str] = None
+    enhanced_prompt: str | None = None
     provider: str
     latency_ms: float
 
 
 class ImageEditResponse(BaseModel):
     id: str
-    url: Optional[str] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
-    file_size: Optional[int] = None
+    url: str | None = None
+    width: int | None = None
+    height: int | None = None
+    file_size: int | None = None
     format: str
     operation: str
     latency_ms: float

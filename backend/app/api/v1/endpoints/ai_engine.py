@@ -1,22 +1,20 @@
-import uuid
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.security import get_current_user
-
-from app.engine import get_ai_engine, JobStatus
+from app.engine import JobStatus, get_ai_engine
 from app.schemas.ai_engine import (
+    AIEngineStatusResponse,
+    CacheStatsResponse,
+    DailyUsageResponse,
     GenerateRequest,
     GenerateResponse,
+    JobResponse,
+    JobSubmitRequest,
     PromptRenderRequest,
     PromptRenderResponse,
     PromptTemplateResponse,
-    JobSubmitRequest,
-    JobResponse,
-    UsageSummaryResponse,
-    DailyUsageResponse,
-    CacheStatsResponse,
     ProviderInfo,
-    AIEngineStatusResponse,
+    UsageSummaryResponse,
 )
 
 router = APIRouter()

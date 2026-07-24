@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.website import WebsiteUpdateRequest, WebsiteRestoreRequest
+from app.schemas.website import WebsiteRestoreRequest, WebsiteUpdateRequest
 
 router = APIRouter()
 

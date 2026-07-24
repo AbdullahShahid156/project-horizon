@@ -1,8 +1,9 @@
-import time
 import asyncio
-from typing import Any, Callable, Optional
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 
 class JobStatus(str, Enum):

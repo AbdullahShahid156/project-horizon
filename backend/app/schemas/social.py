@@ -1,64 +1,65 @@
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
 class SocialPostCreateRequest(BaseModel):
     workspace_id: str
-    campaign_id: Optional[str] = None
+    campaign_id: str | None = None
     platform: str
     post_type: str = "single"
     content: str
-    headline: Optional[str] = None
-    caption: Optional[str] = None
-    hashtags: Optional[list[str]] = None
-    cta: Optional[str] = None
-    emojis: Optional[list[str]] = None
-    image_ids: Optional[list[str]] = None
-    carousel_content: Optional[list[dict[str, Any]]] = None
-    story_content: Optional[dict[str, Any]] = None
-    reel_script: Optional[str] = None
-    poll_ideas: Optional[list[str]] = None
-    business: Optional[str] = None
-    brand: Optional[str] = None
-    target_audience: Optional[str] = None
-    goal: Optional[str] = None
-    tone: Optional[str] = None
-    keywords: Optional[list[str]] = None
-    scheduled_date: Optional[str] = None
+    headline: str | None = None
+    caption: str | None = None
+    hashtags: list[str] | None = None
+    cta: str | None = None
+    emojis: list[str] | None = None
+    image_ids: list[str] | None = None
+    carousel_content: list[dict[str, Any]] | None = None
+    story_content: dict[str, Any] | None = None
+    reel_script: str | None = None
+    poll_ideas: list[str] | None = None
+    business: str | None = None
+    brand: str | None = None
+    target_audience: str | None = None
+    goal: str | None = None
+    tone: str | None = None
+    keywords: list[str] | None = None
+    scheduled_date: str | None = None
 
 
 class SocialPostUpdateRequest(BaseModel):
-    content: Optional[str] = None
-    headline: Optional[str] = None
-    caption: Optional[str] = None
-    hashtags: Optional[list[str]] = None
-    cta: Optional[str] = None
-    emojis: Optional[list[str]] = None
-    image_ids: Optional[list[str]] = None
-    status: Optional[str] = None
-    scheduled_date: Optional[str] = None
+    content: str | None = None
+    headline: str | None = None
+    caption: str | None = None
+    hashtags: list[str] | None = None
+    cta: str | None = None
+    emojis: list[str] | None = None
+    image_ids: list[str] | None = None
+    status: str | None = None
+    scheduled_date: str | None = None
 
 
 class SocialGenerateRequest(BaseModel):
     workspace_id: str
     platform: str
     post_type: str = "single"
-    business: Optional[str] = None
-    brand: Optional[str] = None
-    campaign_id: Optional[str] = None
-    target_audience: Optional[str] = None
-    goal: Optional[str] = None
-    tone: Optional[str] = None
-    keywords: Optional[list[str]] = None
-    cta: Optional[str] = None
-    topic: Optional[str] = None
+    business: str | None = None
+    brand: str | None = None
+    campaign_id: str | None = None
+    target_audience: str | None = None
+    goal: str | None = None
+    tone: str | None = None
+    keywords: list[str] | None = None
+    cta: str | None = None
+    topic: str | None = None
     num_variations: int = 1
 
 
 class SocialAIRequest(BaseModel):
     post_id: str
     action: str
-    context: Optional[str] = None
+    context: str | None = None
 
 
 class SocialAIResponse(BaseModel):
@@ -78,54 +79,54 @@ class SocialGenerateResponse(BaseModel):
 class SocialCampaignCreateRequest(BaseModel):
     workspace_id: str
     name: str
-    description: Optional[str] = None
-    platforms: Optional[list[str]] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    target_audience: Optional[str] = None
-    goals: Optional[list[str]] = None
+    description: str | None = None
+    platforms: list[str] | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    target_audience: str | None = None
+    goals: list[str] | None = None
 
 
 class SocialCalendarEntryRequest(BaseModel):
     workspace_id: str
-    post_id: Optional[str] = None
+    post_id: str | None = None
     date: str
     platform: str
     status: str = "draft"
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class SocialPostResponse(BaseModel):
     id: str
     workspace_id: str
-    campaign_id: Optional[str] = None
+    campaign_id: str | None = None
     platform: str
     post_type: str
     content: str
-    headline: Optional[str] = None
-    caption: Optional[str] = None
-    hashtags: Optional[list[str]] = None
-    cta: Optional[str] = None
-    emojis: Optional[list[str]] = None
-    image_suggestions: Optional[list[str]] = None
-    image_ids: Optional[list[str]] = None
-    carousel_content: Optional[list[dict[str, Any]]] = None
-    story_content: Optional[dict[str, Any]] = None
-    reel_script: Optional[str] = None
-    poll_ideas: Optional[list[str]] = None
-    business: Optional[str] = None
-    brand: Optional[str] = None
-    target_audience: Optional[str] = None
-    goal: Optional[str] = None
-    tone: Optional[str] = None
-    keywords: Optional[list[str]] = None
+    headline: str | None = None
+    caption: str | None = None
+    hashtags: list[str] | None = None
+    cta: str | None = None
+    emojis: list[str] | None = None
+    image_suggestions: list[str] | None = None
+    image_ids: list[str] | None = None
+    carousel_content: list[dict[str, Any]] | None = None
+    story_content: dict[str, Any] | None = None
+    reel_script: str | None = None
+    poll_ideas: list[str] | None = None
+    business: str | None = None
+    brand: str | None = None
+    target_audience: str | None = None
+    goal: str | None = None
+    tone: str | None = None
+    keywords: list[str] | None = None
     status: str
-    scheduled_date: Optional[str] = None
-    published_at: Optional[str] = None
-    performance_score: Optional[float] = None
+    scheduled_date: str | None = None
+    published_at: str | None = None
+    performance_score: float | None = None
     ai_generated: bool
-    ai_provider: Optional[str] = None
-    ai_latency_ms: Optional[float] = None
+    ai_provider: str | None = None
+    ai_latency_ms: float | None = None
     created_at: str
     updated_at: str
 
@@ -134,13 +135,13 @@ class SocialCampaignResponse(BaseModel):
     id: str
     workspace_id: str
     name: str
-    description: Optional[str] = None
-    platforms: Optional[list[str]] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    description: str | None = None
+    platforms: list[str] | None = None
+    start_date: str | None = None
+    end_date: str | None = None
     status: str
-    target_audience: Optional[str] = None
-    goals: Optional[list[str]] = None
+    target_audience: str | None = None
+    goals: list[str] | None = None
     post_count: int = 0
     created_at: str
     updated_at: str
@@ -149,11 +150,11 @@ class SocialCampaignResponse(BaseModel):
 class SocialCalendarResponse(BaseModel):
     id: str
     workspace_id: str
-    post_id: Optional[str] = None
+    post_id: str | None = None
     date: str
     platform: str
     status: str
-    notes: Optional[str] = None
+    notes: str | None = None
     created_at: str
     updated_at: str
 

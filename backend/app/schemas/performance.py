@@ -1,4 +1,5 @@
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -38,12 +39,12 @@ class PerformanceAuditResponse(BaseModel):
     accessibility_score: int
     best_practices_score: int
     seo_score: int
-    metrics: Optional[dict[str, Any]] = None
-    issues: Optional[dict[str, Any]] = None
-    recommendations: Optional[dict[str, Any]] = None
-    resources: Optional[dict[str, Any]] = None
+    metrics: dict[str, Any] | None = None
+    issues: dict[str, Any] | None = None
+    recommendations: dict[str, Any] | None = None
+    resources: dict[str, Any] | None = None
     created_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
 class PerformanceRecommendationResponse(BaseModel):
@@ -52,10 +53,10 @@ class PerformanceRecommendationResponse(BaseModel):
     category: str
     priority: str
     title: str
-    problem: Optional[str] = None
-    impact: Optional[str] = None
-    estimated_improvement: Optional[str] = None
-    implementation_guide: Optional[str] = None
+    problem: str | None = None
+    impact: str | None = None
+    estimated_improvement: str | None = None
+    implementation_guide: str | None = None
     status: str
     created_at: str
 
@@ -64,9 +65,9 @@ class OptimizationHistoryResponse(BaseModel):
     id: str
     project_id: str
     event_type: str
-    data: Optional[dict[str, Any]] = None
-    score_before: Optional[int] = None
-    score_after: Optional[int] = None
+    data: dict[str, Any] | None = None
+    score_before: int | None = None
+    score_after: int | None = None
     created_at: str
 
 
@@ -80,11 +81,11 @@ class PerformanceReportResponse(BaseModel):
     project_id: str
     title: str
     status: str
-    summary: Optional[dict[str, Any]] = None
+    summary: dict[str, Any] | None = None
     score: int
-    file_url: Optional[str] = None
+    file_url: str | None = None
     created_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
 class ImageAuditResponse(BaseModel):
@@ -92,14 +93,14 @@ class ImageAuditResponse(BaseModel):
     audit_id: str
     url: str
     original_size: int
-    optimized_size: Optional[int] = None
+    optimized_size: int | None = None
     format: str
-    recommended_format: Optional[str] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
+    recommended_format: str | None = None
+    width: int | None = None
+    height: int | None = None
     has_lazy_loading: bool
     has_alt_text: bool
-    issues: Optional[dict[str, Any]] = None
+    issues: dict[str, Any] | None = None
     savings_bytes: int
     created_at: str
 
@@ -110,13 +111,13 @@ class AssetAuditResponse(BaseModel):
     url: str
     asset_type: str
     size: int
-    gzipped_size: Optional[int] = None
+    gzipped_size: int | None = None
     is_minified: bool
     is_render_blocking: bool
     is_unused: bool
-    cache_control: Optional[str] = None
-    etag: Optional[str] = None
-    issues: Optional[dict[str, Any]] = None
+    cache_control: str | None = None
+    etag: str | None = None
+    issues: dict[str, Any] | None = None
     created_at: str
 
 
@@ -150,7 +151,7 @@ class PerformanceAIRecommendRequest(BaseModel):
     url: str
     scores: dict[str, int]
     metrics: dict[str, Any]
-    issues: Optional[dict[str, Any]] = None
+    issues: dict[str, Any] | None = None
 
 
 class PerformanceAIRecommendResponse(BaseModel):

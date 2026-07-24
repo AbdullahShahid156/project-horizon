@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -32,7 +32,7 @@ class WebsiteGenerateRequest(BaseModel):
 
 class WebsiteUpdateRequest(BaseModel):
     content: dict[str, Any]
-    change_summary: Optional[str] = None
+    change_summary: str | None = None
 
 
 class WebsiteRestoreRequest(BaseModel):
@@ -42,10 +42,10 @@ class WebsiteRestoreRequest(BaseModel):
 class ProjectCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     workspace_id: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class ProjectUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    status: str | None = None

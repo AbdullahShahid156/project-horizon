@@ -1,14 +1,14 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 
 class GenerateRequest(BaseModel):
     prompt: str
-    system_instruction: Optional[str] = None
-    temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
-    provider: Optional[str] = None
+    system_instruction: str | None = None
+    temperature: float | None = None
+    max_tokens: int | None = None
+    provider: str | None = None
     use_cache: bool = True
 
 
@@ -53,11 +53,11 @@ class JobResponse(BaseModel):
     type: str
     status: str
     progress: float
-    result: Optional[dict[str, Any]] = None
-    error: Optional[str] = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
     created_at: float
-    started_at: Optional[float] = None
-    completed_at: Optional[float] = None
+    started_at: float | None = None
+    completed_at: float | None = None
 
 
 class UsageSummaryResponse(BaseModel):

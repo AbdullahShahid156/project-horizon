@@ -1,10 +1,15 @@
-import json
-import time
-import re
 import base64
+import json
+import re
+import time
 from typing import Any
 
-from app.engine.providers.base import AIProvider, ProviderConfig, ProviderResponse, TokenUsage
+from app.engine.providers.base import (
+    AIProvider,
+    ProviderConfig,
+    ProviderResponse,
+    TokenUsage,
+)
 
 
 class GeminiProvider(AIProvider):
@@ -91,11 +96,11 @@ class GeminiProvider(AIProvider):
         """Generate images using Pollinations.ai (free, no API key).
         Returns (success, list_of_base64_image_data, error_message)."""
         import asyncio
-        start = time.time()
 
         def _pollinations_fetch():
-            import requests as http_requests
             import urllib.parse
+
+            import requests as http_requests
             encoded_prompt = urllib.parse.quote(prompt)
             pollinations_url = (
                 f"https://image.pollinations.ai/prompt/{encoded_prompt}"
@@ -111,10 +116,8 @@ class GeminiProvider(AIProvider):
                 timeout=130,
             )
             img_b64 = base64.b64encode(img_bytes).decode()
-            latency = (time.time() - start) * 1000
             return True, [img_b64], ""
         except Exception as e:
-            latency = (time.time() - start) * 1000
             return False, [], str(e)
 
     async def generate_json(

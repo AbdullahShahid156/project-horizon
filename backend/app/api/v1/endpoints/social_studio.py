@@ -8,10 +8,10 @@ from app.core.security import get_current_user
 from app.schemas.social import (
     SocialAIRequest,
     SocialAIResponse,
-    SocialCampaignCreateRequest,
-    SocialCampaignResponse,
     SocialCalendarEntryRequest,
     SocialCalendarResponse,
+    SocialCampaignCreateRequest,
+    SocialCampaignResponse,
     SocialGenerateRequest,
     SocialGenerateResponse,
     SocialPostCreateRequest,
@@ -530,7 +530,6 @@ async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends
     full_prompt = "\n".join(prompt_parts)
 
     try:
-        start_time = time.time()
         response = await engine.generate_json(
             prompt=full_prompt,
             system_instruction=(

@@ -1,4 +1,3 @@
-import re
 import time
 import uuid
 from datetime import datetime, timezone
@@ -6,7 +5,6 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.security import get_current_user
-
 from app.schemas.email import (
     EmailAIRequest,
     EmailAIResponse,
@@ -15,7 +13,6 @@ from app.schemas.email import (
     EmailCampaignUpdateRequest,
     EmailGenerateRequest,
     EmailGenerateResponse,
-    EmailHistoryResponse,
     EmailStatsResponse,
     EmailTemplateCreateRequest,
     EmailTemplateResponse,
@@ -802,7 +799,6 @@ async def generate_email(data: EmailGenerateRequest, user: str = Depends(get_cur
     full_prompt = "\n".join(prompt_parts)
 
     try:
-        start_time = time.time()
         response = await engine.generate_json(
             prompt=full_prompt,
             system_instruction=(

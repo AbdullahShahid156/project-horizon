@@ -1,4 +1,5 @@
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -16,7 +17,7 @@ class SEODomainResponse(BaseModel):
     health_score: int
     technical_score: int
     content_score: int
-    last_audited_at: Optional[str] = None
+    last_audited_at: str | None = None
     created_at: str
     updated_at: str
 
@@ -37,9 +38,9 @@ class SEOAuditResponse(BaseModel):
     content_score: int
     on_page_score: int
     off_page_score: int
-    issues: Optional[dict[str, Any]] = None
-    recommendations: Optional[dict[str, Any]] = None
-    metrics: Optional[dict[str, Any]] = None
+    issues: dict[str, Any] | None = None
+    recommendations: dict[str, Any] | None = None
+    metrics: dict[str, Any] | None = None
     created_at: str
 
 
@@ -47,15 +48,15 @@ class SEOAuditPageResponse(BaseModel):
     id: str
     audit_id: str
     url: str
-    status_code: Optional[int] = None
-    title: Optional[str] = None
-    meta_description: Optional[str] = None
-    h1: Optional[str] = None
+    status_code: int | None = None
+    title: str | None = None
+    meta_description: str | None = None
+    h1: str | None = None
     word_count: int
     internal_links: int
     external_links: int
     images_without_alt: int
-    issues: Optional[dict[str, Any]] = None
+    issues: dict[str, Any] | None = None
     score: int
     created_at: str
 
@@ -64,7 +65,7 @@ class SEOKeywordCreateRequest(BaseModel):
     domain_id: str
     keyword: str
     keyword_type: str = "primary"
-    cluster_id: Optional[str] = None
+    cluster_id: str | None = None
     is_tracked: bool = True
 
 
@@ -77,9 +78,9 @@ class SEOKeywordResponse(BaseModel):
     cpc: float
     intent: str
     keyword_type: str
-    cluster_id: Optional[str] = None
-    position: Optional[int] = None
-    url: Optional[str] = None
+    cluster_id: str | None = None
+    position: int | None = None
+    url: str | None = None
     is_tracked: bool
     created_at: str
     updated_at: str
@@ -88,8 +89,8 @@ class SEOKeywordResponse(BaseModel):
 class SEOKeywordGenerateRequest(BaseModel):
     domain_id: str
     seed_keywords: list[str]
-    industry: Optional[str] = None
-    target_audience: Optional[str] = None
+    industry: str | None = None
+    target_audience: str | None = None
     language: str = "English"
     count: int = 20
 
@@ -98,8 +99,8 @@ class SEOKeywordClusterResponse(BaseModel):
     id: str
     domain_id: str
     name: str
-    description: Optional[str] = None
-    pillar_keyword: Optional[str] = None
+    description: str | None = None
+    pillar_keyword: str | None = None
     keyword_count: int
     avg_volume: int
     created_at: str
@@ -108,18 +109,18 @@ class SEOKeywordClusterResponse(BaseModel):
 class SEOKeywordClusterCreateRequest(BaseModel):
     domain_id: str
     name: str
-    description: Optional[str] = None
-    pillar_keyword: Optional[str] = None
+    description: str | None = None
+    pillar_keyword: str | None = None
 
 
 class SEOOnPageRequest(BaseModel):
     url: str
-    title: Optional[str] = None
-    meta_description: Optional[str] = None
-    headings: Optional[list[dict[str, str]]] = None
-    body: Optional[str] = None
-    images: Optional[list[dict[str, str]]] = None
-    keywords: Optional[list[str]] = None
+    title: str | None = None
+    meta_description: str | None = None
+    headings: list[dict[str, str]] | None = None
+    body: str | None = None
+    images: list[dict[str, str]] | None = None
+    keywords: list[str] | None = None
 
 
 class SEOOnPageResponse(BaseModel):
@@ -150,7 +151,7 @@ class SEOTechnicalIssue(BaseModel):
     type: str
     severity: str
     message: str
-    url: Optional[str] = None
+    url: str | None = None
     recommendation: str
 
 
@@ -167,7 +168,7 @@ class SEOTechnicalResponse(BaseModel):
 
 
 class SEOContentOptimizeRequest(BaseModel):
-    url: Optional[str] = None
+    url: str | None = None
     title: str
     body: str
     target_keywords: list[str]
@@ -190,7 +191,7 @@ class SEOSchemaCreateRequest(BaseModel):
     domain_id: str
     schema_type: str
     name: str
-    url: Optional[str] = None
+    url: str | None = None
     data: dict[str, Any]
 
 
@@ -200,7 +201,7 @@ class SEOSchemaResponse(BaseModel):
     schema_type: str
     name: str
     json_ld: dict[str, Any]
-    url: Optional[str] = None
+    url: str | None = None
     is_active: bool
     created_at: str
     updated_at: str
@@ -210,7 +211,7 @@ class SEOInternalLinkResponse(BaseModel):
     id: str
     source_url: str
     target_url: str
-    anchor_text: Optional[str] = None
+    anchor_text: str | None = None
     suggestion_type: str
     is_implemented: bool
     created_at: str
@@ -219,7 +220,7 @@ class SEOInternalLinkResponse(BaseModel):
 class SEOInternalLinkSuggestRequest(BaseModel):
     domain_id: str
     url: str
-    content: Optional[str] = None
+    content: str | None = None
     max_suggestions: int = 10
 
 
@@ -235,13 +236,13 @@ class SEOReportResponse(BaseModel):
     title: str
     report_type: str
     status: str
-    summary: Optional[dict[str, Any]] = None
+    summary: dict[str, Any] | None = None
     score: int
     issues_count: int
     recommendations_count: int
-    file_url: Optional[str] = None
+    file_url: str | None = None
     created_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
 class SEORecommendationResponse(BaseModel):
@@ -250,11 +251,11 @@ class SEORecommendationResponse(BaseModel):
     category: str
     priority: str
     title: str
-    description: Optional[str] = None
-    impact: Optional[str] = None
-    effort: Optional[str] = None
+    description: str | None = None
+    impact: str | None = None
+    effort: str | None = None
     status: str
-    url: Optional[str] = None
+    url: str | None = None
     created_at: str
 
 
@@ -262,7 +263,7 @@ class SEOCompetitorCreateRequest(BaseModel):
     domain_id: str
     competitor_url: str
     competitor_name: str
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class SEOCompetitorResponse(BaseModel):
@@ -270,8 +271,8 @@ class SEOCompetitorResponse(BaseModel):
     domain_id: str
     competitor_url: str
     competitor_name: str
-    notes: Optional[str] = None
-    analysis: Optional[dict[str, Any]] = None
+    notes: str | None = None
+    analysis: dict[str, Any] | None = None
     created_at: str
     updated_at: str
 
@@ -279,7 +280,7 @@ class SEOCompetitorResponse(BaseModel):
 class SEOCompetitorAnalyzeRequest(BaseModel):
     domain_url: str
     competitor_url: str
-    industry: Optional[str] = None
+    industry: str | None = None
 
 
 class SEOCompetitorAnalysis(BaseModel):
@@ -294,8 +295,8 @@ class SEOHistoryResponse(BaseModel):
     id: str
     domain_id: str
     event_type: str
-    data: Optional[dict[str, Any]] = None
-    score: Optional[int] = None
+    data: dict[str, Any] | None = None
+    score: int | None = None
     created_at: str
 
 
@@ -312,8 +313,8 @@ class SEOExportResponse(BaseModel):
 class SEOAISuggestRequest(BaseModel):
     action: str
     context: str
-    keywords: Optional[list[str]] = None
-    content_type: Optional[str] = None
+    keywords: list[str] | None = None
+    content_type: str | None = None
     language: str = "English"
 
 

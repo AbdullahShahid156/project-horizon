@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -29,7 +29,7 @@ class LandingPageGenerateRequest(BaseModel):
 
 class LandingPageUpdateRequest(BaseModel):
     content: dict[str, Any]
-    change_summary: Optional[str] = None
+    change_summary: str | None = None
 
 
 class LandingPageRestoreRequest(BaseModel):
@@ -39,8 +39,8 @@ class LandingPageRestoreRequest(BaseModel):
 class CopyImproveRequest(BaseModel):
     text: str
     action: str
-    tone: Optional[str] = None
-    context: Optional[str] = None
+    tone: str | None = None
+    context: str | None = None
 
 
 class CopyImproveResponse(BaseModel):
@@ -51,6 +51,6 @@ class CopyImproveResponse(BaseModel):
 class LandingPageCreateRequest(BaseModel):
     project_id: str
     name: str
-    prompt: Optional[dict[str, Any]] = None
-    content: Optional[dict[str, Any]] = None
-    seo: Optional[dict[str, Any]] = None
+    prompt: dict[str, Any] | None = None
+    content: dict[str, Any] | None = None
+    seo: dict[str, Any] | None = None

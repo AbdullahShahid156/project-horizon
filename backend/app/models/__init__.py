@@ -1,98 +1,104 @@
 from app.core.database import Base
-from app.models.user import User
-from app.models.organization import Organization
-from app.models.membership import Membership
-from app.models.workspace import Workspace
-from app.models.project import Project
-from app.models.website import GeneratedWebsite, WebsiteVersion
-from app.models.landing_page import LandingPage, LandingPageVersion, LandingPageTemplate
+from app.models.brand import Brand, BrandAsset, BrandVersion
 from app.models.content import (
+    ContentExport,
     ContentFolder,
     ContentItem,
-    ContentVersion,
-    ContentTemplate,
-    ContentTag,
     ContentItemTag,
-    ContentExport,
+    ContentTag,
+    ContentTemplate,
+    ContentVersion,
 )
+from app.models.email import EmailCampaign, EmailHistory, EmailTemplate
+from app.models.image import Image, ImageFolder, ImageHistory
+from app.models.landing_page import LandingPage, LandingPageTemplate, LandingPageVersion
+from app.models.membership import Membership
+from app.models.organization import Organization
+from app.models.performance import (
+    AssetAudit,
+    CoreWebVitals,
+    ImageAudit,
+    OptimizationHistory,
+    PerformanceAudit,
+    PerformanceRecommendation,
+    PerformanceReport,
+)
+from app.models.project import Project
 from app.models.seo import (
-    SEODomain,
     SEOAudit,
     SEOAuditPage,
+    SEOCompetitor,
+    SEODomain,
+    SEOHistory,
+    SEOInternalLink,
     SEOKeyword,
     SEOKeywordCluster,
     SEOKeywordRanking,
-    SEOSchema,
-    SEOReport,
     SEORecommendation,
-    SEOCompetitor,
-    SEOHistory,
-    SEOInternalLink,
+    SEOReport,
+    SEOSchema,
 )
-from app.models.performance import (
-    PerformanceAudit,
-    CoreWebVitals,
-    PerformanceRecommendation,
-    OptimizationHistory,
-    PerformanceReport,
-    ImageAudit,
-    AssetAudit,
+from app.models.social import (
+    SocialCalendar,
+    SocialCampaign,
+    SocialHashtag,
+    SocialPost,
+    SocialPostHistory,
 )
-from app.models.brand import Brand, BrandVersion, BrandAsset
-from app.models.image import Image, ImageFolder, ImageHistory
-from app.models.social import SocialPost, SocialCampaign, SocialCalendar, SocialHashtag, SocialPostHistory
-from app.models.email import EmailCampaign, EmailTemplate, EmailHistory
+from app.models.user import User
+from app.models.website import GeneratedWebsite, WebsiteVersion
+from app.models.workspace import Workspace
 
 __all__ = [
+    "AssetAudit",
     "Base",
-    "User",
-    "Organization",
-    "Membership",
-    "Workspace",
-    "Project",
-    "GeneratedWebsite",
-    "WebsiteVersion",
-    "LandingPage",
-    "LandingPageVersion",
-    "LandingPageTemplate",
+    "Brand",
+    "BrandAsset",
+    "BrandVersion",
+    "ContentExport",
     "ContentFolder",
     "ContentItem",
-    "ContentVersion",
-    "ContentTemplate",
-    "ContentTag",
     "ContentItemTag",
-    "ContentExport",
-    "SEODomain",
+    "ContentTag",
+    "ContentTemplate",
+    "ContentVersion",
+    "CoreWebVitals",
+    "EmailCampaign",
+    "EmailHistory",
+    "EmailTemplate",
+    "GeneratedWebsite",
+    "Image",
+    "ImageAudit",
+    "ImageFolder",
+    "ImageHistory",
+    "LandingPage",
+    "LandingPageTemplate",
+    "LandingPageVersion",
+    "Membership",
+    "OptimizationHistory",
+    "Organization",
+    "PerformanceAudit",
+    "PerformanceRecommendation",
+    "PerformanceReport",
+    "Project",
     "SEOAudit",
     "SEOAuditPage",
+    "SEOCompetitor",
+    "SEODomain",
+    "SEOHistory",
+    "SEOInternalLink",
     "SEOKeyword",
     "SEOKeywordCluster",
     "SEOKeywordRanking",
-    "SEOSchema",
-    "SEOReport",
     "SEORecommendation",
-    "SEOCompetitor",
-    "SEOHistory",
-    "SEOInternalLink",
-    "PerformanceAudit",
-    "CoreWebVitals",
-    "PerformanceRecommendation",
-    "OptimizationHistory",
-    "PerformanceReport",
-    "ImageAudit",
-    "AssetAudit",
-    "Brand",
-    "BrandVersion",
-    "BrandAsset",
-    "Image",
-    "ImageFolder",
-    "ImageHistory",
-    "SocialPost",
-    "SocialCampaign",
+    "SEOReport",
+    "SEOSchema",
     "SocialCalendar",
+    "SocialCampaign",
     "SocialHashtag",
+    "SocialPost",
     "SocialPostHistory",
-    "EmailCampaign",
-    "EmailTemplate",
-    "EmailHistory",
+    "User",
+    "WebsiteVersion",
+    "Workspace",
 ]

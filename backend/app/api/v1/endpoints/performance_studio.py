@@ -1,27 +1,27 @@
+import random
 import re
 import time
 import uuid
-import random
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.security import get_current_user
 from app.schemas.performance import (
+    AssetAuditResponse,
+    CoreWebVitalsResponse,
+    ImageAuditResponse,
+    OptimizationHistoryResponse,
+    PerformanceAIRecommendRequest,
+    PerformanceAIRecommendResponse,
     PerformanceAuditRequest,
     PerformanceAuditResponse,
-    CoreWebVitalsResponse,
-    PerformanceRecommendationResponse,
-    OptimizationHistoryResponse,
-    PerformanceReportCreateRequest,
-    PerformanceReportResponse,
-    ImageAuditResponse,
-    AssetAuditResponse,
     PerformanceDashboardResponse,
     PerformanceExportRequest,
     PerformanceExportResponse,
-    PerformanceAIRecommendRequest,
-    PerformanceAIRecommendResponse,
+    PerformanceRecommendationResponse,
+    PerformanceReportCreateRequest,
+    PerformanceReportResponse,
 )
 
 router = APIRouter()

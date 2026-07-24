@@ -1,55 +1,56 @@
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
 class BrandCreateRequest(BaseModel):
     workspace_id: str
     name: str
-    tagline: Optional[str] = None
-    industry: Optional[str] = None
-    description: Optional[str] = None
-    target_audience: Optional[str] = None
-    brand_personality: Optional[str] = None
-    tone_of_voice: Optional[str] = None
-    mission: Optional[str] = None
-    vision: Optional[str] = None
-    values: Optional[list[str]] = None
+    tagline: str | None = None
+    industry: str | None = None
+    description: str | None = None
+    target_audience: str | None = None
+    brand_personality: str | None = None
+    tone_of_voice: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    values: list[str] | None = None
     primary_color: str = "#6366F1"
     secondary_color: str = "#4F46E5"
     accent_color: str = "#818CF8"
-    typography: Optional[str] = None
-    logo_style: Optional[str] = None
-    icon_style: Optional[str] = None
+    typography: str | None = None
+    logo_style: str | None = None
+    icon_style: str | None = None
 
 
 class BrandUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    tagline: Optional[str] = None
-    industry: Optional[str] = None
-    description: Optional[str] = None
-    target_audience: Optional[str] = None
-    brand_personality: Optional[str] = None
-    tone_of_voice: Optional[str] = None
-    mission: Optional[str] = None
-    vision: Optional[str] = None
-    values: Optional[list[str]] = None
-    primary_color: Optional[str] = None
-    secondary_color: Optional[str] = None
-    accent_color: Optional[str] = None
-    typography: Optional[str] = None
-    logo_style: Optional[str] = None
-    icon_style: Optional[str] = None
-    change_summary: Optional[str] = None
+    name: str | None = None
+    tagline: str | None = None
+    industry: str | None = None
+    description: str | None = None
+    target_audience: str | None = None
+    brand_personality: str | None = None
+    tone_of_voice: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    values: list[str] | None = None
+    primary_color: str | None = None
+    secondary_color: str | None = None
+    accent_color: str | None = None
+    typography: str | None = None
+    logo_style: str | None = None
+    icon_style: str | None = None
+    change_summary: str | None = None
 
 
 class BrandGenerateRequest(BaseModel):
     workspace_id: str
     name: str
-    industry: Optional[str] = None
-    target_audience: Optional[str] = None
-    brand_personality: Optional[str] = None
-    tone_of_voice: Optional[str] = None
-    description: Optional[str] = None
+    industry: str | None = None
+    target_audience: str | None = None
+    brand_personality: str | None = None
+    tone_of_voice: str | None = None
+    description: str | None = None
     language: str = "English"
 
 
@@ -80,8 +81,8 @@ class BrandGenerateResponse(BaseModel):
 class BrandAIOptimizeRequest(BaseModel):
     brand_id: str
     action: str
-    field: Optional[str] = None
-    context: Optional[str] = None
+    field: str | None = None
+    context: str | None = None
 
 
 class BrandAIOptimizeResponse(BaseModel):
@@ -98,7 +99,7 @@ class BrandVersionResponse(BaseModel):
     brand_id: str
     version_number: int
     data: dict[str, Any]
-    change_summary: Optional[str] = None
+    change_summary: str | None = None
     created_at: str
 
 
@@ -107,9 +108,9 @@ class BrandAssetResponse(BaseModel):
     brand_id: str
     asset_type: str
     name: str
-    url: Optional[str] = None
-    data: Optional[dict[str, Any]] = None
-    metadata: Optional[dict[str, Any]] = None
+    url: str | None = None
+    data: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
     created_at: str
 
 
@@ -118,31 +119,31 @@ class BrandResponse(BaseModel):
     workspace_id: str
     name: str
     slug: str
-    tagline: Optional[str] = None
-    industry: Optional[str] = None
-    description: Optional[str] = None
-    target_audience: Optional[str] = None
-    brand_personality: Optional[str] = None
-    tone_of_voice: Optional[str] = None
-    mission: Optional[str] = None
-    vision: Optional[str] = None
-    values: Optional[list[str]] = None
+    tagline: str | None = None
+    industry: str | None = None
+    description: str | None = None
+    target_audience: str | None = None
+    brand_personality: str | None = None
+    tone_of_voice: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    values: list[str] | None = None
     primary_color: str
     secondary_color: str
     accent_color: str
-    typography: Optional[str] = None
-    logo_style: Optional[str] = None
-    icon_style: Optional[str] = None
-    brand_summary: Optional[str] = None
-    tagline_suggestions: Optional[list[str]] = None
-    brand_voice: Optional[str] = None
-    elevator_pitch: Optional[str] = None
-    usp: Optional[str] = None
-    color_palette: Optional[dict[str, str]] = None
-    font_pairings: Optional[list[dict[str, str]]] = None
-    icon_suggestions: Optional[list[str]] = None
-    brand_keywords: Optional[list[str]] = None
-    brand_guidelines: Optional[str] = None
+    typography: str | None = None
+    logo_style: str | None = None
+    icon_style: str | None = None
+    brand_summary: str | None = None
+    tagline_suggestions: list[str] | None = None
+    brand_voice: str | None = None
+    elevator_pitch: str | None = None
+    usp: str | None = None
+    color_palette: dict[str, str] | None = None
+    font_pairings: list[dict[str, str]] | None = None
+    icon_suggestions: list[str] | None = None
+    brand_keywords: list[str] | None = None
+    brand_guidelines: str | None = None
     current_version: int
     is_favorite: bool
     is_archived: bool

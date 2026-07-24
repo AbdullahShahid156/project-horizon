@@ -1,14 +1,20 @@
 import time
 import uuid
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
-from app.engine.providers.base import AIProvider, ProviderConfig, ProviderResponse, TokenUsage
-from app.engine.providers.registry import get_provider_registry
-from app.engine.prompts.library import get_prompt_library, PromptTemplate
+from app.engine.analytics import UsageRecord, get_usage_tracker
+from app.engine.cache import AICache, get_ai_cache
 from app.engine.parsers import OutputParser
-from app.engine.cache import get_ai_cache, AICache
-from app.engine.queue import AIJobQueue, AIJob, JobStatus, get_job_queue
-from app.engine.analytics import UsageTracker, UsageRecord, get_usage_tracker
+from app.engine.prompts.library import get_prompt_library
+from app.engine.providers.base import (
+    AIProvider,
+    ProviderConfig,
+    ProviderResponse,
+    TokenUsage,
+)
+from app.engine.providers.registry import get_provider_registry
+from app.engine.queue import AIJob, JobStatus, get_job_queue
 
 
 class AIEngine:

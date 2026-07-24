@@ -1,15 +1,13 @@
-from typing import Any
 
 from app.engine.providers.base import AIProvider, ProviderConfig
 from app.engine.providers.gemini import GeminiProvider
 from app.engine.providers.stubs import (
-    OpenAIProvider,
     ClaudeProvider,
     GroqProvider,
-    OpenRouterProvider,
     LocalProvider,
+    OpenAIProvider,
+    OpenRouterProvider,
 )
-
 
 PROVIDER_MAP: dict[str, type[AIProvider]] = {
     "gemini": GeminiProvider,

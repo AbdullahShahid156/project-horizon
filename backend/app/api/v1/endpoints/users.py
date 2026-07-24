@@ -1,9 +1,8 @@
-import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from app.core.security import get_current_user, Depends
+from app.core.security import Depends, get_current_user
 
 router = APIRouter()
 

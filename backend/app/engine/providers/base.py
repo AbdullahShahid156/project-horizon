@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Optional
+from typing import Any
 
 
 @dataclass
@@ -66,7 +67,6 @@ class AIProvider(ABC):
         max_tokens: int | None = None,
     ) -> ProviderResponse:
         """Generate a text response from a prompt."""
-        pass
 
     @abstractmethod
     async def generate_json(
@@ -77,7 +77,6 @@ class AIProvider(ABC):
         max_tokens: int | None = None,
     ) -> ProviderResponse:
         """Generate a structured JSON response from a prompt."""
-        pass
 
     async def generate_stream(
         self,
@@ -93,7 +92,6 @@ class AIProvider(ABC):
     @abstractmethod
     async def health_check(self) -> bool:
         """Check if the provider is available."""
-        pass
 
     def _estimate_cost(self, tokens: TokenUsage) -> float:
         """Estimate cost based on token usage. Override per provider."""

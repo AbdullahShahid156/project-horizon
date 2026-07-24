@@ -1,6 +1,24 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import health, users, projects, websites, ai, landing_pages, templates, ai_engine, content_studio, seo_studio, performance_studio, brand_studio, image_studio, social_studio, email_studio, organizations, workspaces
+from app.api.v1.endpoints import (
+    ai,
+    ai_engine,
+    brand_studio,
+    content_studio,
+    email_studio,
+    health,
+    image_studio,
+    landing_pages,
+    organizations,
+    performance_studio,
+    projects,
+    seo_studio,
+    social_studio,
+    templates,
+    users,
+    websites,
+    workspaces,
+)
 
 api_router = APIRouter()
 

@@ -1,4 +1,5 @@
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -6,65 +7,65 @@ class EmailCampaignCreateRequest(BaseModel):
     workspace_id: str
     name: str
     subject: str
-    preview_text: Optional[str] = None
+    preview_text: str | None = None
     email_type: str = "promotional"
-    html_content: Optional[str] = None
-    markdown_content: Optional[str] = None
-    json_content: Optional[dict[str, Any]] = None
-    brand: Optional[str] = None
-    audience: Optional[str] = None
-    goal: Optional[str] = None
-    tone: Optional[str] = None
+    html_content: str | None = None
+    markdown_content: str | None = None
+    json_content: dict[str, Any] | None = None
+    brand: str | None = None
+    audience: str | None = None
+    goal: str | None = None
+    tone: str | None = None
     language: str = "English"
-    cta: Optional[str] = None
-    product: Optional[str] = None
-    keywords: Optional[list[str]] = None
-    template_id: Optional[str] = None
+    cta: str | None = None
+    product: str | None = None
+    keywords: list[str] | None = None
+    template_id: str | None = None
 
 
 class EmailCampaignUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    subject: Optional[str] = None
-    preview_text: Optional[str] = None
-    html_content: Optional[str] = None
-    markdown_content: Optional[str] = None
-    json_content: Optional[dict[str, Any]] = None
-    status: Optional[str] = None
+    name: str | None = None
+    subject: str | None = None
+    preview_text: str | None = None
+    html_content: str | None = None
+    markdown_content: str | None = None
+    json_content: dict[str, Any] | None = None
+    status: str | None = None
 
 
 class EmailGenerateRequest(BaseModel):
     workspace_id: str
     email_type: str
-    brand: Optional[str] = None
-    campaign_name: Optional[str] = None
-    audience: Optional[str] = None
-    goal: Optional[str] = None
-    tone: Optional[str] = None
+    brand: str | None = None
+    campaign_name: str | None = None
+    audience: str | None = None
+    goal: str | None = None
+    tone: str | None = None
     language: str = "English"
-    cta: Optional[str] = None
-    product: Optional[str] = None
-    keywords: Optional[list[str]] = None
-    context: Optional[str] = None
+    cta: str | None = None
+    product: str | None = None
+    keywords: list[str] | None = None
+    context: str | None = None
     num_variations: int = 1
 
 
 class EmailAIRequest(BaseModel):
     campaign_id: str
     action: str
-    context: Optional[str] = None
+    context: str | None = None
 
 
 class EmailTemplateCreateRequest(BaseModel):
     workspace_id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     category: str = "business"
     email_type: str
     subject: str
-    preview_text: Optional[str] = None
+    preview_text: str | None = None
     html_content: str
-    markdown_content: Optional[str] = None
-    variables: Optional[list[str]] = None
+    markdown_content: str | None = None
+    variables: list[str] | None = None
 
 
 class EmailCampaignResponse(BaseModel):
@@ -72,30 +73,30 @@ class EmailCampaignResponse(BaseModel):
     workspace_id: str
     name: str
     subject: str
-    preview_text: Optional[str] = None
+    preview_text: str | None = None
     email_type: str
-    html_content: Optional[str] = None
-    markdown_content: Optional[str] = None
-    plain_text: Optional[str] = None
-    json_content: Optional[dict[str, Any]] = None
-    brand: Optional[str] = None
-    audience: Optional[str] = None
-    goal: Optional[str] = None
-    tone: Optional[str] = None
+    html_content: str | None = None
+    markdown_content: str | None = None
+    plain_text: str | None = None
+    json_content: dict[str, Any] | None = None
+    brand: str | None = None
+    audience: str | None = None
+    goal: str | None = None
+    tone: str | None = None
     language: str
-    cta: Optional[str] = None
-    product: Optional[str] = None
-    keywords: Optional[list[str]] = None
-    template_id: Optional[str] = None
+    cta: str | None = None
+    product: str | None = None
+    keywords: list[str] | None = None
+    template_id: str | None = None
     status: str
-    sent_at: Optional[str] = None
-    open_rate: Optional[float] = None
-    click_rate: Optional[float] = None
-    unsubscribe_rate: Optional[float] = None
+    sent_at: str | None = None
+    open_rate: float | None = None
+    click_rate: float | None = None
+    unsubscribe_rate: float | None = None
     recipient_count: int
     ai_generated: bool
-    ai_provider: Optional[str] = None
-    ai_latency_ms: Optional[float] = None
+    ai_provider: str | None = None
+    ai_latency_ms: float | None = None
     created_at: str
     updated_at: str
 
@@ -104,16 +105,16 @@ class EmailTemplateResponse(BaseModel):
     id: str
     workspace_id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     category: str
     email_type: str
     subject: str
-    preview_text: Optional[str] = None
+    preview_text: str | None = None
     html_content: str
-    markdown_content: Optional[str] = None
-    json_content: Optional[dict[str, Any]] = None
-    variables: Optional[list[str]] = None
-    thumbnail_url: Optional[str] = None
+    markdown_content: str | None = None
+    json_content: dict[str, Any] | None = None
+    variables: list[str] | None = None
+    thumbnail_url: str | None = None
     is_system: bool
     usage_count: int
     created_at: str
@@ -124,10 +125,10 @@ class EmailHistoryResponse(BaseModel):
     id: str
     campaign_id: str
     action: str
-    content_before: Optional[str] = None
-    content_after: Optional[str] = None
-    ai_provider: Optional[str] = None
-    latency_ms: Optional[float] = None
+    content_before: str | None = None
+    content_after: str | None = None
+    ai_provider: str | None = None
+    latency_ms: float | None = None
     created_at: str
 
 

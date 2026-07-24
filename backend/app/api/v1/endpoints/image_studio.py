@@ -1,15 +1,20 @@
 import base64
-import hashlib
 import io
-import math
 import os
-import re
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, UploadFile, File, Form
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+)
 from PIL import Image as PILImage
 from PIL import ImageEnhance, ImageFilter
 
@@ -547,12 +552,12 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
         ai_images_b64 = []
 
         try:
-            ai_success, ai_images_b64, ai_error = await engine.generate_image(
+            ai_success, ai_images_b64, _ai_error = await engine.generate_image(
                 prompt=image_prompt,
                 width=data.width or 1024,
                 height=data.height or 1024,
             )
-        except Exception as e:
+        except Exception:
             ai_success = False
 
         for i in range(num_images):
@@ -656,7 +661,7 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Image generation failed: {e!s}")
 
 
 # ─── AI ENHANCE PROMPT ──────────────────────────────────────────────────────
@@ -862,7 +867,7 @@ async def upscale_image(data: ImageUpscaleRequest, user: str = Depends(get_curre
         pil_img = None
 
         if url.startswith("data:image"):
-            header, b64data = url.split(",", 1)
+            _header, b64data = url.split(",", 1)
             img_bytes = base64.b64decode(b64data)
             pil_img = PILImage.open(io.BytesIO(img_bytes))
         elif img.get("localPath") and os.path.exists(img["localPath"]):
@@ -947,7 +952,7 @@ async def upscale_image(data: ImageUpscaleRequest, user: str = Depends(get_curre
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Image upscaling failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Image upscaling failed: {e!s}")
 
 
 # ─── EDIT IMAGE ──────────────────────────────────────────────────────────────
@@ -965,7 +970,7 @@ async def edit_image(data: ImageEditRequest, user: str = Depends(get_current_use
 
     if url.startswith("data:image"):
         try:
-            header, b64data = url.split(",", 1)
+            _header, b64data = url.split(",", 1)
             img_bytes = base64.b64decode(b64data)
             pil_img = PILImage.open(io.BytesIO(img_bytes))
         except Exception:
@@ -1076,7 +1081,7 @@ async def edit_image(data: ImageEditRequest, user: str = Depends(get_current_use
         with open(edited_path, "wb") as f:
             f.write(edited_bytes)
 
-        thumb_path = _create_thumbnail(edited_path)
+        _create_thumbnail(edited_path)
 
         mime_map = {
             "png": "image/png",
@@ -1131,7 +1136,7 @@ async def edit_image(data: ImageEditRequest, user: str = Depends(get_current_use
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Image edit failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Image edit failed: {e!s}")
 
 
 # ─── GET IMAGE ───────────────────────────────────────────────────────────────
