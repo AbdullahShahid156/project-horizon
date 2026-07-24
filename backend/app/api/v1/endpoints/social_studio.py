@@ -15,6 +15,7 @@ from app.schemas.social import (
     SocialGenerateRequest,
     SocialGenerateResponse,
     SocialPostCreateRequest,
+    SocialPostPaginatedResponse,
     SocialPostResponse,
     SocialPostUpdateRequest,
     SocialStatsResponse,
@@ -187,7 +188,7 @@ async def get_post_stats(workspace_id: str = Query(default="dev-workspace"), use
 # ─── POSTS LIST / CREATE ─────────────────────────────────────────────────────
 
 
-@router.get("/posts", response_model=list[SocialPostResponse])
+@router.get("/posts", response_model=SocialPostPaginatedResponse)
 async def list_posts(
     workspace_id: str = Query(default="dev-workspace"),
     search: str | None = None,
@@ -244,7 +245,7 @@ async def list_posts(
     total = len(posts)
     total_pages = (total + page_size - 1) // page_size
     return {
-        "items": [_to_post_response(p) for p in posts[start:end]],
+        "items": [_to_post_response(p).model_dump() for p in posts[start:end]],
         "total": total,
         "page": page,
         "page_size": page_size,

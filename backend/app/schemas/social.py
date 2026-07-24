@@ -167,3 +167,11 @@ class SocialStatsResponse(BaseModel):
     ai_generated_count: int
     avg_performance_score: float
     total_campaigns: int
+
+
+class SocialPostPaginatedResponse(BaseModel):
+    items: list[SocialPostResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
