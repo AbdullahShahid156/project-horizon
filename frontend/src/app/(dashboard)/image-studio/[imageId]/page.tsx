@@ -25,6 +25,7 @@ import {
   ZoomIn,
   Maximize,
   ArrowUpDown,
+  Download,
   Image as ImageIcon,
 } from "lucide-react";
 
@@ -166,6 +167,17 @@ export default function ImageDetailPage() {
     }
   };
 
+  const handleDownload = () => {
+    if (!image?.url) return;
+    const link = document.createElement("a");
+    link.href = image.url;
+    const ext = image.format || (image.url.includes("webp") ? "webp" : image.url.includes("jpeg") || image.url.includes("jpg") ? "jpg" : "png");
+    link.download = `${image.name || "image"}.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleVariations = async () => {
     if (!image) return;
     try {
@@ -237,6 +249,9 @@ export default function ImageDetailPage() {
               <div className="absolute top-2 right-2 flex gap-1">
                 <Badge variant="secondary">{image.image_type}</Badge>
                 {image.style && <Badge variant="outline">{image.style}</Badge>}
+                <Button variant="secondary" size="sm" className="h-7 gap-1" onClick={handleDownload}>
+                  <Download className="h-3.5 w-3.5" /> Download
+                </Button>
               </div>
             </div>
           </Card>
