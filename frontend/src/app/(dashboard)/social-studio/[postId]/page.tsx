@@ -453,6 +453,11 @@ export default function SocialPostDetailPage() {
                     {headline && (
                       <h3 className="font-bold text-lg mb-2">{headline}</h3>
                     )}
+                    {post?.image_url && (
+                      <div className="mb-3 rounded-lg overflow-hidden border">
+                        <img src={post.image_url} alt="Post image" className="w-full h-48 object-cover" loading="lazy" />
+                      </div>
+                    )}
                     <p className="whitespace-pre-wrap text-sm mb-3">{content}</p>
                     {caption && (
                       <p className="text-sm text-muted-foreground mb-3 italic">{caption}</p>

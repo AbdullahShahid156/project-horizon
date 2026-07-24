@@ -1,5 +1,6 @@
 import time
 import uuid
+import urllib.parse
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -66,6 +67,7 @@ def _to_post_response(post: dict) -> SocialPostResponse:
         emojis=post.get("emojis"),
         image_suggestions=post.get("imageSuggestions"),
         image_ids=post.get("imageIds"),
+        image_url=post.get("imageUrl"),
         carousel_content=post.get("carouselContent"),
         story_content=post.get("storyContent"),
         reel_script=post.get("reelScript"),
@@ -276,6 +278,7 @@ async def create_post(data: SocialPostCreateRequest, user: str = Depends(get_cur
         "emojis": data.emojis or [],
         "imageSuggestions": None,
         "imageIds": data.image_ids or [],
+        "imageUrl": None,
         "carouselContent": data.carousel_content,
         "storyContent": data.story_content,
         "reelScript": data.reel_script,
@@ -650,6 +653,22 @@ async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends
 
     for raw in raw_posts[:num]:
         post_id = str(uuid.uuid4())
+
+        image_suggestions = raw.get("image_suggestions", [])
+        image_url = None
+        if image_suggestions:
+            img_prompt = image_suggestions[0]
+            if data.brand:
+                img_prompt = f"{data.brand} brand, {img_prompt}"
+            encoded = urllib.parse.quote(img_prompt)
+            negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark, text overlay")
+            image_url = (
+                f"https://image.pollinations.ai/prompt/{encoded}"
+                f"?width=1024&height=1024&model=flux&quality=hd"
+                f"&enhance=true&nofeed=true&nologo=true"
+                f"&negative_prompt={negative}&reasoning=pro"
+            )
+
         post = {
             "id": post_id,
             "workspaceId": data.workspace_id,
@@ -662,8 +681,9 @@ async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends
             "hashtags": raw.get("hashtags", []),
             "cta": raw.get("cta"),
             "emojis": raw.get("emojis", []),
-            "imageSuggestions": raw.get("image_suggestions", []),
+            "imageSuggestions": image_suggestions,
             "imageIds": [],
+            "imageUrl": image_url,
             "carouselContent": None,
             "storyContent": None,
             "reelScript": None,

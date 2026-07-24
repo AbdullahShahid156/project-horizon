@@ -110,6 +110,7 @@ class SocialPostResponse(BaseModel):
     emojis: list[str] | None = None
     image_suggestions: list[str] | None = None
     image_ids: list[str] | None = None
+    image_url: str | None = None
     carousel_content: list[dict[str, Any]] | None = None
     story_content: dict[str, Any] | None = None
     reel_script: str | None = None

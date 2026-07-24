@@ -593,6 +593,11 @@ export default function SocialStudioPage() {
                       </div>
                     </div>
                     <p className="text-sm line-clamp-3 mb-2">{post.content}</p>
+                    {post.image_url && (
+                      <div className="mb-2 rounded-lg overflow-hidden border">
+                        <img src={post.image_url} alt={post.content.slice(0, 50)} className="w-full h-40 object-cover" loading="lazy" />
+                      </div>
+                    )}
                     {(post.hashtags ?? []).length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
                         {(post.hashtags ?? []).slice(0, 4).map((tag) => (

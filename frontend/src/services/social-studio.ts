@@ -12,6 +12,7 @@ export interface SocialPost {
   emojis: string[] | null;
   image_suggestions: string[] | null;
   image_ids: string[] | null;
+  image_url: string | null;
   carousel_content: Array<{ title: string; description: string; image_url?: string }> | null;
   story_content: { text: string; overlay?: string } | null;
   reel_script: string | null;

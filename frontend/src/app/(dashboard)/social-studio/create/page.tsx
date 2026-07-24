@@ -50,7 +50,7 @@ export default function SocialCreatePage() {
   const [step, setStep] = useState(1);
   const [campaigns, setCampaigns] = useState<SocialCampaign[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPosts, setGeneratedPosts] = useState<Array<{ id: string; content: string; platform: string }>>([]);
+  const [generatedPosts, setGeneratedPosts] = useState<Array<{ id: string; content: string; platform: string; image_url: string | null }>>([]);
 
   const [form, setForm] = useState({
     platform: "instagram",
@@ -101,7 +101,7 @@ export default function SocialCreatePage() {
         topic: form.topic || undefined,
         num_variations: form.num_variations,
       });
-      setGeneratedPosts((result?.posts ?? []).map((p) => ({ id: p.id, content: p.content, platform: p.platform })));
+      setGeneratedPosts((result?.posts ?? []).map((p) => ({ id: p.id, content: p.content, platform: p.platform, image_url: p.image_url ?? null })));
       addToast({ title: "Posts generated", description: `${(result?.posts ?? []).length} post(s) created in ${result?.latency_ms?.toFixed(0) ?? "0"}ms` });
     } catch {
       addToast({ title: "Error", description: "Failed to generate posts", variant: "destructive" });
@@ -318,6 +318,11 @@ export default function SocialCreatePage() {
                 <p className="text-sm font-medium">Generated Posts:</p>
                 {generatedPosts.map((post) => (
                   <div key={post.id} className="p-3 border rounded-lg cursor-pointer hover:bg-muted" onClick={() => router.push(`/social-studio/${post.id}`)}>
+                    {post.image_url && (
+                      <div className="mb-2 rounded-lg overflow-hidden">
+                        <img src={post.image_url} alt="Generated" className="w-full h-32 object-cover" loading="lazy" />
+                      </div>
+                    )}
                     <p className="text-sm whitespace-pre-wrap line-clamp-3">{post.content}</p>
                   </div>
                 ))}
