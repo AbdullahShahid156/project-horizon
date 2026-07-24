@@ -155,8 +155,14 @@ async def get_dashboard(domain_id: str = Query(default="dev-domain"), user: str 
         if audit.get("issues"):
             for sev in ["critical", "warning", "info"]:
                 issues[sev] += len(audit["issues"].get(sev, []))
-            broken_links += audit["issues"].get("brokenLinks", 0)
-            missing_meta += audit["issues"].get("missingMeta", 0)
+            for sev_items in audit["issues"].values():
+                if isinstance(sev_items, list):
+                    for item in sev_items:
+                        msg = item.get("message", "").lower() if isinstance(item, dict) else ""
+                        if "broken" in msg or "link" in msg:
+                            broken_links += 1
+                        if "meta" in msg or "missing" in msg:
+                            missing_meta += 1
 
     return SEODashboardResponse(
         health_score=domain.get("healthScore", 0),
@@ -260,7 +266,7 @@ async def run_audit(data: SEOAuditRequest, user: str = Depends(get_current_user)
         "score": overall, "createdAt": now,
     })
 
-    _recommendations.setdefault(data.domain_id, [])
+    _recommendations.setdefault(data.domain_id, {})
     for rec in recommendations:
         rid = str(uuid.uuid4())
         _recommendations[data.domain_id][rid] = {

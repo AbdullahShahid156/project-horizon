@@ -102,9 +102,12 @@ class GeminiProvider(AIProvider):
 
             import requests as http_requests
             encoded_prompt = urllib.parse.quote(prompt)
+            negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark, text overlay")
             pollinations_url = (
                 f"https://image.pollinations.ai/prompt/{encoded_prompt}"
-                f"?width={width}&height={height}&nologo=true&model=flux"
+                f"?width={width}&height={height}&model=flux&quality=hd"
+                f"&enhance=true&nofeed=true&nologo=true"
+                f"&negative_prompt={negative}&reasoning=pro"
             )
             resp = http_requests.get(pollinations_url, timeout=120, headers={"User-Agent": "BuilderWeb/1.0"})
             resp.raise_for_status()

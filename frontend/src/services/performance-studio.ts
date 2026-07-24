@@ -85,7 +85,7 @@ export interface ImageAuditItem {
   height: number | null;
   has_lazy_loading: boolean;
   has_alt_text: boolean;
-  issues: Record<string, unknown> | null;
+  issues: string[] | null;
   savings_bytes: number;
   created_at: string;
 }
@@ -102,7 +102,7 @@ export interface AssetAuditItem {
   is_unused: boolean;
   cache_control: string | null;
   etag: string | null;
-  issues: Record<string, unknown> | null;
+  issues: string[] | null;
   created_at: string;
 }
 

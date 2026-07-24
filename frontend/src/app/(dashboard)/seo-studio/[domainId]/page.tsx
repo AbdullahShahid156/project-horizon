@@ -116,12 +116,14 @@ export default function SEODomainDashboard() {
 
   const loadDomain = useCallback(async () => {
     try {
-      const [d, dash] = await Promise.all([
+      const [d, dash, auditList] = await Promise.all([
         seoStudioService.getDomain(domainId),
         seoStudioService.getDashboard(domainId),
+        seoStudioService.listAudits(domainId).catch(() => []),
       ]);
       setDomain(d ?? null);
       setDashboard(dash ?? null);
+      setAudits(auditList ?? []);
     } catch (err) {
       console.error("Failed to load domain:", err);
     } finally {
@@ -134,6 +136,10 @@ export default function SEODomainDashboard() {
   const loadTabData = useCallback(async (tab: string) => {
     try {
       switch (tab) {
+        case "overview":
+          const overviewAudits = await seoStudioService.listAudits(domainId).catch(() => []);
+          setAudits(overviewAudits ?? []);
+          break;
         case "keywords":
           setKeywordLoading(true);
           const kw = await seoStudioService.listKeywords(domainId);

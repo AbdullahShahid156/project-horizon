@@ -100,7 +100,7 @@ class ImageAuditResponse(BaseModel):
     height: int | None = None
     has_lazy_loading: bool
     has_alt_text: bool
-    issues: dict[str, Any] | None = None
+    issues: list[str] | None = None
     savings_bytes: int
     created_at: str
 
@@ -117,7 +117,7 @@ class AssetAuditResponse(BaseModel):
     is_unused: bool
     cache_control: str | None = None
     etag: str | None = None
-    issues: dict[str, Any] | None = None
+    issues: list[str] | None = None
     created_at: str
 
 
