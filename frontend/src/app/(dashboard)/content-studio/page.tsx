@@ -23,17 +23,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
   Plus,
   Search,
   MoreHorizontal,
@@ -45,14 +34,10 @@ import {
   Heart,
   Archive,
   Copy,
-  FolderOpen,
-  Tag,
   LayoutGrid,
   List,
   ChevronLeft,
   ChevronRight,
-  Filter,
-  Star,
   Clock,
 } from "lucide-react";
 import {
@@ -109,7 +94,7 @@ export default function ContentStudioPage() {
   const [contentTypeFilter, setContentTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState("updated_at");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortOrder] = useState("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showArchived, setShowArchived] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);

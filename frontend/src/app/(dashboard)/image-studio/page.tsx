@@ -18,14 +18,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { imageStudioService, type ImageItem, type ImageFolder, type ImageStats } from "@/services/image-studio";
 import {
-  Plus,
   Search,
   Heart,
   Trash2,
   MoreHorizontal,
   Download,
   Eye,
-  Copy,
   FolderOpen,
   Grid,
   List,
@@ -34,7 +32,6 @@ import {
   Sparkles,
   FolderPlus,
   Loader2,
-  SlidersHorizontal,
 } from "lucide-react";
 
 const IMAGE_TYPES = ["hero", "product", "blog", "landing-page", "social-media", "background", "icon", "illustration", "general"];
@@ -55,7 +52,7 @@ export default function ImageStudioPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [uploading, setUploading] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [, setActionLoading] = useState<string | null>(null);
   const [tab, setTab] = useState("all");
 
   const fetchImages = useCallback(async () => {

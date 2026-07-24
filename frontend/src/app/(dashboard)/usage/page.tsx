@@ -8,15 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3,
-  Activity,
-  Coins,
   Clock,
   CheckCircle,
   XCircle,
   Trash2,
   RefreshCw,
   Zap,
-  Database,
   Loader2,
 } from "lucide-react";
 import { engineService, type UsageSummary, type DailyUsage, type UsageHistoryItem, type CacheStats } from "@/services/engine";

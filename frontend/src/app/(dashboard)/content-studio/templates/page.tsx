@@ -12,7 +12,6 @@ import {
   Trash2,
   Copy,
   FileText,
-  Loader2,
 } from "lucide-react";
 import {
   AlertDialog,

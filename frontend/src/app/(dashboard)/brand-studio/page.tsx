@@ -26,13 +26,10 @@ import {
   Trash2,
   Eye,
   Edit,
-  Star,
   Palette,
   LayoutGrid,
   List,
-  Sparkles,
   Building2,
-  Loader2,
 } from "lucide-react";
 
 const INDUSTRIES = [
@@ -54,7 +51,7 @@ export default function BrandStudioPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [, setActionLoading] = useState<string | null>(null);
 
   const fetchBrands = useCallback(async () => {
     try {

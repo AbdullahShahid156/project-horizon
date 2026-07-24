@@ -21,14 +21,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   GripVertical,
   Upload,
   Image,
-  FileText,
   Link2,
-  Trash2,
   Search,
   X,
 } from "lucide-react";
@@ -309,7 +306,7 @@ function MediaSortableItem({
             className="h-6 w-6 shrink-0"
             onClick={() => onSelect(item.url)}
           >
-            <Image className="h-3 w-3" />
+            <Image alt="" className="h-3 w-3" />
           </Button>
 
           <Button

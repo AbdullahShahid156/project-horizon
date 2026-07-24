@@ -72,7 +72,7 @@ export default function EmailCampaignEditorPage() {
       setPreviewText(data?.preview_text || "");
       setHtmlContent(data?.html_content || "");
       setMarkdownContent(data?.markdown_content || "");
-    } catch (error) {
+    } catch {
       addToast({
         title: "Error",
         description: "Failed to load campaign",
@@ -98,7 +98,7 @@ export default function EmailCampaignEditorPage() {
         markdown_content: markdownContent,
       });
       addToast({ title: "Success", description: "Campaign saved" });
-    } catch (error) {
+    } catch {
       addToast({
         title: "Error",
         description: "Failed to save campaign",
@@ -114,7 +114,7 @@ export default function EmailCampaignEditorPage() {
     try {
       await emailStudioService.sendCampaign(campaignId);
       addToast({ title: "Success", description: "Campaign sent" });
-    } catch (error) {
+    } catch {
       addToast({
         title: "Error",
         description: "Failed to send campaign",
@@ -129,7 +129,7 @@ export default function EmailCampaignEditorPage() {
       const newCampaign = await emailStudioService.duplicateCampaign(campaignId);
       addToast({ title: "Success", description: "Campaign duplicated" });
       router.push(`/email-studio/${newCampaign.id}`);
-    } catch (error) {
+    } catch {
       addToast({
         title: "Error",
         description: "Failed to duplicate campaign",
@@ -144,7 +144,7 @@ export default function EmailCampaignEditorPage() {
       await emailStudioService.deleteCampaign(campaignId);
       addToast({ title: "Success", description: "Campaign deleted" });
       router.push("/email-studio");
-    } catch (error) {
+    } catch {
       addToast({
         title: "Error",
         description: "Failed to delete campaign",
@@ -183,7 +183,7 @@ export default function EmailCampaignEditorPage() {
         title: "Success",
         description: `AI ${action} completed`,
       });
-    } catch (error) {
+    } catch {
       addToast({
         title: "Error",
         description: `Failed to perform AI ${action}`,

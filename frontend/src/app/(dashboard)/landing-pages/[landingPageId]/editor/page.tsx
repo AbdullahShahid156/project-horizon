@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   Eye,
@@ -18,7 +17,6 @@ import {
   Undo2,
   Redo2,
   Loader2,
-  Wand2,
   Copy,
   Check,
   Sparkles,
@@ -26,19 +24,11 @@ import {
   Smartphone,
   Tablet,
   History,
-  Settings,
   LayoutList,
   ImageIcon,
   Globe,
   Download,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +37,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { landingPagesService } from "@/services/landing-pages";
 import { COPY_ACTIONS } from "@/constants/landing-page";
-import { useLandingPageAutoSave } from "@/hooks/use-landing-page-auto-save";
 import { SeoPanel } from "@/features/landing-page/components/seo-panel";
 import { SectionReorder } from "@/features/landing-page/components/section-reorder";
 import { MediaPanel } from "@/features/landing-page/components/media-panel";
@@ -57,7 +46,6 @@ const LandingPagePreview = dynamic(
   () => import("@/features/landing-page/components/live-preview").then((mod) => mod.LandingPagePreview),
   { ssr: false, loading: () => <div className="p-4 text-muted-foreground text-sm">Loading preview...</div> }
 );
-import { useAutoSave } from "@/hooks/use-auto-save";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
 
@@ -78,7 +66,6 @@ const SECTION_DEFS = [
 ];
 
 export default function LandingPageEditorPage() {
-  const router = useRouter();
   const params = useParams();
   const lpId = params.landingPageId as string;
 
@@ -92,7 +79,7 @@ export default function LandingPageEditorPage() {
   const [improvingField, setImprovingField] = useState<string | null>(null);
   const [history, setHistory] = useState<LandingPageOutput[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [activeSection, setActiveSection] = useState("hero");
+  const [activeSection] = useState("hero");
   const [sidebarTab, setSidebarTab] = useState<"sections" | "seo" | "media">("sections");
   const [sectionOrder, setSectionOrder] = useState(() =>
     SECTION_DEFS.map((s) => ({ ...s, enabled: true }))
@@ -120,7 +107,7 @@ export default function LandingPageEditorPage() {
     load();
   }, [lpId]);
 
-  const { saveNow } = useLandingPageAutoSave(lpId, content, 30000);
+  const { } = useLandingPageAutoSave(lpId, content, 30000);
 
   const pushHistory = (newContent: LandingPageOutput) => {
     const newHistory = history.slice(0, historyIndex + 1);
@@ -786,18 +773,10 @@ function SectionEditor({
   title,
   section,
   onUpdate,
-  onCopy,
-  onImprove,
-  copiedField,
-  improvingField,
 }: {
   title: string;
   section: any;
   onUpdate: (s: any) => void;
-  onCopy: (text: string, field: string) => void;
-  onImprove: (text: string, action: string, cb: (s: string) => void) => void;
-  copiedField: string | null;
-  improvingField: string | null;
 }) {
   if (!section) return null;
   return (

@@ -10,23 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   ArrowLeft,
   Save,
-  Wand2,
   Loader2,
   Search,
   Clock,
   Download,
-  Heart,
-  Eye,
-  ChevronDown,
   Undo2,
   Redo2,
   Bold,
@@ -44,8 +33,6 @@ import {
   BarChart3,
   Sparkles,
   RotateCcw,
-  Copy,
-  Trash2,
 } from "lucide-react";
 import {
   contentStudioService,
@@ -54,7 +41,6 @@ import {
   type ContentVersion,
   type ContentSEOAnalysis,
   type ContentType,
-  type ContentAIOptimizeResponse,
 } from "@/services/content-studio";
 
 const aiActions = [
@@ -88,7 +74,6 @@ export default function ContentEditorPage() {
   const [seoResult, setSeoResult] = useState<ContentSEOAnalysis | null>(null);
   const [versions, setVersions] = useState<ContentVersion[]>([]);
   const [selectedText, setSelectedText] = useState("");
-  const [aiAction, setAiAction] = useState("improve");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");

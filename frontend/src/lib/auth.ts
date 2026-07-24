@@ -8,13 +8,13 @@ export async function getAuthUser() {
   };
 }
 
-export function getPermissionsForRole(role: string | null): string[] {
+export function getPermissionsForRole(_role: string | null): string[] {
   return ['read', 'write', 'delete', 'admin'];
 }
 
 export function hasPermission(
-  role: string | null,
-  permission: string,
+  _role: string | null,
+  _permission: string,
 ): boolean {
   return true;
 }

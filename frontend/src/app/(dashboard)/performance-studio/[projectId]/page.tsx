@@ -7,30 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   Loader2,
   Gauge,
-  Search,
   Zap,
   AlertTriangle,
   CheckCircle2,
   Image,
   FileCode,
-  Clock,
   History,
   BarChart3,
-  Download,
   Plus,
   CheckCircle,
   XCircle,
-  AlertCircle,
   TrendingUp,
   Timer,
-  Eye,
-  Shield,
-  Globe,
 } from "lucide-react";
 import {
   performanceStudioService,
@@ -186,7 +178,7 @@ export default function PerformanceDetailPage() {
     }
   };
 
-  const handleExport = async (format: string) => {
+  const _handleExport = async (format: string) => {
     try {
       const result = await performanceStudioService.exportProject(projectId, format);
       const blob = new Blob([result.content], { type: "text/plain;charset=utf-8" });
@@ -472,7 +464,7 @@ export default function PerformanceDetailPage() {
           ) : (
             <Card className="py-12 text-center">
               <CardContent>
-                <Image className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                <Image alt="" className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-muted-foreground">Run an audit to analyze images.</p>
               </CardContent>
             </Card>

@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, Globe, Layout, Palette, Zap, Shield, Sparkles } from 'lucide-react';
+import { ArrowRight, BarChart3, Globe, Layout, Palette, Zap, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { APP_NAME, APP_DESCRIPTION } from '@/constants';

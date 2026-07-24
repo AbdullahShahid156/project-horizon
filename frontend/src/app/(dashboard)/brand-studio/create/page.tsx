@@ -13,9 +13,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Sparkles,
-  Palette,
   Loader2,
-  Check,
 } from "lucide-react";
 
 const INDUSTRIES = [

@@ -20,7 +20,6 @@ import {
   Plus,
   Gauge,
   Loader2,
-  Trash2,
   ExternalLink,
 } from "lucide-react";
 import { performanceStudioService, type PerformanceAudit } from "@/services/performance-studio";

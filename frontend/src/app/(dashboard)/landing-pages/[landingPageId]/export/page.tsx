@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,6 @@ const exportFormats: {
 
 export default function LandingPageExportPage() {
   const params = useParams();
-  const router = useRouter();
   const lpId = params.landingPageId as string;
 
   const [landingPage, setLandingPage] = useState<LandingPage | null>(null);

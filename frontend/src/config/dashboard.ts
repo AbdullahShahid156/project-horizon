@@ -2,7 +2,6 @@ import {
   BarChart3,
   Bell,
   CreditCard,
-  FileText,
   Grid,
   Key,
   Layers,

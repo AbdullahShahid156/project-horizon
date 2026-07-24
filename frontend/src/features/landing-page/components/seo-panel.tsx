@@ -4,10 +4,9 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Search, Globe, Hash, RefreshCw, Copy, Check } from "lucide-react";
+import { Globe, Hash, RefreshCw, Copy, Check } from "lucide-react";
 import type { LandingPageSeo } from "@/types";
 
 interface SeoPanelProps {

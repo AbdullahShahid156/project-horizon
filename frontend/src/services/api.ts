@@ -22,7 +22,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   let response: Response;
   try {
     response = await fetch(`${API_URL}${endpoint}`, config);
-  } catch (err) {
+  } catch (_err) {
     throw new Error('Unable to connect to the server. Please ensure the backend is running.');
   }
 

@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -23,9 +23,7 @@ import {
   ArrowLeft,
   Clock,
   RotateCcw,
-  Save,
   Loader2,
-  Check,
   Diff,
 } from "lucide-react";
 import { landingPagesService } from "@/services/landing-pages";

@@ -97,7 +97,7 @@ export default function DashboardPage() {
               {recentProjects.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">No projects yet. Create your first one!</p>
               ) : (
-                recentProjects.map((project, i) => (
+                recentProjects.map((project) => (
                   <div key={project.id} className="group flex items-center gap-4 py-3 border-b border-border/50 last:border-0 last:pb-0 first:pt-0">
                     <div className="relative">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/10">

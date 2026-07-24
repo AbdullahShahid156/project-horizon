@@ -1,20 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowLeft,
-  ExternalLink,
   Download,
   Monitor,
   Smartphone,
   Tablet,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   Eye,
 } from "lucide-react";
 import { landingPagesService } from "@/services/landing-pages";
@@ -24,7 +20,6 @@ type Device = "desktop" | "tablet" | "mobile";
 
 export default function LandingPagePreviewPage() {
   const params = useParams();
-  const router = useRouter();
   const lpId = params.landingPageId as string;
 
   const [landingPage, setLandingPage] = useState<LandingPage | null>(null);

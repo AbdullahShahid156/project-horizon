@@ -19,9 +19,7 @@ import {
   History,
   Sparkles,
   Palette,
-  Tag,
   FileText,
-  Globe,
   Plus,
   RotateCcw,
 } from "lucide-react";

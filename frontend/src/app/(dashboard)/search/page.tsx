@@ -19,7 +19,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   project: <Globe className="h-4 w-4" />,
   "landing-page": <FileText className="h-4 w-4" />,
   content: <FileText className="h-4 w-4" />,
-  image: <Image className="h-4 w-4" />,
+  image: <Image alt="" className="h-4 w-4" />,
   email: <Mail className="h-4 w-4" />,
   campaign: <Megaphone className="h-4 w-4" />,
   brand: <Palette className="h-4 w-4" />,

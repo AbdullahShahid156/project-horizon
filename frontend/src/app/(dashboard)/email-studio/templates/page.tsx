@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { emailStudioService, type EmailTemplate } from "@/services/email-studio";
@@ -15,7 +14,6 @@ import {
   Search,
   Plus,
   Eye,
-  Copy,
   Trash2,
   Layout,
   Mail,
@@ -24,7 +22,6 @@ import {
   Rocket,
   Building2,
   GraduationCap,
-  Loader2,
 } from "lucide-react";
 
 const CATEGORIES = [

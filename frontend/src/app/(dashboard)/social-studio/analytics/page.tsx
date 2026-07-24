@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { socialStudioService, type SocialStats } from "@/services/social-studio";
@@ -16,7 +15,6 @@ import {
   Globe,
   FileText,
   Send,
-  Calendar,
   Target,
 } from "lucide-react";
 

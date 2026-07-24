@@ -60,7 +60,6 @@ import {
   Trash2,
   Calendar,
   Hash,
-  BarChart3,
   FileText,
   Copy,
   Send,
@@ -68,11 +67,8 @@ import {
   ChevronRight,
   Loader2,
   Megaphone,
-  Target,
   Sparkles,
   Globe,
-  List,
-  Grid,
 } from "lucide-react";
 
 const WORKSPACE_ID = "ws-default";

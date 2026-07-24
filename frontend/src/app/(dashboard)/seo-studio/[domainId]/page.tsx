@@ -27,18 +27,14 @@ import {
   FileText,
   BarChart3,
   Target,
-  TrendingUp,
   Wrench,
   Layout,
-  MessageSquare,
   FileJson,
   Users,
-  Download,
   History,
   Sparkles,
   Plus,
   Trash2,
-  RotateCcw,
 } from "lucide-react";
 import {
   seoStudioService,
@@ -922,7 +918,7 @@ export default function SEODomainDashboard() {
                 <div className="relative">
                   <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
                   <div className="space-y-4">
-                    {history.map((h, i) => (
+                    {history.map((h) => (
                       <div key={h.id} className="relative pl-10">
                         <div className="absolute left-2.5 top-3 h-3 w-3 rounded-full bg-primary border-2 border-background" />
                         <div className="p-3 rounded-lg border">
