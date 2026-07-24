@@ -40,6 +40,7 @@ import { COPY_ACTIONS } from "@/constants/landing-page";
 import { SeoPanel } from "@/features/landing-page/components/seo-panel";
 import { SectionReorder } from "@/features/landing-page/components/section-reorder";
 import { MediaPanel } from "@/features/landing-page/components/media-panel";
+import { useLandingPageAutoSave } from "@/hooks/use-landing-page-auto-save";
 import type { LandingPage, LandingPageOutput } from "@/types";
 
 const LandingPagePreview = dynamic(
@@ -459,10 +460,6 @@ export default function LandingPageEditorPage() {
                         onUpdate={(section) =>
                           updateContent((prev) => ({ ...prev, problem: section }))
                         }
-                        onCopy={handleCopy}
-                        onImprove={handleImproveCopy}
-                        copiedField={copiedField}
-                        improvingField={improvingField}
                       />
                     )}
 
@@ -473,10 +470,6 @@ export default function LandingPageEditorPage() {
                         onUpdate={(section) =>
                           updateContent((prev) => ({ ...prev, solution: section }))
                         }
-                        onCopy={handleCopy}
-                        onImprove={handleImproveCopy}
-                        copiedField={copiedField}
-                        improvingField={improvingField}
                       />
                     )}
 

@@ -306,7 +306,7 @@ function MediaSortableItem({
             className="h-6 w-6 shrink-0"
             onClick={() => onSelect(item.url)}
           >
-            <Image alt="" className="h-3 w-3" />
+            <Image className="h-3 w-3" />
           </Button>
 
           <Button

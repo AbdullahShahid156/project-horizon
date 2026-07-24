@@ -464,7 +464,7 @@ export default function PerformanceDetailPage() {
           ) : (
             <Card className="py-12 text-center">
               <CardContent>
-                <Image alt="" className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                <Image className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-muted-foreground">Run an audit to analyze images.</p>
               </CardContent>
             </Card>

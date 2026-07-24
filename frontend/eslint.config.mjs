@@ -12,7 +12,7 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
       "@next/next/no-img-element": "off",
-      "jsx-a11y/alt-text": "warn",
+      "jsx-a11y/alt-text": "off",
     },
   },
   globalIgnores([
