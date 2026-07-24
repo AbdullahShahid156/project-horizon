@@ -838,10 +838,6 @@ async def generate_variations(data: ImageVariationRequest, user: str = Depends(g
         provider="pollinations",
         latency_ms=latency_ms,
     )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Variation generation failed: {str(e)}")
 
 
 # ─── AI UPSCALE ──────────────────────────────────────────────────────────────
