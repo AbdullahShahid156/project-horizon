@@ -45,7 +45,7 @@ _rate_limits: dict[str, list[float]] = {}
 
 RATE_LIMIT_WINDOW = 60.0
 RATE_LIMIT_MAX_REQUESTS = 60
-AI_RATE_LIMIT_MAX = 10
+AI_RATE_LIMIT_MAX = 30
 
 
 def check_rate_limit(key: str, max_requests: int = RATE_LIMIT_MAX_REQUESTS) -> None:

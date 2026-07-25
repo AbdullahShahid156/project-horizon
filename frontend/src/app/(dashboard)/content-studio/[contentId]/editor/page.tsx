@@ -71,7 +71,9 @@ export default function ContentEditorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
   const [seoLoading, setSeoLoading] = useState(false);
+  const [seoError, setSeoError] = useState("");
   const [seoResult, setSeoResult] = useState<ContentSEOAnalysis | null>(null);
   const [versions, setVersions] = useState<ContentVersion[]>([]);
   const [selectedText, setSelectedText] = useState("");
@@ -216,6 +218,7 @@ export default function ContentEditorPage() {
 
     try {
       setAiLoading(true);
+      setAiError("");
       const result = await contentStudioService.optimizeContent({
         text,
         action,
@@ -239,6 +242,8 @@ export default function ContentEditorPage() {
         }
       }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI optimization failed";
+      setAiError(msg);
       console.error("AI optimize failed:", err);
     } finally {
       setAiLoading(false);
@@ -248,6 +253,7 @@ export default function ContentEditorPage() {
   const handleSEOAnalyze = async () => {
     try {
       setSeoLoading(true);
+      setSeoError("");
       const result = await contentStudioService.analyzeSEO({
         title,
         body: editorContent,
@@ -257,6 +263,8 @@ export default function ContentEditorPage() {
       });
       setSeoResult(result ?? null);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "SEO analysis failed";
+      setSeoError(msg);
       console.error("SEO analysis failed:", err);
     } finally {
       setSeoLoading(false);
@@ -480,6 +488,11 @@ export default function ContentEditorPage() {
                   </Button>
                 ))}
               </div>
+              {aiError && (
+                <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-lg p-3 text-sm">
+                  {aiError}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -530,6 +543,11 @@ export default function ContentEditorPage() {
                   {seoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
                   Analyze SEO
                 </Button>
+                {seoError && (
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-lg p-3 text-sm">
+                    {seoError}
+                  </div>
+                )}
               </div>
 
               {seoResult && (
