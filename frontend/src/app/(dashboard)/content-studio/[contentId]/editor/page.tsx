@@ -175,6 +175,8 @@ export default function ContentEditorPage() {
     const selection = window.getSelection();
     if (selection && selection.toString().trim()) {
       setSelectedText(selection.toString().trim());
+    } else {
+      setSelectedText("");
     }
   };
 
@@ -219,8 +221,9 @@ export default function ContentEditorPage() {
   };
 
   const handleAIOptimize = async (action: string) => {
-    const plainText = editorContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    const text = selectedText || plainText;
+    const currentSelection = window.getSelection()?.toString().trim() || "";
+    const plainText = editorContent.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+    const text = currentSelection || plainText;
     if (!text.trim()) return;
 
     try {
@@ -231,14 +234,26 @@ export default function ContentEditorPage() {
         action,
         content_type: item?.content_type,
       });
-      const optimized = result.optimized || text;
-      const optimizedHtml = optimized.split("\n\n").filter((p: string) => p.trim()).map((p: string) => `<p>${p.trim()}</p>`).join("");
+      const optimized = (result.optimized || "").trim() || text;
 
-      if (selectedText && editorRef.current) {
+      if (optimized === text) {
+        setAiError("AI returned the same content. The provider may be rate-limited.");
+        return;
+      }
+
+      const optimizedHtml = optimized
+        .split("\n\n")
+        .filter((p: string) => p.trim())
+        .map((p: string) => `<p>${p.trim()}</p>`)
+        .join("");
+
+      if (!optimizedHtml) return;
+
+      if (currentSelection && editorRef.current) {
         const html = editorRef.current.innerHTML;
-        const idx = html.indexOf(selectedText);
+        const idx = html.indexOf(currentSelection);
         if (idx !== -1) {
-          const newHtml = html.substring(0, idx) + optimizedHtml + html.substring(idx + selectedText.length);
+          const newHtml = html.substring(0, idx) + optimizedHtml + html.substring(idx + currentSelection.length);
           pushUndo();
           skipSyncRef.current = true;
           setEditorContent(newHtml);
@@ -252,6 +267,7 @@ export default function ContentEditorPage() {
           editorRef.current.innerHTML = optimizedHtml;
         }
       }
+      setSelectedText("");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "AI optimization failed";
       setAiError(msg);

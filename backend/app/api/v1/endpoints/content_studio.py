@@ -817,40 +817,51 @@ async def ai_optimize_content(data: ContentAIOptimizeRequest, user: str = Depend
     if data.content_type:
         extra += f"\nThis is {data.content_type} content."
 
-    try:
-        prompt = (
-            f"Action: {action_text}\n\n"
-            f"Text to optimize:\n{data.text}\n\n"
-            f"{extra}\n\n"
-            "Return ONLY the optimized text without explanations or markdown formatting."
-        )
+    prompt = (
+        f"Action: {action_text}\n\n"
+        f"Text to optimize:\n{data.text}\n\n"
+        f"{extra}\n\n"
+        "Return ONLY the optimized text without explanations or markdown formatting."
+    )
 
-        response = await engine.generate(
-            prompt=prompt,
-            system_instruction="You are an expert content editor. Optimize the given text according to the specified action.",
-            operation="content_optimize",
-            user_id=user,
-        )
+    optimized = data.text
+    provider = "none"
+    latency = 0.0
 
-        optimized = response.text.strip() if response.success and response.text else data.text
+    for attempt in range(3):
+        try:
+            response = await engine.generate(
+                prompt=prompt,
+                system_instruction="You are an expert content editor. Optimize the given text according to the specified action.",
+                operation="content_optimize",
+                user_id=user,
+            )
 
-        return ContentAIOptimizeResponse(
-            original=data.text,
-            optimized=optimized,
-            action=data.action,
-            provider=response.provider or "none",
-            latency_ms=response.latency_ms or 0,
-        )
-    except HTTPException:
-        raise
-    except Exception:
-        return ContentAIOptimizeResponse(
-            original=data.text,
-            optimized=data.text,
-            action=data.action,
-            provider="none",
-            latency_ms=0,
-        )
+            if response.success and response.text and response.text.strip():
+                optimized = response.text.strip()
+                provider = response.provider or "none"
+                latency = response.latency_ms or 0
+                break
+
+            if response.error and "429" in str(response.error):
+                import asyncio
+                await asyncio.sleep(2 * (attempt + 1))
+                continue
+            break
+        except HTTPException:
+            raise
+        except Exception:
+            import asyncio
+            await asyncio.sleep(2 * (attempt + 1))
+            continue
+
+    return ContentAIOptimizeResponse(
+        original=data.text,
+        optimized=optimized,
+        action=data.action,
+        provider=provider,
+        latency_ms=latency,
+    )
 
 
 @router.post("/ai/seo", response_model=ContentSEOAnalysis)
