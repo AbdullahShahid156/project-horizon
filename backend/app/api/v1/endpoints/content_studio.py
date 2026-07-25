@@ -354,6 +354,226 @@ async def create_content(data: ContentCreateRequest, user: str = Depends(get_cur
     return _to_response(item)
 
 
+def _generate_fallback_content(data: ContentGenerateRequest) -> str:
+    """Generate template-based content when AI is unavailable."""
+    biz = data.business_name or "your business"
+    prod = data.product or "products and services"
+    ind = data.industry or "the industry"
+    aud = data.target_audience or "customers"
+    cta = data.call_to_action or "Get Started"
+    tone = data.tone or "professional"
+
+    templates = {
+        "blog_post": (
+            f"Welcome to {biz}, where we're transforming {ind} with innovative solutions.\n\n"
+            f"In today's competitive landscape, businesses like {biz} are leading the way by "
+            f"leveraging cutting-edge technology to deliver exceptional {prod} to {aud}.\n\n"
+            f"Our approach combines {tone} expertise with a deep understanding of what {aud} really need. "
+            f"Whether you're looking for reliability, innovation, or results, {biz} has you covered.\n\n"
+            f"What sets us apart is our commitment to quality and customer satisfaction. "
+            f"We believe that every interaction is an opportunity to exceed expectations.\n\n"
+            f"Ready to experience the {biz} difference? {cta} today and discover how we can "
+            f"help you achieve your goals."
+        ),
+        "facebook_ad": (
+            f"🚀 Introducing {biz} - Your Solution for {prod}\n\n"
+            f"Looking for reliable {prod} in {ind}? {biz} is here to help {aud} succeed.\n\n"
+            f"✅ Expert solutions tailored for {aud}\n"
+            f"✅ Proven results in {ind}\n"
+            f"✅ Trusted by businesses worldwide\n\n"
+            f"{cta} and see the difference today!\n\n"
+            f"#Business #Innovation #{ind.replace(' ', '')} #Growth"
+        ),
+        "google_ad": (
+            f"{biz} | Professional {prod} for {aud}\n\n"
+            f"Looking for the best {prod} in {ind}? {biz} offers top-rated solutions "
+            f"designed specifically for {aud}. Get results you can count on.\n\n"
+            f"{cta} - Free Consultation Available"
+        ),
+        "product_description": (
+            f"Discover {prod} by {biz} - designed for {aud} in {ind}.\n\n"
+            f"Our {prod} combines quality craftsmanship with innovative design to deliver "
+            f"exceptional value. Built with {aud} in mind, every detail has been carefully "
+            f"considered to ensure the best possible experience.\n\n"
+            f"Key Features:\n"
+            f"- Premium quality materials and construction\n"
+            f"- Designed specifically for {aud}\n"
+            f"- Backed by {biz}'s commitment to excellence\n"
+            f"- Proven performance in {ind}\n\n"
+            f"{cta} today and experience the {biz} difference."
+        ),
+        "landing_page_copy": (
+            f"Welcome to {biz}\n\n"
+            f"The #1 choice for {prod} in {ind}\n\n"
+            f"We help {aud} achieve their goals with professional {prod} "
+            f"that delivers real results. Our {tone} approach ensures you get "
+            f"the best experience from start to finish.\n\n"
+            f"Why Choose {biz}?\n"
+            f"- Expert team with deep {ind} knowledge\n"
+            f"- Proven track record of success\n"
+            f"- Tailored solutions for {aud}\n"
+            f"- Outstanding customer support\n\n"
+            f"{cta} Now - It's Free to Try"
+        ),
+        "instagram_caption": (
+            f"✨ {biz} - Where Innovation Meets Excellence ✨\n\n"
+            f"Proud to serve {aud} with premium {prod}. Every day, we push "
+            f"boundaries in {ind} to bring you the best.\n\n"
+            f"Drop a 🔥 if you believe in great {prod}!\n\n"
+            f"#{biz.replace(' ', '')} #{ind.replace(' ', '')} #Innovation #Quality"
+        ),
+        "linkedin_post": (
+            f"I'm excited to share that {biz} continues to lead in {ind}.\n\n"
+            f"Our team has been working tirelessly to deliver exceptional {prod} "
+            f"for {aud}. The results speak for themselves.\n\n"
+            f"Key highlights:\n"
+            f"- Serving {aud} with distinction\n"
+            f"- Innovating in {ind} every day\n"
+            f"- Building lasting partnerships\n\n"
+            f"I'd love to connect with others in {ind}. {cta} to learn more."
+        ),
+        "twitter_post": (
+            f"🚀 {biz} is changing the game in {ind}!\n\n"
+            f"Professional {prod} designed for {aud}. "
+            f"See why businesses trust us.\n\n"
+            f"{cta} 👇\n\n"
+            f"#{ind.replace(' ', '')} #Innovation #Growth"
+        ),
+        "email_campaign": (
+            f"Subject: Transform Your {ind} Experience with {biz}\n\n"
+            f"Dear {aud},\n\n"
+            f"We're reaching out because we believe {biz} can make a real difference "
+            f"for you in {ind}.\n\n"
+            f"Our {prod} has been designed with {aud} in mind, offering the perfect "
+            f"blend of quality and value.\n\n"
+            f"{cta} to learn more about how we can help.\n\n"
+            f"Best regards,\nThe {biz} Team"
+        ),
+        "youtube_title": (
+            f"How {biz} is Revolutionizing {ind} | {prod}"
+        ),
+        "youtube_description": (
+            f"Discover how {biz} is transforming {ind} with our innovative {prod}.\n\n"
+            f"In this video, we explore:\n"
+            f"- What makes our {prod} unique\n"
+            f"- How {aud} benefit from our solutions\n"
+            f"- Real results from real customers\n\n"
+            f"🔗 Learn more: Visit {biz} today!\n"
+            f"📞 {cta}\n\n"
+            f"#{ind.replace(' ', '')} #{biz.replace(' ', '')} #Innovation"
+        ),
+        "video_script": (
+            f"[INTRO]\n"
+            f"Hey everyone, welcome to {biz}!\n\n"
+            f"[PROBLEM]\n"
+            f"If you're {aud} looking for great {prod} in {ind}, you've come to the right place.\n\n"
+            f"[SOLUTION]\n"
+            f"At {biz}, we've developed {prod} that truly makes a difference. "
+            f"Our {tone} approach means you get the best experience possible.\n\n"
+            f"[PROOF]\n"
+            f"Businesses across {ind} trust {biz} for their {prod} needs.\n\n"
+            f"[CTA]\n"
+            f"Don't wait - {cta} today and see the difference for yourself!"
+        ),
+        "faq": (
+            f"Frequently Asked Questions - {biz}\n\n"
+            f"Q: What {prod} does {biz} offer?\n"
+            f"A: {biz} provides professional {prod} tailored for {aud} in {ind}.\n\n"
+            f"Q: Who is {biz} designed for?\n"
+            f"A: Our {prod} are specifically designed for {aud} in {ind}.\n\n"
+            f"Q: How do I get started?\n"
+            f"A: Simply {cta.lower()} and our team will guide you through the process.\n\n"
+            f"Q: What makes {biz} different?\n"
+            f"A: Our commitment to quality, {tone} service, and deep expertise in {ind} sets us apart."
+        ),
+        "tagline": f"{biz} - Empowering {aud} Through Innovation",
+        "headline": f"{biz}: The Future of {ind} Starts Here",
+        "cta": f"{cta} with {biz} Today",
+        "meta_title": f"{biz} | Professional {prod} for {aud}",
+        "meta_description": f"{biz} offers premium {prod} for {aud} in {ind}. Discover how our solutions can help you succeed. {cta}.",
+        "press_release": (
+            f"FOR IMMEDIATE RELEASE\n\n"
+            f"{biz} Announces Innovative {prod} for {ind}\n\n"
+            f"{biz} today announced the launch of its professional {prod} designed for {aud}. "
+            f"The new offering combines cutting-edge technology with {tone} expertise to deliver "
+            f"exceptional results in {ind}.\n\n"
+            f"\"We're excited to bring this to {aud},\" said the team at {biz}. "
+            f"\"Our goal is to provide the best {prod} experience possible.\"\n\n"
+            f"For more information, {cta.lower()} at {biz}."
+        ),
+        "case_study": (
+            f"Case Study: How {biz} Delivered Results in {ind}\n\n"
+            f"Client: A leading company in {ind}\n"
+            f"Challenge: Finding reliable {prod} for {aud}\n"
+            f"Solution: Partnered with {biz} for professional {prod}\n\n"
+            f"Results:\n"
+            f"- Improved efficiency in {ind}\n"
+            f"- Better outcomes for {aud}\n"
+            f"- Long-term partnership with {biz}\n\n"
+            f"Conclusion: {biz} continues to deliver exceptional {prod} for {aud} in {ind}."
+        ),
+        "sales_letter": (
+            f"Dear {aud},\n\n"
+            f"Are you struggling to find the right {prod} in {ind}?\n\n"
+            f"Meet {biz} - your solution for professional {prod}.\n\n"
+            f"Here's what makes us different:\n"
+            f"✅ Designed specifically for {aud}\n"
+            f"✅ Proven results in {ind}\n"
+            f"✅ {tone.title()} service you can trust\n\n"
+            f"For a limited time, {cta.lower()} and receive a free consultation.\n\n"
+            f"Don't miss out - join the growing number of {aud} who trust {biz}.\n\n"
+            f"{cta} Now!"
+        ),
+        "website_copy": (
+            f"Welcome to {biz}\n\n"
+            f"We are a {ind} company dedicated to providing {aud} with the finest {prod}. "
+            f"Our {tone} team works tirelessly to ensure every customer receives "
+            f"exceptional service and results.\n\n"
+            f"Discover our range of {prod} and see why {aud} across {ind} choose {biz}."
+        ),
+        "service_page": (
+            f"{biz} - Professional {prod} Services\n\n"
+            f"Expert {prod} for {aud} in {ind}\n\n"
+            f"Our services include:\n"
+            f"- Comprehensive {prod} solutions\n"
+            f"- Custom strategies for {aud}\n"
+            f"- Ongoing support and optimization\n\n"
+            f"{cta} to discuss your needs with our team."
+        ),
+        "about_us": (
+            f"About {biz}\n\n"
+            f"Founded with a vision to transform {ind}, {biz} has become a trusted partner "
+            f"for {aud} seeking professional {prod}.\n\n"
+            f"Our mission is simple: deliver exceptional {prod} that help {aud} succeed. "
+            f"Through our {tone} approach and deep expertise in {ind}, we continue to "
+            f"set the standard for excellence.\n\n"
+            f"Join the growing community of {aud} who trust {biz}."
+        ),
+        "cold_email": (
+            f"Subject: Quick question about your {ind} strategy, {aud}\n\n"
+            f"Hi there,\n\n"
+            f"I noticed you're in {ind} and wanted to reach out. At {biz}, we help {aud} "
+            f"like you with professional {prod}.\n\n"
+            f"Would you be open to a quick chat about how we can help?\n\n"
+            f"Best,\nThe {biz} Team"
+        ),
+        "newsletter": (
+            f"{biz} Monthly Newsletter\n\n"
+            f"Hello {aud}!\n\n"
+            f"What's new at {biz}:\n"
+            f"🔹 Latest innovations in {ind}\n"
+            f"🔹 Tips for getting the most from {prod}\n"
+            f"🔹 Customer success stories\n\n"
+            f"Stay tuned for more updates from {biz}!"
+        ),
+    }
+
+    return templates.get(data.content_type, (
+        f"{biz} provides professional {prod} for {aud} in {ind}. "
+        f"Our {tone} approach ensures exceptional results. {cta} today to learn more."
+    ))
+
+
 @router.post("/generate", response_model=ContentGenerateResponse)
 async def generate_content(data: ContentGenerateRequest, user: str = Depends(get_current_user)):
     check_rate_limit(f"ai:{user}", AI_RATE_LIMIT_MAX)
@@ -404,143 +624,159 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
     full_prompt = "\n".join(prompt_parts)
     full_prompt += "\n\nReturn your response as a JSON object with this structure: {\"title\": \"...\", \"content\": \"the content text\", \"html\": \"the formatted HTML content\", \"seo\": {\"meta_title\": \"...\", \"meta_description\": \"...\", \"keywords\": [\"...\"]}}"
 
-    try:
-        response = await engine.generate_json(
-            prompt=full_prompt,
-            system_instruction=data.system_prompt or "You are an expert content writer. Create high-quality, engaging content optimized for the specified audience.",
-            operation=f"content_generate_{data.content_type}",
-            user_id=user,
-        )
+    json_data = {}
+    ai_success = False
+    response_provider = "none"
+    response_model = "unknown"
+    response_latency = 0.0
+    response_tokens = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "estimated_cost": 0}
 
-        json_data = response.json_data or {} if response.success else {}
-        title = json_data.get("title", data.title or f"Generated {data.content_type}")
-        content_text = json_data.get("content", "")
-        html_content = json_data.get("html", f"<p>{content_text}</p>")
-        seo = json_data.get("seo", {})
-
-        item_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
-        slug = slugify(title)
-
-        image_url = None
-        _ad_image_types = {
-            "facebook_ad": (1536, 1024),
-            "google_ad": (1536, 1024),
-            "instagram_caption": (1024, 1024),
-            "product_description": (1024, 1024),
-            "landing_page_copy": (1536, 1024),
-            "linkedin_post": (1536, 1024),
-            "twitter_post": (1536, 1024),
-            "youtube_title": (1536, 1024),
-        }
-        if data.content_type in _ad_image_types:
-            img_w, img_h = _ad_image_types[data.content_type]
-            img_prompt = f"{data.business_name or 'business'}"
-            if data.product:
-                img_prompt += f", {data.product}"
-            img_prompt += f", professional {data.content_type.replace('_', ' ')} advertisement, high quality, modern design, sharp details, vibrant colors, marketing material"
-            encoded = urllib.parse.quote(img_prompt)
-            negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark, text errors, bad typography")
-            image_url = (
-                f"https://image.pollinations.ai/prompt/{encoded}"
-                f"?width={img_w}&height={img_h}&model=nanobanana-pro"
-                f"&enhance=true&nofeed=true&nologo=true"
-                f"&negative_prompt={negative}&reasoning=pro"
+    for attempt in range(3):
+        try:
+            response = await engine.generate_json(
+                prompt=full_prompt,
+                system_instruction=data.system_prompt or "You are an expert content writer. Create high-quality, engaging content optimized for the specified audience.",
+                operation=f"content_generate_{data.content_type}",
+                user_id=user,
             )
 
-        item = {
-            "id": item_id,
-            "workspaceId": data.workspace_id,
-            "folderId": None,
-            "title": title,
-            "slug": slug,
-            "contentType": data.content_type,
-            "status": "draft",
-            "body": {"text": content_text},
-            "htmlBody": html_content,
-            "plainBody": content_text,
-            "metadata": {"generated_by": "ai", "provider": response.provider, "model": response.model},
-            "seoData": seo,
-            "promptData": {
-                "business_name": data.business_name,
-                "product": data.product,
-                "industry": data.industry,
-                "target_audience": data.target_audience,
-                "tone": data.tone,
-                "content_goal": data.content_goal,
-                "keywords": data.keywords,
-            },
-            "generationSettings": {"provider": response.provider, "model": response.model},
-            "currentVersion": 1,
-            "wordCount": count_words(content_text),
-            "isFavorite": False,
-            "isArchived": False,
-            "tags": [],
-            "imageUrl": image_url,
-            "createdAt": now,
-            "updatedAt": now,
-        }
-        _items[item_id] = item
+            response_provider = response.provider or "none"
+            response_model = response.model or "unknown"
+            response_latency = response.latency_ms or 0
+            if response.tokens:
+                response_tokens = {
+                    "prompt_tokens": response.tokens.prompt_tokens,
+                    "completion_tokens": response.tokens.completion_tokens,
+                    "total_tokens": response.tokens.total_tokens,
+                    "estimated_cost": response.tokens.estimated_cost,
+                }
 
-        version_entry = {
-            "id": str(uuid.uuid4()),
-            "contentId": item_id,
-            "versionNumber": 1,
-            "title": title,
-            "body": item["body"],
-            "htmlBody": html_content,
-            "plainBody": content_text,
-            "metadata": item["metadata"],
-            "changeSummary": "AI generation",
-            "isAutoSave": False,
-            "createdAt": now,
-        }
-        _versions[item_id] = [version_entry]
+            if response.success and response.json_data:
+                json_data = response.json_data
+                ai_success = True
+                break
+            elif response.success and response.text:
+                text = response.text.strip()
+                try:
+                    json_data = __import__("json").loads(text)
+                    ai_success = True
+                    break
+                except Exception:
+                    pass
 
-        return ContentGenerateResponse(
-            content_id=item_id,
-            title=title,
-            body=item["body"],
-            html_body=html_content,
-            plain_body=content_text,
-            word_count=item["wordCount"],
-            seo_data=seo,
-            provider=response.provider or "none",
-            model=response.model or "unknown",
-            latency_ms=response.latency_ms or 0,
-            tokens={
-                "prompt_tokens": response.tokens.prompt_tokens if response.tokens else 0,
-                "completion_tokens": response.tokens.completion_tokens if response.tokens else 0,
-                "total_tokens": response.tokens.total_tokens if response.tokens else 0,
-                "estimated_cost": response.tokens.estimated_cost if response.tokens else 0,
-            },
-            image_url=image_url,
+            if response.error and "429" in str(response.error):
+                import asyncio
+                await asyncio.sleep(2 * (attempt + 1))
+                continue
+            break
+        except Exception:
+            import asyncio
+            await asyncio.sleep(2 * (attempt + 1))
+            continue
+
+    title = json_data.get("title", "") or data.title or f"{data.business_name or 'My Business'} - {data.content_type.replace('_', ' ').title()}"
+    content_text = json_data.get("content", "")
+    html_content = json_data.get("html", f"<p>{content_text}</p>" if content_text else "")
+    seo = json_data.get("seo", {})
+
+    if not content_text and not ai_success:
+        content_text = _generate_fallback_content(data)
+        html_content = f"<p>{content_text}</p>"
+        title = data.title or f"{data.business_name or 'My Business'} - {data.content_type.replace('_', ' ').title()}"
+
+    item_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    slug = slugify(title)
+
+    image_url = None
+    _ad_image_types = {
+        "facebook_ad": (1536, 1024),
+        "google_ad": (1536, 1024),
+        "instagram_caption": (1024, 1024),
+        "product_description": (1024, 1024),
+        "landing_page_copy": (1536, 1024),
+        "linkedin_post": (1536, 1024),
+        "twitter_post": (1536, 1024),
+        "youtube_title": (1536, 1024),
+    }
+    if data.content_type in _ad_image_types:
+        img_w, img_h = _ad_image_types[data.content_type]
+        img_prompt = f"{data.business_name or 'business'}"
+        if data.product:
+            img_prompt += f", {data.product}"
+        img_prompt += f", professional {data.content_type.replace('_', ' ')} advertisement, high quality, modern design, sharp details, vibrant colors, marketing material"
+        encoded = urllib.parse.quote(img_prompt)
+        negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark, text errors, bad typography")
+        image_url = (
+            f"https://image.pollinations.ai/prompt/{encoded}"
+            f"?width={img_w}&height={img_h}&model=nanobanana-pro"
+            f"&enhance=true&nofeed=true&nologo=true"
+            f"&negative_prompt={negative}&reasoning=pro"
         )
-    except HTTPException:
-        raise
-    except Exception:
-        fallback_title = data.title or f"Generated {data.content_type}"
-        fallback_content = ""
-        fallback_html = f"<p>{fallback_content}</p>"
-        item_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
-        item = {
-            "id": item_id, "workspaceId": data.workspace_id, "folderId": None,
-            "title": fallback_title, "slug": slugify(fallback_title),
-            "contentType": data.content_type, "status": "draft",
-            "body": {"text": fallback_content}, "htmlBody": fallback_html,
-            "plainBody": fallback_content, "metadata": {"generated_by": "fallback"},
-            "seoData": {}, "promptData": {}, "generationSettings": {},
-            "currentVersion": 1, "wordCount": 0, "isFavorite": False,
-            "isArchived": False, "tags": [], "createdAt": now, "updatedAt": now,
-        }
-        _items[item_id] = item
-        return ContentGenerateResponse(
-            content_id=item_id, title=fallback_title, body=item["body"],
-            html_body=fallback_html, plain_body=fallback_content,
-            word_count=0, seo_data={}, provider="none", model="unknown",
-            latency_ms=0, tokens={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "estimated_cost": 0},
-        )
+
+    item = {
+        "id": item_id,
+        "workspaceId": data.workspace_id,
+        "folderId": None,
+        "title": title,
+        "slug": slug,
+        "contentType": data.content_type,
+        "status": "draft",
+        "body": {"text": content_text},
+        "htmlBody": html_content,
+        "plainBody": content_text,
+        "metadata": {"generated_by": "ai" if ai_success else "fallback", "provider": response_provider, "model": response_model},
+        "seoData": seo,
+        "promptData": {
+            "business_name": data.business_name,
+            "product": data.product,
+            "industry": data.industry,
+            "target_audience": data.target_audience,
+            "tone": data.tone,
+            "content_goal": data.content_goal,
+            "keywords": data.keywords,
+        },
+        "generationSettings": {"provider": response_provider, "model": response_model},
+        "currentVersion": 1,
+        "wordCount": count_words(content_text),
+        "isFavorite": False,
+        "isArchived": False,
+        "tags": [],
+        "imageUrl": image_url,
+        "createdAt": now,
+        "updatedAt": now,
+    }
+    _items[item_id] = item
+
+    version_entry = {
+        "id": str(uuid.uuid4()),
+        "contentId": item_id,
+        "versionNumber": 1,
+        "title": title,
+        "body": item["body"],
+        "htmlBody": html_content,
+        "plainBody": content_text,
+        "metadata": item["metadata"],
+        "changeSummary": "AI generation" if ai_success else "Template generation",
+        "isAutoSave": False,
+        "createdAt": now,
+    }
+    _versions[item_id] = [version_entry]
+
+    return ContentGenerateResponse(
+        content_id=item_id,
+        title=title,
+        body=item["body"],
+        html_body=html_content,
+        plain_body=content_text,
+        word_count=item["wordCount"],
+        seo_data=seo,
+        provider=response_provider,
+        model=response_model,
+        latency_ms=response_latency,
+        tokens=response_tokens,
+        image_url=image_url,
+    )
 
 
 @router.post("/ai/optimize", response_model=ContentAIOptimizeResponse)
