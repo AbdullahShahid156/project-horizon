@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -64,6 +64,7 @@ const aiActions = [
 export default function ContentEditorPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const contentId = params.contentId as string;
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +85,7 @@ export default function ContentEditorPage() {
   const [title, setTitle] = useState("");
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState("editor");
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "editor");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const skipSyncRef = useRef(false);
 
@@ -264,9 +265,10 @@ export default function ContentEditorPage() {
     try {
       setSeoLoading(true);
       setSeoError("");
+      const plainBody = editorContent.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
       const result = await contentStudioService.analyzeSEO({
         title,
-        body: editorContent,
+        body: plainBody,
         meta_title: metaTitle,
         meta_description: metaDescription,
         keywords: metaKeywords.split(",").map((k) => k.trim()).filter(Boolean),
@@ -409,13 +411,13 @@ export default function ContentEditorPage() {
                   <Underline className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "h1")} aria-label="Heading 1">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "<h1>")} aria-label="Heading 1">
                   <Heading1 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "h2")} aria-label="Heading 2">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "<h2>")} aria-label="Heading 2">
                   <Heading2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "h3")} aria-label="Heading 3">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "<h3>")} aria-label="Heading 3">
                   <Heading3 className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />

@@ -38,6 +38,10 @@ class ContentBulkUpdateRequest(BaseModel):
     is_archived: bool | None = None
 
 
+class ContentBulkDeleteRequest(BaseModel):
+    ids: list[str]
+
+
 class ContentRestoreRequest(BaseModel):
     version_number: int
 

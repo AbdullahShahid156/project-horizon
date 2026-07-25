@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -98,7 +98,16 @@ export default function ContentStudioPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showArchived, setShowArchived] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const workspaceId = "default-workspace";
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const loadItems = useCallback(async () => {
     try {
@@ -108,7 +117,7 @@ export default function ContentStudioPage() {
         status: statusFilter === "all" ? undefined : statusFilter,
         is_archived: showArchived || undefined,
         is_favorite: showFavoritesOnly || undefined,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         sort_by: sortBy,
         sort_order: sortOrder,
         page,
@@ -122,13 +131,14 @@ export default function ContentStudioPage() {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, contentTypeFilter, statusFilter, showArchived, showFavoritesOnly, search, sortBy, sortOrder, page]);
+  }, [workspaceId, contentTypeFilter, statusFilter, showArchived, showFavoritesOnly, debouncedSearch, sortBy, sortOrder, page]);
 
   useEffect(() => {
     loadItems();
   }, [loadItems]);
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this content?")) return;
     try {
       await contentStudioService.deleteContent(id);
       setItems((prev) => prev.filter((item) => item.id !== id));
@@ -203,7 +213,7 @@ export default function ContentStudioPage() {
           <Input
             placeholder="Search content..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
             aria-label="Search content"
           />
@@ -393,10 +403,10 @@ export default function ContentStudioPage() {
                             <DropdownMenuItem onClick={() => handleDuplicate(item.id)}>
                               <Copy className="mr-2 h-4 w-4" /> Duplicate
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/content-studio/${item.id}/versions`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/content-studio/${item.id}/editor?tab=versions`)}>
                               <Clock className="mr-2 h-4 w-4" /> Versions
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/content-studio/${item.id}/export`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/content-studio/${item.id}/editor?tab=export`)}>
                               <Archive className="mr-2 h-4 w-4" /> Export
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />

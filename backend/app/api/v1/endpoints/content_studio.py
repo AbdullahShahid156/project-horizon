@@ -11,6 +11,7 @@ from app.core.security import get_current_user
 from app.schemas.content import (
     ContentAIOptimizeRequest,
     ContentAIOptimizeResponse,
+    ContentBulkDeleteRequest,
     ContentBulkUpdateRequest,
     ContentCreateRequest,
     ContentExportRequest,
@@ -109,9 +110,10 @@ def analyze_seo(title: str, body: str, meta_title: str | None, meta_description:
 
     keyword_density = {}
     if keywords:
+        plain_lower = plain.lower()
         for kw in keywords:
             kw_lower = kw.lower()
-            count = words.count(kw_lower)
+            count = plain_lower.count(kw_lower) if " " in kw_lower else words.count(kw_lower)
             density = (count / max(word_count, 1)) * 100
             keyword_density[kw] = round(density, 2)
             if count == 0:
@@ -869,7 +871,14 @@ async def export_content(data: ContentExportRequest, user: str = Depends(get_cur
     check_rate_limit(f"export:{user}")
     if data.format not in ("txt", "markdown", "html", "json"):
         raise HTTPException(status_code=400, detail="Unsupported format. Use txt, markdown, html, or json.")
-    return {"content": data.content or "", "format": data.format, "filename": f"export.{data.format}"}
+    content_text = data.content or ""
+    if data.item_id and data.item_id in _items:
+        item = _items[data.item_id]
+        content_text = item.get("plainBody", "") or item.get("body", {}).get("text", "")
+    filename = "export"
+    if data.item_id and data.item_id in _items:
+        filename = slugify(_items[data.item_id].get("title", "content"))
+    return {"content": content_text, "format": data.format, "filename": f"{filename}.{data.format}"}
 
 
 @router.get("/folders", response_model=list[ContentFolderResponse])
@@ -1051,10 +1060,10 @@ async def bulk_update_content(data: ContentBulkUpdateRequest, user: str = Depend
 
 
 @router.post("/bulk-delete")
-async def bulk_delete_content(ids: list[str], user: str = Depends(get_current_user)):
+async def bulk_delete_content(data: ContentBulkDeleteRequest, user: str = Depends(get_current_user)):
     check_rate_limit(f"bulk:{user}")
     deleted = 0
-    for item_id in ids:
+    for item_id in data.ids:
         if item_id in _items:
             _items[item_id]["deletedAt"] = datetime.now(timezone.utc).isoformat()
             deleted += 1
@@ -1144,10 +1153,13 @@ async def auto_save_content(item_id: str, data: ContentUpdateRequest, user: str 
         item["seoData"] = data.seo_data
     item["updatedAt"] = now
 
+    new_version = item.get("currentVersion", 1) + 1
+    item["currentVersion"] = new_version
+
     version_entry = {
         "id": str(uuid.uuid4()),
         "contentId": item_id,
-        "versionNumber": item.get("currentVersion", 1),
+        "versionNumber": new_version,
         "title": item["title"],
         "body": item.get("body"),
         "htmlBody": item.get("htmlBody"),
