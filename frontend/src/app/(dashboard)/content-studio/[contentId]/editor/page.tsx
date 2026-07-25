@@ -33,6 +33,7 @@ import {
   BarChart3,
   Sparkles,
   RotateCcw,
+  Image,
 } from "lucide-react";
 import {
   contentStudioService,
@@ -342,6 +343,30 @@ export default function ContentEditorPage() {
           </Button>
         </div>
       </div>
+
+      {item.image_url && (
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Ad Creative Preview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center">
+              <img
+                src={item.image_url}
+                alt={title}
+                className="max-w-full rounded-lg shadow-md"
+                style={{ maxHeight: "400px", objectFit: "contain" }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Generated ad creative · Right-click to save image
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -656,6 +681,23 @@ export default function ContentEditorPage() {
                     <span className="text-xs text-muted-foreground">{opt.desc}</span>
                   </Button>
                 ))}
+                {item.image_url && (
+                  <Button
+                    variant="outline"
+                    className="h-auto py-4 flex-col items-start"
+                    onClick={() => {
+                      const a = document.createElement("a");
+                      a.href = item.image_url!;
+                      a.target = "_blank";
+                       a.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-ad-creative.png`;
+                      a.click();
+                    }}
+                  >
+                    <Image className="h-5 w-5 mb-2" />
+                    <span className="font-semibold">Ad Image</span>
+                    <span className="text-xs text-muted-foreground">Download ad creative</span>
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

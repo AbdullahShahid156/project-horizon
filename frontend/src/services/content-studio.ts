@@ -18,6 +18,7 @@ export interface ContentItem {
   is_favorite: boolean;
   is_archived: boolean;
   tags: string[] | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -126,6 +127,7 @@ export interface ContentGenerateResponse {
     total_tokens: number;
     estimated_cost: number;
   };
+  image_url: string | null;
 }
 
 export interface ContentAIOptimizeRequest {

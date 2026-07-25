@@ -1,6 +1,7 @@
 import math
 import re
 import time
+import urllib.parse
 import uuid
 from datetime import datetime, timezone
 
@@ -209,6 +210,7 @@ def _to_response(item: dict) -> ContentItemResponse:
         is_favorite=item.get("isFavorite", False),
         is_archived=item.get("isArchived", False),
         tags=item.get("tags", []),
+        image_url=item.get("imageUrl"),
         created_at=item["createdAt"],
         updated_at=item["updatedAt"],
     )
@@ -420,6 +422,32 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
         now = datetime.now(timezone.utc).isoformat()
         slug = slugify(title)
 
+        image_url = None
+        _ad_image_types = {
+            "facebook_ad": (1200, 628),
+            "google_ad": (1200, 628),
+            "instagram_caption": (1080, 1080),
+            "product_description": (1024, 1024),
+            "landing_page_copy": (1200, 628),
+            "linkedin_post": (1200, 628),
+            "twitter_post": (1200, 675),
+            "youtube_title": (1280, 720),
+        }
+        if data.content_type in _ad_image_types:
+            img_w, img_h = _ad_image_types[data.content_type]
+            img_prompt = f"{data.business_name or 'business'}"
+            if data.product:
+                img_prompt += f", {data.product}"
+            img_prompt += f", professional {data.content_type.replace('_', ' ')} advertisement, high quality, modern design"
+            encoded = urllib.parse.quote(img_prompt)
+            negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark")
+            image_url = (
+                f"https://image.pollinations.ai/prompt/{encoded}"
+                f"?width={img_w}&height={img_h}&model=flux&quality=hd"
+                f"&enhance=true&nofeed=true&nologo=true"
+                f"&negative_prompt={negative}&reasoning=pro"
+            )
+
         item = {
             "id": item_id,
             "workspaceId": data.workspace_id,
@@ -448,6 +476,7 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
             "isFavorite": False,
             "isArchived": False,
             "tags": [],
+            "imageUrl": image_url,
             "createdAt": now,
             "updatedAt": now,
         }
@@ -485,6 +514,7 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
                 "total_tokens": response.tokens.total_tokens if response.tokens else 0,
                 "estimated_cost": response.tokens.estimated_cost if response.tokens else 0,
             },
+            image_url=image_url,
         )
     except HTTPException:
         raise
@@ -1052,7 +1082,7 @@ async def restore_version(item_id: str, version_id: str, user: str = Depends(get
     return _to_response(item)
 
 
-@router.get("/content/{item_id}/export", response_model=ContentExportResponse)
+@router.get("/{item_id}/export", response_model=ContentExportResponse)
 async def export_content_item(item_id: str, format: str = "html", user: str = Depends(get_current_user)):
     check_rate_limit(f"export:{user}")
     if item_id not in _items:
@@ -1062,8 +1092,10 @@ async def export_content_item(item_id: str, format: str = "html", user: str = De
     title = item["title"]
     html = item.get("htmlBody", "")
     plain = item.get("plainBody", "")
+    image_url = item.get("imageUrl")
 
     if format == "html":
+        image_html = f'\n<div style="text-align:center;margin:20px 0;"><img src="{image_url}" alt="{title}" style="max-width:100%;border-radius:8px;" /></div>\n' if image_url else ""
         content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1073,7 +1105,7 @@ async def export_content_item(item_id: str, format: str = "html", user: str = De
 </head>
 <body>
 <h1>{title}</h1>
-{html}
+{image_html}{html}
 </body>
 </html>"""
         filename = f"{slugify(title)}.html"

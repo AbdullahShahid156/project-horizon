@@ -74,6 +74,7 @@ class ContentGenerateResponse(BaseModel):
     model: str
     latency_ms: float
     tokens: dict[str, Any]
+    image_url: str | None = None
 
 
 class ContentAIOptimizeRequest(BaseModel):
@@ -145,6 +146,7 @@ class ContentItemResponse(BaseModel):
     is_favorite: bool
     is_archived: bool
     tags: list[str] | None = None
+    image_url: str | None = None
     created_at: str
     updated_at: str
 

@@ -355,6 +355,11 @@ export default function ContentStudioPage() {
               >
                 <Card className="h-full hover:shadow-md transition-shadow group">
                   <CardContent className="p-4">
+                    {item.image_url && (
+                      <div className="mb-3 rounded-md overflow-hidden bg-muted">
+                        <img src={item.image_url} alt={item.title} className="w-full h-32 object-cover" loading="lazy" />
+                      </div>
+                    )}
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{contentTypeIcons[item.content_type] || "📄"}</span>
@@ -440,7 +445,11 @@ export default function ContentStudioPage() {
           {items.map((item) => (
             <Card key={item.id} className="hover:shadow-sm transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
-                <span className="text-xl">{contentTypeIcons[item.content_type] || "📄"}</span>
+                {item.image_url ? (
+                  <img src={item.image_url} alt="" className="h-10 w-10 rounded object-cover shrink-0" loading="lazy" />
+                ) : (
+                  <span className="text-xl">{contentTypeIcons[item.content_type] || "📄"}</span>
+                )}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm truncate">{item.title}</h3>
                   <p className="text-xs text-muted-foreground truncate">
