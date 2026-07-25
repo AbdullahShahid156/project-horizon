@@ -86,6 +86,7 @@ export default function ContentEditorPage() {
   const [redoStack, setRedoStack] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("editor");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const skipSyncRef = useRef(false);
 
   const loadContent = useCallback(async () => {
     try {
@@ -121,6 +122,10 @@ export default function ContentEditorPage() {
   }, [loadContent, loadVersions]);
 
   useEffect(() => {
+    if (skipSyncRef.current) {
+      skipSyncRef.current = false;
+      return;
+    }
     if (!editorRef.current) return;
     if (editorRef.current.innerHTML !== editorContent) {
       editorRef.current.innerHTML = editorContent;
@@ -213,7 +218,8 @@ export default function ContentEditorPage() {
   };
 
   const handleAIOptimize = async (action: string) => {
-    const text = selectedText || editorContent.replace(/<[^>]+>/g, " ");
+    const plainText = editorContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const text = selectedText || plainText;
     if (!text.trim()) return;
 
     try {
@@ -224,21 +230,25 @@ export default function ContentEditorPage() {
         action,
         content_type: item?.content_type,
       });
+      const optimized = result.optimized || text;
+      const optimizedHtml = optimized.split("\n\n").filter((p: string) => p.trim()).map((p: string) => `<p>${p.trim()}</p>`).join("");
+
       if (selectedText && editorRef.current) {
         const html = editorRef.current.innerHTML;
-        const plain = html;
-        const idx = plain.indexOf(selectedText);
+        const idx = html.indexOf(selectedText);
         if (idx !== -1) {
-          const newHtml = html.substring(0, idx) + result.optimized + html.substring(idx + selectedText.length);
+          const newHtml = html.substring(0, idx) + optimizedHtml + html.substring(idx + selectedText.length);
           pushUndo();
+          skipSyncRef.current = true;
           setEditorContent(newHtml);
           editorRef.current.innerHTML = newHtml;
         }
       } else {
         pushUndo();
-        setEditorContent(result.optimized);
+        skipSyncRef.current = true;
+        setEditorContent(optimizedHtml);
         if (editorRef.current) {
-          editorRef.current.innerHTML = result.optimized;
+          editorRef.current.innerHTML = optimizedHtml;
         }
       }
     } catch (err) {
