@@ -1,6 +1,6 @@
 import time
-import uuid
 import urllib.parse
+import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -12,6 +12,7 @@ from app.schemas.social import (
     SocialCalendarEntryRequest,
     SocialCalendarResponse,
     SocialCampaignCreateRequest,
+    SocialCampaignPaginatedResponse,
     SocialCampaignResponse,
     SocialGenerateRequest,
     SocialGenerateResponse,
@@ -473,14 +474,12 @@ async def get_post_history(post_id: str, user: str = Depends(get_current_user)):
 
 def _fallback_generate_posts(data: SocialGenerateRequest, num: int) -> list[dict]:
     """Generate social media posts when AI is unavailable."""
-    import random
 
     platform = data.platform.lower()
     topic = data.topic or data.brand or data.business or "our product"
     brand = data.brand or data.business or "We"
     tone = data.tone or "Professional"
     audience = data.target_audience or "our audience"
-    goal = data.goal or "Engagement"
     cta = data.cta or "Learn More"
     keywords = data.keywords or []
 
@@ -845,7 +844,7 @@ async def ai_action_on_post(data: SocialAIRequest, user: str = Depends(get_curre
 # ─── CAMPAIGNS LIST / CREATE ─────────────────────────────────────────────────
 
 
-@router.get("/campaigns", response_model=list[SocialCampaignResponse])
+@router.get("/campaigns", response_model=SocialCampaignPaginatedResponse)
 async def list_campaigns(
     workspace_id: str = Query(default="dev-workspace"),
     search: str | None = None,
@@ -878,7 +877,7 @@ async def list_campaigns(
 
     total = len(campaigns)
     return {
-        "items": [_to_campaign_response(c) for c in campaigns],
+        "items": [_to_campaign_response(c).model_dump() for c in campaigns],
         "total": total,
     }
 

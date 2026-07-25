@@ -9,6 +9,7 @@ from app.schemas.email import (
     EmailAIRequest,
     EmailAIResponse,
     EmailCampaignCreateRequest,
+    EmailCampaignPaginatedResponse,
     EmailCampaignResponse,
     EmailCampaignUpdateRequest,
     EmailGenerateRequest,
@@ -459,7 +460,7 @@ async def get_campaign_stats(workspace_id: str = Query(default="dev-workspace"),
 # ─── CAMPAIGNS LIST / CREATE ─────────────────────────────────────────────────
 
 
-@router.get("/campaigns", response_model=list[EmailCampaignResponse])
+@router.get("/campaigns", response_model=EmailCampaignPaginatedResponse)
 async def list_campaigns(
     workspace_id: str = Query(default="dev-workspace"),
     search: str | None = None,
@@ -512,7 +513,7 @@ async def list_campaigns(
     total = len(campaigns)
     total_pages = (total + page_size - 1) // page_size
     return {
-        "items": [_to_campaign_response(c) for c in campaigns[start:end]],
+        "items": [_to_campaign_response(c).model_dump() for c in campaigns[start:end]],
         "total": total,
         "page": page,
         "page_size": page_size,

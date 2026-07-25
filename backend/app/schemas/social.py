@@ -176,3 +176,8 @@ class SocialPostPaginatedResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+class SocialCampaignPaginatedResponse(BaseModel):
+    items: list[SocialCampaignResponse]
+    total: int

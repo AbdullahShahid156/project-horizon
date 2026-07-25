@@ -157,3 +157,11 @@ class EmailAIResponse(BaseModel):
     action: str
     provider: str
     latency_ms: float
+
+
+class EmailCampaignPaginatedResponse(BaseModel):
+    items: list[EmailCampaignResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

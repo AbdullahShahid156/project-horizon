@@ -2,6 +2,7 @@ import base64
 import io
 import os
 import time
+import urllib.parse
 import uuid
 from datetime import datetime, timezone
 
@@ -530,22 +531,6 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
         start_time = time.time()
         generated_images = []
 
-        style_colors = {
-            "photorealistic": ("#1a1a2e", "#e94560"),
-            "digital-art": ("#0f3460", "#e94560"),
-            "watercolor": ("#f5e6cc", "#6b5b95"),
-            "oil-painting": ("#2c1810", "#c9a959"),
-            "3d-render": ("#16213e", "#0f3460"),
-            "pixel-art": ("#000000", "#00ff00"),
-            "anime": ("#ff6b9d", "#c44dff"),
-            "minimalist": ("#ffffff", "#333333"),
-            "abstract": ("#667eea", "#764ba2"),
-            "flat-design": ("#4facfe", "#00f2fe"),
-            "sketch": ("#f5f5f5", "#333333"),
-            "cinematic": ("#0c0c0c", "#ff6b35"),
-        }
-        bg_color, text_color = style_colors.get(data.style or "", ("#1e293b", "#f8fafc"))
-
         num_images = max(1, min(data.num_variations, 4))
 
         ai_success = False
@@ -576,25 +561,20 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
                 generated_by = "ai"
                 provider_name = response.provider
             else:
-                label = (data.prompt[:60] + "...") if len(data.prompt) > 60 else data.prompt
-                label_lines = [label[j:j+30] for j in range(0, len(label), 30)]
-                text_svg = "\n".join(
-                    f'<text x="50%" y="{45 + idx*8}%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="14">{line}</text>'
-                    for idx, line in enumerate(label_lines[:3])
+                pollinations_prompt = data.prompt
+                if data.style:
+                    pollinations_prompt += f", {data.style} style"
+                encoded = urllib.parse.quote(pollinations_prompt)
+                negative = urllib.parse.quote(data.negative_prompt or "worst quality, blurry, low resolution, deformed, ugly, watermark, text overlay")
+                data_url = (
+                    f"https://image.pollinations.ai/prompt/{encoded}"
+                    f"?width={data.width or 1024}&height={data.height or 1024}"
+                    f"&model=flux&quality=hd&enhance=true&nofeed=true&nologo=true"
+                    f"&negative_prompt={negative}&reasoning=pro"
                 )
-                style_label = (data.style or "default").replace("-", " ").title()
-                svg = (
-                    f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">'
-                    f'<rect width="100%" height="100%" fill="{bg_color}"/>'
-                    f'<text x="50%" y="35%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="20" font-weight="bold">{style_label}</text>'
-                    f'{text_svg}'
-                    f'<text x="50%" y="85%" text-anchor="middle" fill="{text_color}" font-family="sans-serif" font-size="10" opacity="0.5">Variation {i+1} of {num_images}</text>'
-                    f'</svg>'
-                )
-                data_url = f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
-                mime_type = "image/svg+xml"
-                generated_by = "placeholder"
-                provider_name = "svg-generator"
+                mime_type = "image/jpeg"
+                generated_by = "ai"
+                provider_name = "pollinations"
 
             img_record = {
                 "id": img_id,
@@ -777,11 +757,18 @@ async def generate_variations(data: ImageVariationRequest, user: str = Depends(g
             generated_by = "ai"
             provider_name = "pollinations"
         else:
-            data_url = img.get("url", "")
-            file_size = img.get("fileSize", 0)
-            mime_type = img.get("mimeType", "image/png")
-            generated_by = "copy"
-            provider_name = "original"
+            encoded = urllib.parse.quote(var_prompt)
+            negative = urllib.parse.quote(img.get("negativePrompt") or "worst quality, blurry, low resolution, deformed, ugly, watermark, text overlay")
+            data_url = (
+                f"https://image.pollinations.ai/prompt/{encoded}"
+                f"?width={width}&height={height}"
+                f"&model=flux&quality=hd&enhance=true&nofeed=true&nologo=true"
+                f"&negative_prompt={negative}&reasoning=pro"
+            )
+            file_size = 0
+            mime_type = "image/jpeg"
+            generated_by = "ai"
+            provider_name = "pollinations"
 
         var_record = {
             "id": var_id,
@@ -886,7 +873,10 @@ async def upscale_image(data: ImageUpscaleRequest, user: str = Depends(get_curre
             file_size = len(buf.getvalue())
             mime_type = "image/png"
         else:
-            data_url = url
+            if url.startswith("https://image.pollinations.ai/"):
+                data_url = url.replace(f"width={original_width}", f"width={new_width}").replace(f"height={original_height}", f"height={new_height}") if f"width={original_width}" in url else url + f"&width={new_width}&height={new_height}"
+            else:
+                data_url = url
             file_size = img.get("fileSize", 0)
             mime_type = img.get("mimeType", "image/png")
 
