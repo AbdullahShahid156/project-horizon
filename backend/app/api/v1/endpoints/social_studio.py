@@ -663,7 +663,7 @@ async def generate_social_posts(data: SocialGenerateRequest, user: str = Depends
             negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark, text overlay")
             image_url = (
                 f"https://image.pollinations.ai/prompt/{encoded}"
-                f"?width=1024&height=1024&model=flux&quality=hd"
+                f"?width=1024&height=1024&model=nanobanana-pro"
                 f"&enhance=true&nofeed=true&nologo=true"
                 f"&negative_prompt={negative}&reasoning=pro"
             )

@@ -569,7 +569,7 @@ async def generate_image(data: ImageGenerateRequest, user: str = Depends(get_cur
                 data_url = (
                     f"https://image.pollinations.ai/prompt/{encoded}"
                     f"?width={data.width or 1024}&height={data.height or 1024}"
-                    f"&model=flux&quality=hd&enhance=true&nofeed=true&nologo=true"
+                    f"&model=nanobanana-pro&enhance=true&nofeed=true&nologo=true"
                     f"&negative_prompt={negative}&reasoning=pro"
                 )
                 mime_type = "image/jpeg"
@@ -762,7 +762,7 @@ async def generate_variations(data: ImageVariationRequest, user: str = Depends(g
             data_url = (
                 f"https://image.pollinations.ai/prompt/{encoded}"
                 f"?width={width}&height={height}"
-                f"&model=flux&quality=hd&enhance=true&nofeed=true&nologo=true"
+                f"&model=nanobanana-pro&enhance=true&nofeed=true&nologo=true"
                 f"&negative_prompt={negative}&reasoning=pro"
             )
             file_size = 0

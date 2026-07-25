@@ -424,26 +424,26 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
 
         image_url = None
         _ad_image_types = {
-            "facebook_ad": (1200, 628),
-            "google_ad": (1200, 628),
-            "instagram_caption": (1080, 1080),
+            "facebook_ad": (1536, 1024),
+            "google_ad": (1536, 1024),
+            "instagram_caption": (1024, 1024),
             "product_description": (1024, 1024),
-            "landing_page_copy": (1200, 628),
-            "linkedin_post": (1200, 628),
-            "twitter_post": (1200, 675),
-            "youtube_title": (1280, 720),
+            "landing_page_copy": (1536, 1024),
+            "linkedin_post": (1536, 1024),
+            "twitter_post": (1536, 1024),
+            "youtube_title": (1536, 1024),
         }
         if data.content_type in _ad_image_types:
             img_w, img_h = _ad_image_types[data.content_type]
             img_prompt = f"{data.business_name or 'business'}"
             if data.product:
                 img_prompt += f", {data.product}"
-            img_prompt += f", professional {data.content_type.replace('_', ' ')} advertisement, high quality, modern design"
+            img_prompt += f", professional {data.content_type.replace('_', ' ')} advertisement, high quality, modern design, sharp details, vibrant colors, marketing material"
             encoded = urllib.parse.quote(img_prompt)
-            negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark")
+            negative = urllib.parse.quote("worst quality, blurry, low resolution, deformed, ugly, watermark, text errors, bad typography")
             image_url = (
                 f"https://image.pollinations.ai/prompt/{encoded}"
-                f"?width={img_w}&height={img_h}&model=flux&quality=hd"
+                f"?width={img_w}&height={img_h}&model=nanobanana-pro"
                 f"&enhance=true&nofeed=true&nologo=true"
                 f"&negative_prompt={negative}&reasoning=pro"
             )
