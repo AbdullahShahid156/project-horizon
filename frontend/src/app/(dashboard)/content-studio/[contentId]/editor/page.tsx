@@ -123,6 +123,14 @@ export default function ContentEditorPage() {
   }, [loadContent, loadVersions]);
 
   useEffect(() => {
+    if (activeTab === "editor" && editorRef.current && editorContent) {
+      if (editorRef.current.innerHTML !== editorContent) {
+        editorRef.current.innerHTML = editorContent;
+      }
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (skipSyncRef.current) {
       skipSyncRef.current = false;
       return;
@@ -413,7 +421,7 @@ export default function ContentEditorPage() {
           <TabsTrigger value="export">Export</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="editor" className="space-y-4">
+        <TabsContent value="editor" className="space-y-4" forceMount>
           <Card>
             <CardContent className="p-2">
               <div className="flex items-center gap-1 flex-wrap border-b pb-2 mb-2">
