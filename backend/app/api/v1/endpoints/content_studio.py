@@ -1078,7 +1078,9 @@ async def export_content(data: ContentExportRequest, user: str = Depends(get_cur
     if data.format not in ("txt", "markdown", "html", "json"):
         raise HTTPException(status_code=400, detail="Unsupported format. Use txt, markdown, html, or json.")
     content_text = data.content or ""
-    if data.item_id and data.item_id in _items:
+    if data.item_id:
+        if data.item_id not in _items:
+            raise HTTPException(status_code=404, detail="Content not found.")
         item = _items[data.item_id]
         content_text = item.get("plainBody", "") or item.get("body", {}).get("text", "")
     filename = "export"

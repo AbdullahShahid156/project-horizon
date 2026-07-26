@@ -81,13 +81,11 @@ export default function ContentEditorPage() {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");
-  const [editorContent, setEditorContent] = useState("");
   const [title, setTitle] = useState("");
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "editor");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const skipSyncRef = useRef(false);
   const savedRangeRef = useRef<Range | null>(null);
 
   const saveSelection = () => {
@@ -113,12 +111,15 @@ export default function ContentEditorPage() {
       const data = await contentStudioService.getContent(contentId);
       setItem(data ?? null);
       setTitle(data?.title ?? "");
-      setEditorContent(data?.html_body || data?.plain_body || "");
       if (data?.seo_data) {
         setMetaTitle((data.seo_data as Record<string, unknown>).meta_title as string || "");
         setMetaDescription((data.seo_data as Record<string, unknown>).meta_description as string || "");
         const kw = (data.seo_data as Record<string, unknown>).keywords;
         setMetaKeywords(Array.isArray(kw) ? kw.join(", ") : "");
+      }
+      const html = data?.html_body || data?.plain_body || "";
+      if (editorRef.current && html) {
+        editorRef.current.innerHTML = html;
       }
     } catch (err) {
       console.error("Failed to load content:", err);
@@ -141,25 +142,6 @@ export default function ContentEditorPage() {
     loadVersions();
   }, [loadContent, loadVersions]);
 
-  useEffect(() => {
-    if (activeTab === "editor" && editorRef.current && editorContent) {
-      if (editorRef.current.innerHTML !== editorContent) {
-        editorRef.current.innerHTML = editorContent;
-      }
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (skipSyncRef.current) {
-      skipSyncRef.current = false;
-      return;
-    }
-    if (!editorRef.current) return;
-    if (editorRef.current.innerHTML !== editorContent) {
-      editorRef.current.innerHTML = editorContent;
-    }
-  }, [editorContent]);
-
   const pushUndo = () => {
     if (editorRef.current) {
       setUndoStack((prev) => [...prev.slice(-49), editorRef.current!.innerHTML]);
@@ -168,90 +150,30 @@ export default function ContentEditorPage() {
   };
 
   const handleUndo = () => {
-    if (undoStack.length === 0) return;
+    if (undoStack.length === 0 || !editorRef.current) return;
     const prev = undoStack[undoStack.length - 1];
-    setRedoStack((r) => [...r, editorContent]);
+    setRedoStack((r) => [...r, editorRef.current!.innerHTML]);
     setUndoStack((u) => u.slice(0, -1));
-    setEditorContent(prev);
+    editorRef.current.innerHTML = prev;
   };
 
   const handleRedo = () => {
-    if (redoStack.length === 0) return;
+    if (redoStack.length === 0 || !editorRef.current) return;
     const next = redoStack[redoStack.length - 1];
-    setUndoStack((u) => [...u, editorContent]);
+    setUndoStack((u) => [...u, editorRef.current!.innerHTML]);
     setRedoStack((r) => r.slice(0, -1));
-    setEditorContent(next);
+    editorRef.current.innerHTML = next;
   };
 
   const execCommand = (cmd: string, value?: string) => {
+    if (!editorRef.current) return;
     pushUndo();
-    if (cmd === "formatBlock" && value) {
-      restoreSelection();
-      const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
-      const tag = value.replace(/[<>]/g, "").toLowerCase();
-      let node: HTMLElement | null = sel.anchorNode as HTMLElement;
-      if (node?.nodeType === Node.TEXT_NODE) node = node.parentElement;
-      while (node && node !== editorRef.current) {
-        const t = node.tagName?.toLowerCase();
-        if (["p","div","h1","h2","h3","h4","h5","h6","blockquote","pre","li","span"].includes(t || "")) break;
-        node = node.parentElement;
-      }
-      if (node && node !== editorRef.current && node.parentElement !== editorRef.current) {
-        const el = document.createElement(tag);
-        el.innerHTML = node.innerHTML;
-        node.parentNode?.replaceChild(el, node);
-      } else if (node && node !== editorRef.current) {
-        const el = document.createElement(tag);
-        el.innerHTML = node.innerHTML;
-        node.parentNode?.replaceChild(el, node);
-      } else {
-        const el = document.createElement(tag);
-        el.innerHTML = sel.toString() || "<br>";
-        sel.deleteFromDocument();
-        sel.getRangeAt(0).insertNode(el);
-      }
-    } else if (cmd === "insertUnorderedList" || cmd === "insertOrderedList") {
-      restoreSelection();
-      const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
-      const tag = cmd === "insertUnorderedList" ? "ul" : "ol";
-      let node: HTMLElement | null = sel.anchorNode as HTMLElement;
-      if (node?.nodeType === Node.TEXT_NODE) node = node.parentElement;
-      while (node && node !== editorRef.current) {
-        if (node.tagName?.toLowerCase() === "li") break;
-        if (node.tagName?.toLowerCase() === tag) {
-          const p = document.createElement("p");
-          p.innerHTML = node.innerHTML;
-          node.parentNode?.replaceChild(p, node);
-          break;
-        }
-        node = node.parentElement;
-      }
-      if (node && node.tagName?.toLowerCase() !== tag && node !== editorRef.current) {
-        const list = document.createElement(tag);
-        const li = document.createElement("li");
-        const range = sel.getRangeAt(0);
-        const content = range.extractContents();
-        li.appendChild(content);
-        list.appendChild(li);
-        range.insertNode(list);
-      }
-    } else {
-      restoreSelection();
-      document.execCommand(cmd, false, value);
-    }
-    if (editorRef.current) {
-      skipSyncRef.current = true;
-      setEditorContent(editorRef.current.innerHTML);
-    }
+    restoreSelection();
+    document.execCommand(cmd, false, value);
   };
 
   const handleInput = () => {
-    if (editorRef.current) {
-      const html = editorRef.current.innerHTML;
-      setEditorContent(html);
-    }
+    // editor owns its own DOM, nothing to sync
   };
 
   const handleSelectText = () => {
@@ -264,12 +186,13 @@ export default function ContentEditorPage() {
   };
 
   const handleAutoSave = async () => {
-    if (!item) return;
+    if (!item || !editorRef.current) return;
     try {
       setSaving(true);
+      const html = editorRef.current.innerHTML;
       await contentStudioService.autoSave(item.id, {
-        html_body: editorContent,
-        plain_body: editorContent.replace(/<[^>]+>/g, " "),
+        html_body: html,
+        plain_body: html.replace(/<[^>]+>/g, " "),
       });
       setLastSaved(new Date());
     } catch (err) {
@@ -280,13 +203,14 @@ export default function ContentEditorPage() {
   };
 
   const handleSave = async () => {
-    if (!item) return;
+    if (!item || !editorRef.current) return;
     try {
       setSaving(true);
+      const html = editorRef.current.innerHTML;
       await contentStudioService.updateContent(item.id, {
         title,
-        html_body: editorContent,
-        plain_body: editorContent.replace(/<[^>]+>/g, " "),
+        html_body: html,
+        plain_body: html.replace(/<[^>]+>/g, " "),
         seo_data: {
           meta_title: metaTitle,
           meta_description: metaDescription,
@@ -304,8 +228,9 @@ export default function ContentEditorPage() {
   };
 
   const handleAIOptimize = async (action: string) => {
+    if (!editorRef.current) return;
     const currentSelection = window.getSelection()?.toString().trim() || "";
-    const plainText = editorContent.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+    const plainText = editorRef.current.innerText || "";
     const text = currentSelection || plainText;
     if (!text.trim()) return;
 
@@ -332,23 +257,17 @@ export default function ContentEditorPage() {
 
       if (!optimizedHtml) return;
 
+      pushUndo();
+
       if (currentSelection && editorRef.current) {
         const html = editorRef.current.innerHTML;
         const idx = html.indexOf(currentSelection);
         if (idx !== -1) {
           const newHtml = html.substring(0, idx) + optimizedHtml + html.substring(idx + currentSelection.length);
-          pushUndo();
-          skipSyncRef.current = true;
-          setEditorContent(newHtml);
           editorRef.current.innerHTML = newHtml;
         }
       } else {
-        pushUndo();
-        skipSyncRef.current = true;
-        setEditorContent(optimizedHtml);
-        if (editorRef.current) {
-          editorRef.current.innerHTML = optimizedHtml;
-        }
+        editorRef.current.innerHTML = optimizedHtml;
       }
       setSelectedText("");
     } catch (err) {
@@ -361,10 +280,11 @@ export default function ContentEditorPage() {
   };
 
   const handleSEOAnalyze = async () => {
+    if (!editorRef.current) return;
     try {
       setSeoLoading(true);
       setSeoError("");
-      const plainBody = editorContent.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+      const plainBody = editorRef.current.innerText || "";
       const result = await contentStudioService.analyzeSEO({
         title,
         body: plainBody,
@@ -386,7 +306,9 @@ export default function ContentEditorPage() {
     try {
       const updated = await contentStudioService.restoreVersion(contentId, versionId);
       setItem(updated ?? null);
-      setEditorContent(updated.html_body || updated.plain_body || "");
+      if (editorRef.current) {
+        editorRef.current.innerHTML = updated.html_body || updated.plain_body || "";
+      }
       setTitle(updated.title);
       await loadVersions();
     } catch (err) {
@@ -819,7 +741,7 @@ export default function ContentEditorPage() {
                       const a = document.createElement("a");
                       a.href = item.image_url!;
                       a.target = "_blank";
-                       a.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-ad-creative.png`;
+                      a.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-ad-creative.png`;
                       a.click();
                     }}
                   >
