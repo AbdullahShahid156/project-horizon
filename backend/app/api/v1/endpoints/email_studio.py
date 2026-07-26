@@ -1080,7 +1080,7 @@ def _generate_fallback_email(data: EmailGenerateRequest) -> dict:
 
 <!-- HERO -->
 <tr><td style="background:{theme['gradient']};padding:52px 44px;text-align:center">
-<div style="font-size:48px;margin-bottom:12px">{c['hero_emoji']}</div>
+<div style="font-size:48px;margin-bottom:12px">{theme['hero_emoji']}</div>
 <h1 style="color:#ffffff;margin:0 0 10px;font-size:32px;font-weight:800;letter-spacing:-0.5px;text-shadow:0 2px 8px rgba(0,0,0,0.15)">{c['headline']}</h1>
 <p style="color:rgba(255,255,255,0.92);margin:0;font-size:17px;font-weight:400">{c['subheadline']}</p>
 <div style="margin-top:20px"><a href="#" style="display:inline-block;background:#ffffff;color:{theme['accent']};padding:14px 40px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15)">{cta}</a></div>
@@ -1174,7 +1174,7 @@ def _generate_fallback_email(data: EmailGenerateRequest) -> dict:
     paragraphs_md = "\n\n".join(paragraphs)
     features_md = "\n".join(f"- {ic} **{f}**" for ic, f in zip(icons, features))
     markdown = (
-        f"# {c['hero_emoji']} {c['headline']}\n\n"
+        f"# {theme['hero_emoji']} {c['headline']}\n\n"
         f"*{c['subheadline']}*\n\n"
         f"Hi {audience},\n\n{paragraphs_md}\n\n"
         f"## ✨ What You Get\n\n{features_md}\n\n"
