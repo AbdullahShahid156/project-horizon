@@ -41,6 +41,10 @@ _VALID_EMAIL_TYPES = {
     "announcement",
     "nurture",
     "re-engagement",
+    "abandoned-cart",
+    "thank-you",
+    "event-invitation",
+    "discount",
 }
 
 _VALID_CATEGORIES = {
@@ -724,6 +728,107 @@ async def get_campaign_history(campaign_id: str, user: str = Depends(get_current
     return history
 
 
+# ─── FALLBACK EMAIL GENERATOR ────────────────────────────────────────────────
+
+
+def _generate_fallback_email(data: EmailGenerateRequest) -> dict:
+    """Generate template-based email when AI is unavailable."""
+    brand = data.brand or "your brand"
+    audience = data.audience or "valued customers"
+    product = data.product or "our products"
+    cta = data.cta or "Learn More"
+
+    type_templates = {
+        "promotional": {
+            "subject": f"Don't Miss Out - Special Offer from {brand}!",
+            "preview_text": f"Exclusive deal for {audience} - limited time only",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:40px 30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:28px">Special Offer from {brand}</h1><p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:16px">Exclusive deal for {audience}</p></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We're excited to share an exclusive offer with you. For a limited time, enjoy special pricing on {product}.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">This is your chance to experience the quality and value that {brand} is known for.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#667eea;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Special Offer from {brand}\n\nHi {audience},\n\nWe're excited to share an exclusive offer with you. For a limited time, enjoy special pricing on {product}.\n\n**{cta}** to take advantage of this offer.\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "transactional": {
+            "subject": f"Your {brand} Order Confirmation",
+            "preview_text": "We've received your order and are processing it now",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#27ae60;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">Order Confirmed</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Thank you for your order with {brand}. We've received your request and our team is already working on it.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">You'll receive another email once your order has been processed and shipped.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0">If you have any questions, please don't hesitate to contact our support team.</p></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Order Confirmed - {brand}\n\nHi {audience},\n\nThank you for your order with {brand}. We've received your request and our team is already working on it.\n\nYou'll receive another email once your order has been processed.\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "newsletter": {
+            "subject": f"{brand} Newsletter - What's New This Month",
+            "preview_text": f"Latest updates, tips, and insights from {brand}",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#3498db;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">{brand} Newsletter</h1><p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:14px">Monthly Updates & Insights</p></td></tr><tr><td style="padding:40px 30px"><h2 style="color:#333;font-size:20px;margin:0 0 15px">What's New</h2><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Here are the latest updates from {brand} that we think you'll find valuable.</p><h2 style="color:#333;font-size:20px;margin:0 0 15px">Featured Story</h2><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We've been working on exciting new developments in {product} that will help you achieve your goals more effectively.</p><h2 style="color:#333;font-size:20px;margin:0 0 15px">Tips & Resources</h2><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">Stay tuned for more tips and resources to help you get the most out of {product}.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#3498db;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">Read More</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# {brand} Newsletter\n\n## What's New\n\nHere are the latest updates from {brand} that we think you'll find valuable.\n\n## Featured Story\n\nWe've been working on exciting new developments in {product}.\n\n## Tips & Resources\n\nStay tuned for more tips and resources.\n\n**Read More**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "welcome": {
+            "subject": f"Welcome to {brand}!",
+            "preview_text": "We're thrilled to have you on board",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#e74c3c;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">Welcome to {brand}!</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We're thrilled to welcome you to the {brand} community! You've just taken the first step toward discovering what {product} can do for you.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Here's what you can expect:</p><ul style="font-size:16px;line-height:1.8;color:#333;margin:0 0 30px"><li>Access to our premium {product}</li><li>Exclusive tips and insights</li><li>Priority customer support</li></ul><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#e74c3c;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Welcome to {brand}!\n\nHi {audience},\n\nWe're thrilled to welcome you to the {brand} community!\n\nHere's what you can expect:\n- Access to our premium {product}\n- Exclusive tips and insights\n- Priority customer support\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "product-launch": {
+            "subject": f"Introducing Something New from {brand}",
+            "preview_text": f"Be the first to experience {product}",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#9b59b6;padding:40px 30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:28px">New from {brand}</h1><p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:16px">Introducing {product}</p></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We're excited to announce the launch of {product} - designed specifically for {audience} who demand excellence.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">This is just the beginning of something special, and we want you to be among the first to experience it.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#9b59b6;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Introducing {product} from {brand}\n\nHi {audience},\n\nWe're excited to announce the launch of {product}.\n\nDesigned specifically for {audience} who demand excellence.\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "cold-outreach": {
+            "subject": f"Quick question about your {brand} strategy",
+            "preview_text": f"Helping {audience} achieve more with {product}",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#f39c12;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">Let's Connect</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">I'm reaching out because I believe {brand} can help you achieve your goals more effectively.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We specialize in {product} and have helped many {audience} achieve measurable results.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">Would you be open to a quick chat about how we might be able to help?</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#f39c12;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Let's Connect\n\nHi {audience},\n\nI'm reaching out because I believe {brand} can help you achieve your goals.\n\nWe specialize in {product} and have helped many {audience} achieve results.\n\nWould you be open to a quick chat?\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "follow-up": {
+            "subject": f"Following up from {brand}",
+            "preview_text": "Just checking in on our previous conversation",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#1abc9c;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">Following Up</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">I wanted to follow up on our previous conversation. We're still very much interested in helping you with {product}.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">Let me know if you have any questions or if there's anything else I can help with.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#1abc9c;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Following Up\n\nHi {audience},\n\nI wanted to follow up on our previous conversation about {product}.\n\nLet me know if you have any questions.\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "announcement": {
+            "subject": f"Important Update from {brand}",
+            "preview_text": f"News about {product} from {brand}",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#2c3e50;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">Announcement from {brand}</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We have some exciting news to share with you. {brand} is making important updates to {product} that will benefit you directly.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">Stay tuned for more details in the coming days.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#2c3e50;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Announcement from {brand}\n\nHi {audience},\n\nWe have exciting news about {product}.\n\nStay tuned for more details.\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "nurture": {
+            "subject": f"Valuable insights from {brand}",
+            "preview_text": f"Resources to help you succeed with {product}",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#2980b9;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">Your Success Matters</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">At {brand}, we're committed to your success. That's why we've put together some valuable resources to help you get the most out of {product}.</p><h3 style="color:#333;margin:0 0 10px">Tips for Success</h3><ul style="font-size:16px;line-height:1.8;color:#333;margin:0 0 30px"><li>Start with clear goals in mind</li><li>Leverage our resources and support</li><li>Track your progress regularly</li></ul><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#2980b9;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Your Success Matters\n\nHi {audience},\n\nAt {brand}, we're committed to your success.\n\n## Tips for Success\n- Start with clear goals in mind\n- Leverage our resources and support\n- Track your progress regularly\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "re-engagement": {
+            "subject": f"We miss you at {brand}!",
+            "preview_text": f"Come back and see what's new with {product}",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#e67e22;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">We Miss You!</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">It's been a while since we've heard from you, and we wanted to reach out. A lot has changed at {brand}, and we think you'll love what's new.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">Come back and see what's new with {product}. We have some exciting updates waiting for you.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#e67e22;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# We Miss You!\n\nHi {audience},\n\nIt's been a while since we've heard from you.\n\nCome back and see what's new with {product}.\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "abandoned-cart": {
+            "subject": f"You left something behind at {brand}!",
+            "preview_text": f"Complete your order for {product} before it's gone",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#e74c3c;padding:30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:24px">Don't Forget!</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We noticed you left something in your cart. Your selection is still saved, but we can't guarantee it'll stay available for long.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">Complete your order today and enjoy {product} delivered right to your door.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#e74c3c;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Don't Forget!\n\nHi {audience},\n\nWe noticed you left something in your cart. Your selection is still saved.\n\nComplete your order today.\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "thank-you": {
+            "subject": f"Thank You from {brand}!",
+            "preview_text": "We appreciate your support",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#27ae60;padding:40px 30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:28px">Thank You!</h1></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We just wanted to take a moment to say thank you. Your support means the world to us.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Because of customers like you, {brand} continues to grow and improve. We're committed to delivering the best {product} experience possible.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">If there's anything we can do better, please don't hesitate to reach out. We're always here to help.</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#27ae60;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Thank You!\n\nHi {audience},\n\nWe just wanted to take a moment to say thank you. Your support means the world to us.\n\nBecause of customers like you, {brand} continues to grow.\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "event-invitation": {
+            "subject": f"You're Invited - {brand} Event",
+            "preview_text": f"Join us for an exclusive event from {brand}",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#8e44ad;padding:40px 30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:28px">You're Invited!</h1><p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:16px">Exclusive Event from {brand}</p></td></tr><tr><td style="padding:40px 30px"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We're thrilled to invite you to our upcoming event. This is an exclusive opportunity to connect with our team and learn about the latest in {product}.</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 30px">Spaces are limited, so reserve your spot today!</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#8e44ad;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# You're Invited!\n\nHi {audience},\n\nWe're thrilled to invite you to our upcoming event.\n\nLearn about the latest in {product}.\n\nSpaces are limited!\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+        "discount": {
+            "subject": f"Exclusive Discount from {brand}!",
+            "preview_text": f"Save big on {product} - limited time only",
+            "html": f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden"><tr><td style="background:#f39c12;padding:40px 30px;text-align:center"><h1 style="color:#ffffff;margin:0;font-size:36px">SAVE NOW</h1><p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:18px">Exclusive Discount from {brand}</p></td></tr><tr><td style="padding:40px 30px;text-align:center"><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">Hi {audience},</p><p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 20px">We're offering an exclusive discount on {product} just for you. This is a limited-time offer, so don't miss out!</p><p style="font-size:20px;font-weight:bold;color:#f39c12;margin:0 0 30px">Use this offer before it expires</p><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:#f39c12;border-radius:6px;padding:14px 36px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold">{cta}</a></td></tr></table></td></tr><tr><td style="padding:20px 30px;background:#f8f9fa;text-align:center"><p style="font-size:13px;color:#999;margin:0">&copy; {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>""",
+            "markdown": f"# Exclusive Discount from {brand}!\n\nHi {audience},\n\nWe're offering an exclusive discount on {product} just for you.\n\nThis is a limited-time offer!\n\n**{cta}**\n\n---\n*{brand} - All rights reserved.*",
+        },
+    }
+
+    template = type_templates.get(data.email_type, type_templates["promotional"])
+    return template
+
+
 # ─── AI GENERATE ─────────────────────────────────────────────────────────────
 
 
@@ -799,28 +904,51 @@ async def generate_email(data: EmailGenerateRequest, user: str = Depends(get_cur
 
     full_prompt = "\n".join(prompt_parts)
 
-    try:
-        response = await engine.generate_json(
-            prompt=full_prompt,
-            system_instruction=(
-                "You are an expert email marketing copywriter. "
-                "Create high-converting, professional emails with clean HTML and inline CSS. "
-                "Ensure all HTML is responsive and uses table-based layout for email client compatibility. "
-                "Return only valid JSON without any markdown formatting."
-            ),
-            operation="email_generate",
-            user_id=user,
-        )
+    json_data = {}
+    ai_success = False
+    response_provider = "none"
+    response_latency = 0.0
 
-        json_data = response.json_data or {} if response.success else {}
-        raw_campaigns = json_data.get("campaigns", [])
+    for attempt in range(3):
+        try:
+            response = await engine.generate_json(
+                prompt=full_prompt,
+                system_instruction=(
+                    "You are an expert email marketing copywriter. "
+                    "Create high-converting, professional emails with clean HTML and inline CSS. "
+                    "Ensure all HTML is responsive and uses table-based layout for email client compatibility. "
+                    "Return only valid JSON without any markdown formatting."
+                ),
+                operation="email_generate",
+                user_id=user,
+            )
 
-        if not raw_campaigns:
-            raw_campaigns = [json_data]
+            response_provider = response.provider or "none"
+            response_latency = response.latency_ms or 0
 
+            json_data = response.json_data or {} if response.success else {}
+            raw_campaigns = json_data.get("campaigns", [])
+
+            if not raw_campaigns:
+                raw_campaigns = [json_data]
+
+            if raw_campaigns and raw_campaigns[0].get("subject"):
+                ai_success = True
+                break
+
+            if response.error and "429" in str(response.error):
+                import asyncio
+                await asyncio.sleep(2 * (attempt + 1))
+                continue
+            break
+        except Exception:
+            import asyncio
+            await asyncio.sleep(2 * (attempt + 1))
+            continue
+
+    if ai_success:
         now = datetime.now(timezone.utc).isoformat()
         created_campaigns: list[dict] = []
-
         num = max(1, min(data.num_variations, 5))
         for raw in raw_campaigns[:num]:
             campaign_id = str(uuid.uuid4())
@@ -862,15 +990,52 @@ async def generate_email(data: EmailGenerateRequest, user: str = Depends(get_cur
 
         return EmailGenerateResponse(
             campaigns=[_to_campaign_response(c) for c in created_campaigns],
-            provider=response.provider or "none",
-            latency_ms=round(response.latency_ms or 0, 2),
+            provider=response_provider,
+            latency_ms=round(response_latency, 2),
         )
-    except HTTPException:
-        raise
-    except Exception:
-        return EmailGenerateResponse(
-            campaigns=[], provider="none", latency_ms=0,
-        )
+
+    fallback = _generate_fallback_email(data)
+    now = datetime.now(timezone.utc).isoformat()
+    campaign_id = str(uuid.uuid4())
+    campaign = {
+        "id": campaign_id,
+        "workspaceId": data.workspace_id,
+        "name": data.campaign_name or f"Fallback Generated - {data.email_type.title()}",
+        "subject": fallback["subject"],
+        "previewText": fallback["preview_text"],
+        "emailType": email_type,
+        "htmlContent": fallback["html"],
+        "markdownContent": fallback["markdown"],
+        "plainText": None,
+        "jsonContent": None,
+        "brand": data.brand,
+        "audience": data.audience,
+        "goal": data.goal,
+        "tone": data.tone,
+        "language": data.language or "English",
+        "cta": data.cta,
+        "product": data.product,
+        "keywords": data.keywords or [],
+        "templateId": None,
+        "status": "draft",
+        "sentAt": None,
+        "openRate": None,
+        "clickRate": None,
+        "unsubscribeRate": None,
+        "recipientCount": 0,
+        "aiGenerated": True,
+        "aiProvider": "fallback",
+        "aiLatencyMs": 0,
+        "deletedAt": None,
+        "createdAt": now,
+        "updatedAt": now,
+    }
+    _campaigns[campaign_id] = campaign
+    return EmailGenerateResponse(
+        campaigns=[_to_campaign_response(campaign)],
+        provider="fallback",
+        latency_ms=0,
+    )
 
 
 # ─── AI ACTION ───────────────────────────────────────────────────────────────

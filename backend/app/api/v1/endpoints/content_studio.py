@@ -420,13 +420,13 @@ def _generate_fallback_content(data: ContentGenerateRequest) -> str:
             f"giving them a significant competitive advantage in their respective markets."
         )
         paras.append(
-            f"Our process is designed to deliver maximum value with minimal disruption to your operations. "
-            f"We begin with a comprehensive assessment of your current situation, identifying strengths, "
-            f"weaknesses, and opportunities for improvement. Based on this analysis, we develop a detailed "
-            f"roadmap that outlines specific actions, timelines, and milestones. Throughout the engagement, "
-            f"we maintain open lines of communication, providing regular progress updates and adjusting our "
-            f"approach as needed to ensure optimal results. This transparent, collaborative process has "
-            f"proven to be highly effective in delivering outcomes that consistently exceed expectations."
+            "Our process is designed to deliver maximum value with minimal disruption to your operations. "
+            "We begin with a comprehensive assessment of your current situation, identifying strengths, "
+            "weaknesses, and opportunities for improvement. Based on this analysis, we develop a detailed "
+            "roadmap that outlines specific actions, timelines, and milestones. Throughout the engagement, "
+            "we maintain open lines of communication, providing regular progress updates and adjusting our "
+            "approach as needed to ensure optimal results. This transparent, collaborative process has "
+            "proven to be highly effective in delivering outcomes that consistently exceed expectations."
         )
         paras.append(
             f"Transparency is a core value at {biz}. We believe that {aud} have the right to know exactly "
@@ -795,6 +795,17 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
         else:
             html_content = f"<p>{content_text}</p>"
         title = data.title or f"{data.business_name or 'My Business'} - {data.content_type.replace('_', ' ').title()}"
+        if not seo:
+            _biz = data.business_name or "your business"
+            _prod = data.product or "products and services"
+            _aud = data.target_audience or "customers"
+            _ind = data.industry or "the industry"
+            _cta = data.call_to_action or "Get Started"
+            seo = {
+                "meta_title": f"{_biz} | Professional {_prod} for {_aud}",
+                "meta_description": f"{_biz} offers premium {_prod} for {_aud} in {_ind}. Discover how our solutions can help you succeed. {_cta}.",
+                "keywords": data.keywords or [],
+            }
 
     item_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
@@ -978,7 +989,8 @@ async def ai_optimize_content(data: ContentAIOptimizeRequest, user: str = Depend
 
 
 def _apply_fallback_transform(text: str, action: str) -> str:
-    import re, random
+    import random
+    import re
 
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     if not sentences:
