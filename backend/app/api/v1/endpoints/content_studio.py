@@ -1056,6 +1056,140 @@ def _apply_fallback_transform(text: str, action: str) -> str:
                 mid = len(words) // 2
                 result = " ".join(words[mid:mid+3] + words[:mid] + words[mid+3:])
         return result
+    elif action in ("improve", "rewrite"):
+        improved_words = {
+            "good": "excellent", "bad": "poor", "big": "significant",
+            "small": "modest", "very": "extremely", "really": "truly",
+            "help": "assist", "make": "create", "use": "utilize",
+            "get": "obtain", "find": "discover", "start": "begin",
+            "show": "demonstrate", "give": "provide", "tell": "convey",
+            "need": "require", "try": "strive", "think": "believe",
+            "important": "essential", "great": "outstanding", "new": "innovative",
+        }
+        result = text
+        for orig, repl in improved_words.items():
+            pattern = r'\b' + re.escape(orig) + r'\b'
+            if re.search(pattern, result, re.IGNORECASE):
+                result = re.sub(pattern, repl, result, count=1, flags=re.IGNORECASE)
+        if result == text:
+            result = " ".join(sentences[-1:] + sentences[:-1])
+        return result
+    elif action in ("professional", "formal"):
+        formal = {
+            "can": "shall", "will": "shall", "use": "utilize",
+            "get": "obtain", "help": "facilitate", "make": "construct",
+            "start": "commence", "end": "conclude", "buy": "procure",
+            "show": "illustrate", "tell": "inform", "give": "furnish",
+            "think": "determine", "ask": "inquire", "try": "endeavor",
+        }
+        result = text
+        for word, repl in formal.items():
+            pattern = r'\b' + re.escape(word) + r'\b'
+            if re.search(pattern, result, re.IGNORECASE):
+                result = re.sub(pattern, repl, result, count=1, flags=re.IGNORECASE)
+        return result
+    elif action in ("friendly", "casual"):
+        casual = {
+            "utilize": "use", "facilitate": "help", "commence": "start",
+            "procure": "get", "endeavor": "try", "inquire": "ask",
+            "construct": "make", "demonstrate": "show", "acquire": "get",
+            "illustrate": "show", "furnish": "give", "conclude": "end",
+        }
+        result = text
+        for word, repl in casual.items():
+            pattern = r'\b' + re.escape(word) + r'\b'
+            if re.search(pattern, result, re.IGNORECASE):
+                result = re.sub(pattern, repl, result, count=1, flags=re.IGNORECASE)
+        if result == text:
+            result = "Hey! " + sentences[0]
+            if len(sentences) > 1:
+                result += " " + " ".join(sentences[1:])
+        return result
+    elif action == "simplify":
+        complex_words = {
+            "utilize": "use", "facilitate": "help", "implement": "do",
+            "approximately": "about", "subsequently": "then",
+            "demonstrate": "show", "commence": "start", "terminate": "end",
+            "endeavor": "try", "acquire": "get", "sufficient": "enough",
+            "necessitate": "need", "prioritize": "focus on",
+            "innovative": "new", "comprehensive": "full", "significant": "big",
+            "substantial": "large", "extraordinary": "great", "fundamental": "basic",
+        }
+        result = text
+        for word, repl in complex_words.items():
+            pattern = r'\b' + re.escape(word) + r'\b'
+            if re.search(pattern, result, re.IGNORECASE):
+                result = re.sub(pattern, repl, result, count=1, flags=re.IGNORECASE)
+        if result == text:
+            simplified = []
+            for s in sentences:
+                s = re.sub(r'\bthat is\b', "that's", s, flags=re.IGNORECASE)
+                s = re.sub(r'\bdo not\b', "don't", s, flags=re.IGNORECASE)
+                s = re.sub(r'\bcannot\b', "can't", s, flags=re.IGNORECASE)
+                s = re.sub(r'\bwill not\b', "won't", s, flags=re.IGNORECASE)
+                simplified.append(s)
+            result = " ".join(simplified)
+        if result == text and len(sentences) > 1:
+            result = " ".join(sentences[1:] + sentences[:1])
+        return result
+    elif action == "luxury":
+        luxury_words = {
+            "good": "exceptional", "great": "exquisite", "best": "finest",
+            "quality": "premium", "new": "exclusive", "special": "bespoke",
+            "help": "curate", "make": "craft", "provide": "offer",
+        }
+        result = text
+        for word, repl in luxury_words.items():
+            pattern = r'\b' + re.escape(word) + r'\b'
+            if re.search(pattern, result, re.IGNORECASE):
+                result = re.sub(pattern, repl, result, count=1, flags=re.IGNORECASE)
+        return result
+    elif action == "startup":
+        startup_words = {
+            "business": "venture", "company": "startup", "product": "solution",
+            "service": "platform", "customer": "user", "market": "ecosystem",
+            "grow": "scale", "improve": "iterate", "build": "ship",
+        }
+        result = text
+        for word, repl in startup_words.items():
+            pattern = r'\b' + re.escape(word) + r'\b'
+            if re.search(pattern, result, re.IGNORECASE):
+                result = re.sub(pattern, repl, result, count=1, flags=re.IGNORECASE)
+        return result
+    elif action == "technical":
+        tech_words = {
+            "use": "implement", "make": "develop", "help": "optimize",
+            "improve": "enhance", "fix": "debug", "change": "modify",
+            "build": "deploy", "run": "execute", "test": "validate",
+        }
+        result = text
+        for word, repl in tech_words.items():
+            pattern = r'\b' + re.escape(word) + r'\b'
+            if re.search(pattern, result, re.IGNORECASE):
+                result = re.sub(pattern, repl, result, count=1, flags=re.IGNORECASE)
+        return result
+    elif action == "persuasive":
+        persuasive_additions = [
+            "Don't miss out on this opportunity.",
+            "The results speak for themselves.",
+            "Take action today and see the difference.",
+            "Join thousands of satisfied customers.",
+            "This is your chance to get ahead.",
+        ]
+        result = text
+        result += " " + random.choice(persuasive_additions)
+        return result
+    elif action == "grammar_fix":
+        result = text
+        result = re.sub(r'\s+([.,!?;:])', r'\1', result)
+        result = re.sub(r'([.,!?;:])([A-Za-z])', r'\1 \2', result)
+        result = re.sub(r'\bi\b', 'I', result)
+        if result == text:
+            words = text.split()
+            if len(words) > 6:
+                mid = len(words) // 2
+                result = " ".join(words[mid:mid+3] + words[:mid] + words[mid+3:])
+        return result
     return text
 
 
