@@ -435,6 +435,7 @@ export default function EmailCampaignEditorPage() {
                   <label className="text-sm font-medium flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     Markdown Content
+                    <span className="text-xs text-muted-foreground font-normal">(plain text version — does not affect the email design)</span>
                   </label>
                   <div className="text-sm text-muted-foreground">
                     {getCharCount(markdownContent)} chars | {getWordCount(markdownContent)} words
@@ -444,35 +445,7 @@ export default function EmailCampaignEditorPage() {
                   value={markdownContent}
                   onChange={(e) => {
                     setDirty(true);
-                    const md = e.target.value;
-                    setMarkdownContent(md);
-                    if (md.trim()) {
-                      const html = md
-                        .split('\n\n')
-                        .map(block => {
-                          block = block.trim();
-                          if (!block) return '';
-                          if (block.startsWith('### ')) return `<h3 style="font-size:18px;color:#1a1a2e;margin:20px 0 10px;font-weight:700">${block.slice(4)}</h3>`;
-                          if (block.startsWith('## ')) return `<h2 style="font-size:22px;color:#1a1a2e;margin:24px 0 12px;font-weight:700">${block.slice(3)}</h2>`;
-                          if (block.startsWith('# ')) return `<h1 style="font-size:28px;color:#1a1a2e;margin:28px 0 14px;font-weight:700">${block.slice(2)}</h1>`;
-                          if (block === '---') return '<hr style="border:none;border-top:1px solid #ddd;margin:20px 0">';
-                          if (block.startsWith('- ')) {
-                            const items = block.split('\n').filter(l => l.startsWith('- ')).map(l => `<li style="padding:4px 0;color:#444">${l.slice(2)}</li>`).join('');
-                            return `<ul style="margin:12px 0;padding-left:24px">${items}</ul>`;
-                          }
-                          const processed = block
-                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                            .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color:#2563eb">$1</a>')
-                            .replace(/\n/g, '<br>');
-                          return `<p style="font-size:16px;line-height:1.8;color:#444;margin:0 0 16px">${processed}</p>`;
-                        })
-                        .filter(Boolean)
-                        .join('\n');
-                      setHtmlContent(
-                        `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:30px;font-family:Arial,sans-serif;background:#fff">${html}</body></html>`
-                      );
-                    }
+                    setMarkdownContent(e.target.value);
                   }}
                   placeholder="# Enter your markdown content..."
                   className="min-h-[200px] font-mono text-sm"
