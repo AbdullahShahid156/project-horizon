@@ -1262,28 +1262,120 @@ async def ai_action_on_campaign(data: EmailAIRequest, user: str = Depends(get_cu
         return EmailAIResponse(
             campaign_id=data.campaign_id,
             field="html_content",
-            original=original_content[:500],
-            updated=new_content[:500],
+            original=original_content,
+            updated=new_content,
             action=data.action,
             provider=response_provider,
             latency_ms=round(response_latency, 2),
         )
 
+    import html as _html_mod
     import re
-    new_content = original_content
+
+    def _strip_tags(s: str) -> str:
+        return _html_mod.unescape(re.sub(r"<[^>]+>", " ", s))
+
+    def _rebuild_html(new_text: str) -> str:
+        if "<" in original_content:
+            body = re.sub(
+                r"(<body[^>]*>)(.*?)(</body>)",
+                lambda m: m.group(1) + "\n" + new_text + "\n" + m.group(3),
+                original_content,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+            if body == original_content:
+                inner = re.sub(r"<[^>]+>\s*", "", original_content).strip()
+                if not inner and "<" in original_content:
+                    body = re.sub(r">[^<]*<", ">\n" + new_text + "\n<", original_content, count=1)
+                else:
+                    body = new_text
+            return body
+        return new_text
+
+    plain = _strip_tags(original_content)
+    sentences = re.split(r'(?<=[.!?])\s+', plain.strip())
+    sentences = [s for s in sentences if s.strip()]
+
+    tone = (campaign.get("tone") or "professional").lower()
+    brand = campaign.get("brand") or "our brand"
+    cta = campaign.get("cta") or "Learn More"
+
     if data.action == "shorten":
-        sentences = re.split(r'(?<=[.!?])\s+', original_content.strip())
-        new_content = " ".join(sentences[:max(1, len(sentences) // 2)])
+        new_content = _rebuild_html(" ".join(sentences[:max(1, len(sentences) // 2)]))
+
     elif data.action == "expand":
-        sentences = re.split(r'(?<=[.!?])\s+', original_content.strip())
+        filler = {
+            "professional": "We are committed to delivering exceptional results and exceeding expectations.",
+            "friendly": "We'd love to help you every step of the way — don't hesitate to reach out!",
+            "luxury": "Experience the pinnacle of refined craftsmanship, designed for those who accept nothing less than perfection.",
+            "casual": "Pretty cool, right? We think you'll love it.",
+            "formal": "We cordially invite you to experience the exceptional quality of our distinguished offerings.",
+        }
+        extra = filler.get(tone, filler["professional"])
         expanded = []
         for s in sentences:
             expanded.append(s)
             if s.strip():
-                expanded.append("Furthermore, this approach ensures that every aspect is thoroughly addressed and delivers maximum value.")
-        new_content = " ".join(expanded)
+                expanded.append(extra)
+        new_content = _rebuild_html(" ".join(expanded))
+
+    elif data.action == "rewrite":
+        word_map = {
+            "amazing": "exceptional", "great": "remarkable", "best": "finest",
+            "innovative": "groundbreaking", "solution": "approach", "help": "empower",
+            "use": "leverage", "make": "craft", "get": "receive", "try": "explore",
+            "big": "significant", "fast": "swift", "easy": "seamless",
+        }
+        rewritten = plain
+        for old, new in word_map.items():
+            rewritten = re.sub(r'\b' + old + r'\b', new, rewritten, flags=re.IGNORECASE)
+        new_content = _rebuild_html(rewritten)
+
+    elif data.action == "improve":
+        improvements = []
+        if not re.search(r'<h[1-6]', original_content, re.IGNORECASE):
+            improvements.append(f"<h2>Discover What {brand} Can Do for You</h2>")
+        if "call to action" not in plain.lower() and cta.lower() not in plain.lower():
+            improvements.append(f'<p style="text-align:center;margin:24px 0"><a href="#" style="background:#2563eb;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600">{cta}</a></p>')
+        improved_text = plain
+        for s in sentences:
+            if s and not s[0].isupper():
+                s = s[0].upper() + s[1:]
+            improved_text += " " + s if improved_text else s
+        new_content = _rebuild_html(improved_text)
+        for imp in improvements:
+            if imp.startswith("<h"):
+                new_content = imp + "\n" + new_content
+            else:
+                new_content = new_content + "\n" + imp
+
+    elif data.action == "personalize":
+        greeting = "<p>Hi there,</p>\n" if "<" in original_content else "Hi there, "
+        closing = f"\n<p>Best regards,<br>The {brand} Team</p>" if "<" in original_content else f"\n\nBest regards,\nThe {brand} Team"
+        personalized = greeting + plain + closing
+        new_content = _rebuild_html(personalized)
+
+    elif data.action == "translate":
+        word_map = {
+            "amazing": "incroyable", "great": "formidable", "best": "meilleur",
+            "welcome": "bienvenue", "discover": "découvrez", "today": "aujourd'hui",
+            "offer": "offre", "free": "gratuit", "new": "nouveau", "click": "cliquez",
+        }
+        translated = plain
+        for en, fr in word_map.items():
+            translated = re.sub(r'\b' + en + r'\b', fr, translated, flags=re.IGNORECASE)
+        new_content = _rebuild_html(translated)
+
     elif data.action == "grammar-fix":
-        new_content = original_content.replace("  ", " ").replace(" .", ".").replace(" ,", ",")
+        fixed = plain
+        fixed = re.sub(r'\s+', ' ', fixed)
+        fixed = fixed.replace(" .", ".").replace(" ,", ",").replace(" !", "!").replace(" ?", "?")
+        fixed = fixed.replace(" i ", " I ").replace(" i'", " I'")
+        fixed = re.sub(r'(?<=[.!?])\s*([a-z])', lambda m: ' ' + m.group(1).upper(), fixed)
+        new_content = _rebuild_html(fixed)
+
+    else:
+        new_content = original_content
 
     now = datetime.now(timezone.utc).isoformat()
     campaign["htmlContent"] = new_content
@@ -1304,8 +1396,8 @@ async def ai_action_on_campaign(data: EmailAIRequest, user: str = Depends(get_cu
     return EmailAIResponse(
         campaign_id=data.campaign_id,
         field="html_content",
-        original=original_content[:500],
-        updated=new_content[:500],
+        original=original_content,
+        updated=new_content,
         action=data.action,
         provider="fallback",
         latency_ms=0,

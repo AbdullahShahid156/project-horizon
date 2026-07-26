@@ -173,6 +173,14 @@ export default function EmailCampaignEditorPage() {
       if (result.updated) {
         setHtmlContent(result.updated);
       }
+      try {
+        const refreshed = await emailStudioService.getCampaign(campaignId);
+        setCampaign(refreshed);
+        setSubject(refreshed.subject || "");
+        setPreviewText(refreshed.preview_text || "");
+        setHtmlContent(refreshed.html_content || result.updated || "");
+        setMarkdownContent(refreshed.markdown_content || "");
+      } catch { /* use result data */ }
       setHistory((prev) => [
         {
           id: Date.now().toString(),
@@ -584,7 +592,7 @@ export default function EmailCampaignEditorPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => handleAiAction("grammar")}
+                    onClick={() => handleAiAction("grammar-fix")}
                     disabled={aiLoading}
                   >
                     <Check className="mr-2 h-4 w-4" />
