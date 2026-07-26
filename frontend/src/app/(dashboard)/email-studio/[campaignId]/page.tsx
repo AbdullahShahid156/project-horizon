@@ -28,6 +28,7 @@ import {
   History as HistoryIcon,
   Settings,
   Eye,
+  Code,
   Brain,
   FileText,
   Clock,
@@ -62,6 +63,7 @@ export default function EmailCampaignEditorPage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [keyword, setKeyword] = useState("");
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [contentView, setContentView] = useState<"source" | "visual">("source");
 
   const fetchCampaign = useCallback(async () => {
     try {
@@ -360,16 +362,52 @@ export default function EmailCampaignEditorPage() {
                     <FileText className="h-4 w-4" />
                     HTML Content
                   </label>
-                  <div className="text-sm text-muted-foreground">
-                    {getCharCount(htmlContent)} chars | {getWordCount(htmlContent)} words
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm text-muted-foreground">
+                      {getCharCount(htmlContent)} chars | {getWordCount(htmlContent)} words
+                    </div>
+                    <div className="flex border rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setContentView("source")}
+                        className={`px-3 py-1 text-xs font-medium transition-colors ${
+                          contentView === "source"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        <Code className="inline h-3 w-3 mr-1" />
+                        Source
+                      </button>
+                      <button
+                        onClick={() => setContentView("visual")}
+                        className={`px-3 py-1 text-xs font-medium transition-colors ${
+                          contentView === "visual"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        <Eye className="inline h-3 w-3 mr-1" />
+                        Visual
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <Textarea
-                  value={htmlContent}
-                  onChange={(e) => setHtmlContent(e.target.value)}
-                  placeholder="<div>Enter your HTML email content...</div>"
-                  className="min-h-[400px] font-mono text-sm"
-                />
+                {contentView === "source" ? (
+                  <Textarea
+                    value={htmlContent}
+                    onChange={(e) => setHtmlContent(e.target.value)}
+                    placeholder="<div>Enter your HTML email content...</div>"
+                    className="min-h-[400px] font-mono text-sm"
+                  />
+                ) : (
+                  <div className="border rounded-lg overflow-hidden bg-white">
+                    <iframe
+                      srcDoc={htmlContent}
+                      className="w-full h-[500px] border-0"
+                      title="Email Visual Preview"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

@@ -971,24 +971,30 @@ async def generate_email(data: EmailGenerateRequest, user: str = Depends(get_cur
     prompt_parts.append(f"Email best practices: {tip}")
 
     prompt_parts.append(
-        "\nIMPORTANT: This must be a COMPLETE, VISUALLY RICH, PROFESSIONAL HTML email. The html_content MUST include:\n"
-        "1. A visually striking header/hero section with a colored background gradient or solid color, large bold headline\n"
-        "2. 2-4 paragraphs of compelling body content (not just 1-2 sentences)\n"
-        "3. A features/benefits section with 3-4 items as styled bullet points or icon rows, each with a short title and description\n"
-        "4. A prominent, large call-to-action button (styled as a pill/rounded button with background color, padding, and hover-ready design)\n"
-        "5. Social proof section (testimonial quote, star ratings, or trust badges)\n"
-        "6. A professional footer with brand name, address, and unsubscribe link\n"
-        "7. Full inline CSS styling: responsive table-based layout, email-safe fonts, background colors, padding, borders, rounded corners\n"
-        "8. Visual dividers or section separators between content blocks\n"
-        "Use colored section backgrounds (#f8f9fa, #e8f4fd, #fff3cd, etc.) to create visual depth.\n"
-        "Use icon-like Unicode characters (★, ●, ✦, →) for bullet points and feature markers.\n"
-        "The email should look like it was designed by a professional designer, NOT plain text in a table.\n"
-        "Total content: 400-700 words. Do NOT generate minimal or stub content.\n\n"
+        "\nGenerate a WORLD-CLASS, EXTRAORDINARY HTML email that looks like it was designed by a top-tier email agency.\n\n"
+        "DESIGN REQUIREMENTS (your html_content MUST match this level of quality):\n"
+        "- Hero section: full-width gradient background (e.g. linear-gradient 135deg), large bold white headline (28-34px), subtitle in lighter color\n"
+        "- Content sections: alternating background colors (#ffffff, #f8f9fa, #e8f4fd) for visual rhythm\n"
+        "- Feature list: 3-4 items, each with a colored circle icon (Unicode: ★ ● ✦ ◆), bold title, and 1-line description\n"
+        "- CTA button: large pill shape (border-radius 8px), gradient or solid bg, white bold text, 16px padding, centered\n"
+        "- Social proof: styled testimonial card with italic quote, bold author name, and star ratings (★★★★★)\n"
+        "- Trust badges row: 3-4 small badges with icons (✓ Free Shipping, ✓ 24/7 Support, ✓ Money Back, ✓ Premium Quality)\n"
+        "- Footer: dark background (#1a1a2e), brand name, address, unsubscribe link, copyright\n"
+        "- Visual dividers: thin colored lines or gradient bars between sections\n"
+        "- Table-based layout with 600px max-width, inline CSS on every element\n"
+        "- Unicode decorative elements: ✦ ★ ● ◆ → ♦ for visual flair\n"
+        "- Total: 400-700 words, 5-7 distinct visual sections\n\n"
+        "WHAT MAKES IT EXTRAORDINARY:\n"
+        "- Not just text in a table — it should feel like a designed newsletter\n"
+        "- Use box shadows, rounded corners, gradient backgrounds, colored section breaks\n"
+        "- Include a 'quote of the day' or 'tip of the week' styled section\n"
+        "- Add a 'What Our Customers Say' testimonial block\n"
+        "- End with a 'Stay Connected' section with social media icons (Unicode)\n\n"
         "Return a JSON object with:\n"
-        '- "subject": the email subject line (compelling, under 60 characters)\n'
-        '- "preview_text": the preview/preheader text (under 100 characters)\n'
-        '- "html_content": the FULL styled HTML email with inline CSS, table layout, colored sections, buttons, and visual hierarchy\n'
-        '- "markdown_content": the markdown version of the email text content\n'
+        '- "subject": compelling subject line (under 60 chars, with emoji if appropriate)\n'
+        '- "preview_text": preheader text (under 100 chars)\n'
+        '- "html_content": the FULL extraordinary HTML email with all above elements\n'
+        '- "markdown_content": markdown version of the email text\n'
     )
 
     if data.num_variations > 1:
@@ -1011,12 +1017,14 @@ async def generate_email(data: EmailGenerateRequest, user: str = Depends(get_cur
             response = await engine.generate_json(
                 prompt=full_prompt,
                 system_instruction=(
-                    "You are an expert email marketing copywriter and HTML email designer. "
-                    "Create visually stunning, high-converting emails with rich HTML and inline CSS. "
-                    "Use table-based layout with colored section backgrounds, styled buttons, bullet points with icons, "
-                    "testimonial sections, and visual hierarchy. The email should look professionally designed, "
-                    "not like plain text. Ensure all HTML is email-client compatible. "
-                    "Return only valid JSON without any markdown formatting."
+                    "You are a world-class email marketing designer and copywriter. "
+                    "Create EXTRAORDINARY, visually stunning HTML emails that look like premium agency work. "
+                    "Use rich inline CSS: gradients, box shadows, rounded corners, colored backgrounds, styled buttons. "
+                    "Every email must have: gradient hero header, feature bullets with icons, styled CTA button, "
+                    "testimonial card with stars, trust badges, dark footer, visual dividers. "
+                    "Table-based layout, 600px max-width, email-client compatible. "
+                    "The email should be visually breathtaking — not plain text. "
+                    "Return only valid JSON without markdown formatting."
                 ),
                 operation="email_generate",
                 user_id=user,

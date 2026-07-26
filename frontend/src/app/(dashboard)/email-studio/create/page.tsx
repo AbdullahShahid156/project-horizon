@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +36,10 @@ import {
   UserPlus,
   Check,
   X,
+  Save,
+  Eye,
+  Code,
+  ExternalLink,
 } from "lucide-react";
 
 const WORKSPACE_ID = "ws-default";
@@ -105,8 +109,13 @@ export default function CreateEmailCampaignPage() {
   const [keywordInput, setKeywordInput] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generatedCampaigns, setGeneratedCampaigns] = useState<EmailCampaign[]>([]);
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [editSubject, setEditSubject] = useState("");
+  const [editPreview, setEditPreview] = useState("");
+  const [editHtml, setEditHtml] = useState("");
+  const [editMode, setEditMode] = useState<"preview" | "source">("preview");
+  const [saving, setSaving] = useState(false);
+  const previewFrameRef = useRef<HTMLIFrameElement>(null);
 
   const addKeyword = () => {
     const val = keywordInput.trim();
@@ -142,8 +151,11 @@ export default function CreateEmailCampaignPage() {
       });
       setGeneratedCampaigns(result?.campaigns ?? []);
       if ((result?.campaigns ?? []).length > 0) {
-        setPreviewHtml(result.campaigns[0].html_content);
+        const first = result.campaigns[0];
         setPreviewIndex(0);
+        setEditSubject(first.subject || "");
+        setEditPreview(first.preview_text || "");
+        setEditHtml(first.html_content || "");
       }
       addToast({
         title: "Generated",
@@ -189,6 +201,40 @@ export default function CreateEmailCampaignPage() {
   }, [campaignName, subjectLine, previewText, emailType, brand, audience, goal, tone, language, cta, product, keywords, addToast, router]);
 
   const selectedType = EMAIL_TYPES.find((t) => t.value === emailType);
+
+  const switchVariation = (i: number) => {
+    setPreviewIndex(i);
+    const c = generatedCampaigns[i];
+    if (c) {
+      setEditSubject(c.subject || "");
+      setEditPreview(c.preview_text || "");
+      setEditHtml(c.html_content || "");
+    }
+  };
+
+  const handleSaveEdits = useCallback(async () => {
+    if (!generatedCampaigns[previewIndex]) return;
+    try {
+      setSaving(true);
+      await emailStudioService.updateCampaign(generatedCampaigns[previewIndex].id, {
+        subject: editSubject,
+        preview_text: editPreview,
+        html_content: editHtml,
+      });
+      setGeneratedCampaigns((prev) =>
+        prev.map((c, i) =>
+          i === previewIndex
+            ? { ...c, subject: editSubject, preview_text: editPreview, html_content: editHtml }
+            : c
+        )
+      );
+      addToast({ title: "Saved", description: "Changes saved successfully" });
+    } catch {
+      addToast({ title: "Error", description: "Failed to save changes", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }, [generatedCampaigns, previewIndex, editSubject, editPreview, editHtml, addToast]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -517,15 +563,33 @@ export default function CreateEmailCampaignPage() {
           {generatedCampaigns.length > 0 && (
             <Card>
               <CardContent className="p-6 space-y-4">
-                <h2 className="text-lg font-semibold">Generated Content</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Generated Email</h2>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={editMode === "preview" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setEditMode("preview")}
+                    >
+                      <Eye className="mr-1 h-4 w-4" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant={editMode === "source" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setEditMode("source")}
+                    >
+                      <Code className="mr-1 h-4 w-4" />
+                      Edit Source
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {generatedCampaigns.map((c, i) => (
                     <button
                       key={c.id}
-                      onClick={() => {
-                        setPreviewIndex(i);
-                        setPreviewHtml(c.html_content);
-                      }}
+                      onClick={() => switchVariation(i)}
                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap border transition-colors ${
                         previewIndex === i
                           ? "border-primary bg-primary/5 text-primary font-medium"
@@ -536,18 +600,79 @@ export default function CreateEmailCampaignPage() {
                     </button>
                   ))}
                 </div>
-                {previewHtml && (
-                  <div
-                    className="border rounded-lg overflow-hidden bg-white"
-                    dangerouslySetInnerHTML={{ __html: previewHtml }}
-                  />
-                )}
-                <Button
-                  onClick={() => router.push(`/email-studio/${generatedCampaigns[previewIndex].id}`)}
-                  className="w-full"
-                >
-                  Edit Campaign
-                </Button>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Subject Line</label>
+                      <Input
+                        value={editSubject}
+                        onChange={(e) => setEditSubject(e.target.value)}
+                        placeholder="Email subject..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Preview Text</label>
+                      <Input
+                        value={editPreview}
+                        onChange={(e) => setEditPreview(e.target.value)}
+                        placeholder="Preview text (shown in inbox)..."
+                      />
+                    </div>
+                    {editMode === "source" && (
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">HTML Content</label>
+                        <Textarea
+                          value={editHtml}
+                          onChange={(e) => setEditHtml(e.target.value)}
+                          className="min-h-[400px] font-mono text-xs"
+                        />
+                      </div>
+                    )}
+                    {editMode === "preview" && (
+                      <div className="border rounded-lg overflow-hidden bg-white">
+                        <iframe
+                          ref={previewFrameRef}
+                          srcDoc={editHtml}
+                          className="w-full h-[500px] border-0"
+                          title="Email Preview"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {editMode === "source" && (
+                    <div className="border rounded-lg overflow-hidden bg-white">
+                      <div className="bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                        Live Preview
+                      </div>
+                      <iframe
+                        ref={previewFrameRef}
+                        srcDoc={editHtml}
+                        className="w-full h-[500px] border-0"
+                        title="Live Preview"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button onClick={handleSaveEdits} disabled={saving} variant="default">
+                    {saving ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                    )}
+                    Save Changes
+                  </Button>
+                  <Button
+                    onClick={() => router.push(`/email-studio/${generatedCampaigns[previewIndex].id}`)}
+                    variant="outline"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open in Editor
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
