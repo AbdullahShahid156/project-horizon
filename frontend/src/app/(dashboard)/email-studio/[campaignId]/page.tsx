@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { emailStudioService, type EmailCampaign } from "@/services/email-studio";
@@ -64,6 +64,8 @@ export default function EmailCampaignEditorPage() {
   const [keyword, setKeyword] = useState("");
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [contentView, setContentView] = useState<"source" | "visual">("source");
+  const [dirty, setDirty] = useState(false);
+  const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchCampaign = useCallback(async () => {
     try {
@@ -88,6 +90,23 @@ export default function EmailCampaignEditorPage() {
   useEffect(() => {
     fetchCampaign();
   }, [fetchCampaign]);
+
+  useEffect(() => {
+    if (!dirty || !campaign) return;
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    autoSaveRef.current = setTimeout(async () => {
+      try {
+        await emailStudioService.updateCampaign(campaignId, {
+          subject,
+          preview_text: previewText,
+          html_content: htmlContent,
+          markdown_content: markdownContent,
+        });
+        setDirty(false);
+      } catch { /* silent */ }
+    }, 1000);
+    return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
+  }, [dirty, subject, previewText, htmlContent, markdownContent, campaignId, campaign]);
 
   const handleSave = async () => {
     if (!campaign) return;
@@ -294,7 +313,7 @@ export default function EmailCampaignEditorPage() {
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              Save
+              {dirty ? "Save*" : "Saved"}
             </Button>
             <Button size="sm" onClick={handleSend}>
               <Send className="mr-2 h-4 w-4" />
@@ -338,7 +357,7 @@ export default function EmailCampaignEditorPage() {
                 </label>
                 <Input
                   value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
+                  onChange={(e) => { setSubject(e.target.value); setDirty(true); }}
                   placeholder="Enter email subject line..."
                   className="text-lg"
                 />
@@ -351,7 +370,7 @@ export default function EmailCampaignEditorPage() {
                 </label>
                 <Input
                   value={previewText}
-                  onChange={(e) => setPreviewText(e.target.value)}
+                  onChange={(e) => { setPreviewText(e.target.value); setDirty(true); }}
                   placeholder="Enter preview text (shown in inbox)..."
                 />
               </div>
@@ -395,13 +414,14 @@ export default function EmailCampaignEditorPage() {
                 {contentView === "source" ? (
                   <Textarea
                     value={htmlContent}
-                    onChange={(e) => setHtmlContent(e.target.value)}
+                    onChange={(e) => { setHtmlContent(e.target.value); setDirty(true); }}
                     placeholder="<div>Enter your HTML email content...</div>"
                     className="min-h-[400px] font-mono text-sm"
                   />
                 ) : (
                   <div className="border rounded-lg overflow-hidden bg-white">
                     <iframe
+                      key={htmlContent}
                       srcDoc={htmlContent}
                       className="w-full h-[500px] border-0"
                       title="Email Visual Preview"
@@ -423,6 +443,7 @@ export default function EmailCampaignEditorPage() {
                 <Textarea
                   value={markdownContent}
                   onChange={(e) => {
+                    setDirty(true);
                     const md = e.target.value;
                     setMarkdownContent(md);
                     if (md.trim()) {
