@@ -165,6 +165,9 @@ export default function ContentEditorPage() {
   };
 
   const execCommand = (cmd: string, value?: string) => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
     pushUndo();
     document.execCommand(cmd, false, value);
     if (editorRef.current) {
@@ -425,53 +428,54 @@ export default function ContentEditorPage() {
           <Card>
             <CardContent className="p-2">
               <div className="flex items-center gap-1 flex-wrap border-b pb-2 mb-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("bold")} aria-label="Bold">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("bold"); }} aria-label="Bold">
                   <Bold className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("italic")} aria-label="Italic">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("italic"); }} aria-label="Italic">
                   <Italic className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("underline")} aria-label="Underline">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("underline"); }} aria-label="Underline">
                   <Underline className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "<h1>")} aria-label="Heading 1">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<h1>"); }} aria-label="Heading 1">
                   <Heading1 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "<h2>")} aria-label="Heading 2">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<h2>"); }} aria-label="Heading 2">
                   <Heading2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "<h3>")} aria-label="Heading 3">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<h3>"); }} aria-label="Heading 3">
                   <Heading3 className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("insertUnorderedList")} aria-label="Bullet list">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("insertUnorderedList"); }} aria-label="Bullet list">
                   <List className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("insertOrderedList")} aria-label="Numbered list">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("insertOrderedList"); }} aria-label="Numbered list">
                   <ListOrdered className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => {
+                  e.preventDefault();
                   const url = prompt("Enter URL:");
                   if (url) execCommand("createLink", url);
                 }} aria-label="Insert link">
                   <Link2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "blockquote")} aria-label="Quote">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<blockquote>"); }} aria-label="Quote">
                   <Quote className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("formatBlock", "pre")} aria-label="Code block">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<pre>"); }} aria-label="Code block">
                   <Code className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand("insertHorizontalRule")} aria-label="Horizontal rule">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("insertHorizontalRule"); }} aria-label="Horizontal rule">
                   <Minus className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleUndo} disabled={undoStack.length === 0} aria-label="Undo">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); handleUndo(); }} disabled={undoStack.length === 0} aria-label="Undo">
                   <Undo2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRedo} disabled={redoStack.length === 0} aria-label="Redo">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); handleRedo(); }} disabled={redoStack.length === 0} aria-label="Redo">
                   <Redo2 className="h-4 w-4" />
                 </Button>
               </div>

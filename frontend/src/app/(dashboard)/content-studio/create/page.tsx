@@ -94,10 +94,12 @@ export default function ContentCreatePage() {
   const handleGenerate = async () => {
     if (!formData.content_type) {
       setError("Please select a content type");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     if (!formData.business_name) {
       setError("Please enter a business name");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -105,7 +107,7 @@ export default function ContentCreatePage() {
       setGenerating(true);
       setError("");
       const result = await contentStudioService.generateContent({
-        workspace_id: "default-workspace",
+        workspace_id: "ws-default",
         content_type: formData.content_type,
         title: formData.title || undefined,
         business_name: formData.business_name,
@@ -124,6 +126,7 @@ export default function ContentCreatePage() {
       router.push(`/content-studio/${result.content_id}/editor`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed. Please try again.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setGenerating(false);
     }
@@ -371,7 +374,7 @@ export default function ContentCreatePage() {
         </Button>
         <Button
           onClick={handleGenerate}
-          disabled={generating || !formData.content_type || !formData.business_name}
+          disabled={generating}
           size="lg"
         >
           {generating ? (
@@ -387,6 +390,11 @@ export default function ContentCreatePage() {
           )}
         </Button>
       </div>
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-lg p-3 text-sm text-right">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
