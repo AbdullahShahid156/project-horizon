@@ -971,19 +971,24 @@ async def generate_email(data: EmailGenerateRequest, user: str = Depends(get_cur
     prompt_parts.append(f"Email best practices: {tip}")
 
     prompt_parts.append(
-        "\nIMPORTANT: This must be a COMPLETE, PROFESSIONAL email. The html_content must be a full HTML email with:\n"
-        "1. A compelling headline/header section\n"
-        "2. 2-4 paragraphs of body content (not just 1-2 sentences)\n"
-        "3. A list of 3-4 key features or benefits\n"
-        "4. A prominent call-to-action button\n"
-        "5. A professional footer with brand name\n"
-        "6. Full inline CSS styling with responsive table-based layout\n"
-        "The total email should be 300-600 words of content. Do NOT generate minimal or stub content.\n\n"
+        "\nIMPORTANT: This must be a COMPLETE, VISUALLY RICH, PROFESSIONAL HTML email. The html_content MUST include:\n"
+        "1. A visually striking header/hero section with a colored background gradient or solid color, large bold headline\n"
+        "2. 2-4 paragraphs of compelling body content (not just 1-2 sentences)\n"
+        "3. A features/benefits section with 3-4 items as styled bullet points or icon rows, each with a short title and description\n"
+        "4. A prominent, large call-to-action button (styled as a pill/rounded button with background color, padding, and hover-ready design)\n"
+        "5. Social proof section (testimonial quote, star ratings, or trust badges)\n"
+        "6. A professional footer with brand name, address, and unsubscribe link\n"
+        "7. Full inline CSS styling: responsive table-based layout, email-safe fonts, background colors, padding, borders, rounded corners\n"
+        "8. Visual dividers or section separators between content blocks\n"
+        "Use colored section backgrounds (#f8f9fa, #e8f4fd, #fff3cd, etc.) to create visual depth.\n"
+        "Use icon-like Unicode characters (★, ●, ✦, →) for bullet points and feature markers.\n"
+        "The email should look like it was designed by a professional designer, NOT plain text in a table.\n"
+        "Total content: 400-700 words. Do NOT generate minimal or stub content.\n\n"
         "Return a JSON object with:\n"
         '- "subject": the email subject line (compelling, under 60 characters)\n'
         '- "preview_text": the preview/preheader text (under 100 characters)\n'
-        '- "html_content": the FULL HTML email body with inline CSS styles (responsive, table-based layout)\n'
-        '- "markdown_content": the markdown version of the email content\n'
+        '- "html_content": the FULL styled HTML email with inline CSS, table layout, colored sections, buttons, and visual hierarchy\n'
+        '- "markdown_content": the markdown version of the email text content\n'
     )
 
     if data.num_variations > 1:
@@ -1006,9 +1011,11 @@ async def generate_email(data: EmailGenerateRequest, user: str = Depends(get_cur
             response = await engine.generate_json(
                 prompt=full_prompt,
                 system_instruction=(
-                    "You are an expert email marketing copywriter. "
-                    "Create high-converting, professional emails with clean HTML and inline CSS. "
-                    "Ensure all HTML is responsive and uses table-based layout for email client compatibility. "
+                    "You are an expert email marketing copywriter and HTML email designer. "
+                    "Create visually stunning, high-converting emails with rich HTML and inline CSS. "
+                    "Use table-based layout with colored section backgrounds, styled buttons, bullet points with icons, "
+                    "testimonial sections, and visual hierarchy. The email should look professionally designed, "
+                    "not like plain text. Ensure all HTML is email-client compatible. "
                     "Return only valid JSON without any markdown formatting."
                 ),
                 operation="email_generate",
@@ -1177,22 +1184,34 @@ async def ai_action_on_campaign(data: EmailAIRequest, user: str = Depends(get_cu
     original_content = campaign.get("htmlContent") or campaign.get("markdownContent") or campaign["subject"]
 
     prompt = (
+        f"You are editing an existing HTML email. You MUST preserve ALL of the following in your response:\n"
+        f"- All HTML tags, table structure, and table-based layout\n"
+        f"- All inline CSS styles (every style attribute on every element)\n"
+        f"- All images, image URLs, and image dimensions\n"
+        f"- All bullet points (<ul>, <ol>, <li> tags)\n"
+        f"- All links (<a> tags) and button styles\n"
+        f"- All colors, fonts, spacing, padding, and margins\n"
+        f"- The overall visual structure and design of the email\n\n"
         f"Email Type: {campaign['emailType']}\n"
         f"Subject: {campaign['subject']}\n"
         f"Brand: {campaign.get('brand') or 'Not specified'}\n"
         f"Audience: {campaign.get('audience') or 'Not specified'}\n"
         f"Tone: {campaign.get('tone') or 'Professional'}\n"
-        f"Action: {action_text}\n\n"
-        f"Current email content:\n{original_content}\n\n"
+        f"Action to perform: {action_text}\n\n"
+        f"Current HTML email content (preserve ALL formatting, only change the text/copy as needed):\n{original_content}\n\n"
     )
     if data.context:
         prompt += f"Additional instructions: {data.context}\n\n"
     prompt += (
         "Return a JSON object with:\n"
-        '- "subject": the updated subject line\n'
-        '- "preview_text": the updated preview text\n'
-        '- "html_content": the updated HTML email body with inline CSS\n'
-        '- "markdown_content": the updated markdown version\n'
+        '- "subject": the updated subject line (keep if action does not require change)\n'
+        '- "preview_text": the updated preview text (keep if action does not require change)\n'
+        '- "html_content": the COMPLETE updated HTML email with ALL existing inline CSS, tables, images, bullets, and formatting preserved\n'
+        '- "markdown_content": a markdown version of the email text content\n\n'
+        "CRITICAL: The html_content must be a COMPLETE, READY-TO-SEND HTML email. "
+        "Do NOT output plain text. Do NOT remove HTML tags. Do NOT strip styling. "
+        "Do NOT remove images or bullet points. Do NOT simplify the layout. "
+        "Only modify the text copy within the existing HTML structure."
     )
 
     ai_success = False
@@ -1206,8 +1225,12 @@ async def ai_action_on_campaign(data: EmailAIRequest, user: str = Depends(get_cu
                 prompt=prompt,
                 system_instruction=(
                     "You are an expert email marketing copywriter. "
-                    "Modify the email according to the requested action while keeping it professional and high-converting. "
-                    "Maintain responsive HTML with table-based layout and inline CSS. "
+                    "You are given an existing HTML email. Your job is to modify ONLY the text copy "
+                    "(headlines, paragraphs, button text, etc.) according to the requested action. "
+                    "You MUST keep the EXACT same HTML structure, table layout, inline CSS styles, "
+                    "images, bullet points, links, and visual design. "
+                    "Do NOT convert HTML to plain text. Do NOT remove any HTML tags or styles. "
+                    "Do NOT simplify or strip the layout. "
                     "Return only valid JSON without any markdown formatting."
                 ),
                 operation=f"email_ai_{data.action}",
@@ -1269,55 +1292,41 @@ async def ai_action_on_campaign(data: EmailAIRequest, user: str = Depends(get_cu
             latency_ms=round(response_latency, 2),
         )
 
-    import html as _html_mod
     import re
 
-    def _strip_tags(s: str) -> str:
-        return _html_mod.unescape(re.sub(r"<[^>]+>", " ", s))
-
-    def _rebuild_html(new_text: str) -> str:
-        if "<" in original_content:
-            body = re.sub(
-                r"(<body[^>]*>)(.*?)(</body>)",
-                lambda m: m.group(1) + "\n" + new_text + "\n" + m.group(3),
-                original_content,
-                flags=re.DOTALL | re.IGNORECASE,
-            )
-            if body == original_content:
-                inner = re.sub(r"<[^>]+>\s*", "", original_content).strip()
-                if not inner and "<" in original_content:
-                    body = re.sub(r">[^<]*<", ">\n" + new_text + "\n<", original_content, count=1)
-                else:
-                    body = new_text
-            return body
-        return new_text
-
-    plain = _strip_tags(original_content)
-    sentences = re.split(r'(?<=[.!?])\s+', plain.strip())
-    sentences = [s for s in sentences if s.strip()]
+    def _transform_text(html: str, fn) -> str:
+        """Apply fn() only to visible text between HTML tags, preserving all tags/CSS."""
+        return re.sub(r'>([^<]+)<', lambda m: '>' + fn(m.group(1)) + '<', html)
 
     tone = (campaign.get("tone") or "professional").lower()
     brand = campaign.get("brand") or "our brand"
     cta = campaign.get("cta") or "Learn More"
 
     if data.action == "shorten":
-        new_content = _rebuild_html(" ".join(sentences[:max(1, len(sentences) // 2)]))
+        def _shorten(text):
+            sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+            return " ".join(sentences[:max(1, len(sentences) // 2)])
+        new_content = _transform_text(original_content, _shorten)
 
     elif data.action == "expand":
-        filler = {
-            "professional": "We are committed to delivering exceptional results and exceeding expectations.",
-            "friendly": "We'd love to help you every step of the way — don't hesitate to reach out!",
-            "luxury": "Experience the pinnacle of refined craftsmanship, designed for those who accept nothing less than perfection.",
-            "casual": "Pretty cool, right? We think you'll love it.",
-            "formal": "We cordially invite you to experience the exceptional quality of our distinguished offerings.",
+        fillers = {
+            "professional": "We're committed to delivering exceptional results.",
+            "friendly": "We'd love to help you every step of the way!",
+            "luxury": "Experience the pinnacle of refined craftsmanship.",
+            "casual": "Pretty cool, right?",
+            "formal": "We cordially invite you to experience our offerings.",
         }
-        extra = filler.get(tone, filler["professional"])
-        expanded = []
-        for s in sentences:
-            expanded.append(s)
-            if s.strip():
-                expanded.append(extra)
-        new_content = _rebuild_html(" ".join(expanded))
+        filler = fillers.get(tone, fillers["professional"])
+
+        def _expand(text):
+            sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+            expanded = []
+            for s in sentences:
+                expanded.append(s)
+                if s.strip() and len(expanded) % 2 == 0:
+                    expanded.append(filler)
+            return " ".join(expanded)
+        new_content = _transform_text(original_content, _expand)
 
     elif data.action == "rewrite":
         word_map = {
@@ -1325,54 +1334,62 @@ async def ai_action_on_campaign(data: EmailAIRequest, user: str = Depends(get_cu
             "innovative": "groundbreaking", "solution": "approach", "help": "empower",
             "use": "leverage", "make": "craft", "get": "receive", "try": "explore",
             "big": "significant", "fast": "swift", "easy": "seamless",
+            "stunning": "breathtaking", "beautiful": "elegant", "powerful": "robust",
+            "save": "unlock", "discount": "exclusive offer", "buy": "discover",
         }
-        rewritten = plain
-        for old, new in word_map.items():
-            rewritten = re.sub(r'\b' + old + r'\b', new, rewritten, flags=re.IGNORECASE)
-        new_content = _rebuild_html(rewritten)
+
+        def _rewrite(text):
+            result = text
+            for old, new in word_map.items():
+                result = re.sub(r'\b' + old + r'\b', new, result, flags=re.IGNORECASE)
+            return result
+        new_content = _transform_text(original_content, _rewrite)
 
     elif data.action == "improve":
-        improvements = []
-        if not re.search(r'<h[1-6]', original_content, re.IGNORECASE):
-            improvements.append(f"<h2>Discover What {brand} Can Do for You</h2>")
-        if "call to action" not in plain.lower() and cta.lower() not in plain.lower():
-            improvements.append(f'<p style="text-align:center;margin:24px 0"><a href="#" style="background:#2563eb;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600">{cta}</a></p>')
-        improved_text = plain
-        for s in sentences:
-            if s and not s[0].isupper():
-                s = s[0].upper() + s[1:]
-            improved_text += " " + s if improved_text else s
-        new_content = _rebuild_html(improved_text)
-        for imp in improvements:
-            if imp.startswith("<h"):
-                new_content = imp + "\n" + new_content
-            else:
-                new_content = new_content + "\n" + imp
+        new_content = original_content
+
+        if "<h" not in original_content.lower():
+            heading = f'<tr><td style="padding:20px 30px;text-align:center"><h1 style="margin:0;font-size:28px;color:#1a1a2e">Discover What {brand} Can Do for You</h1></td></tr>'
+            new_content = re.sub(r'(<body[^>]*>)', r'\1\n' + heading, new_content, count=1, flags=re.IGNORECASE)
+
+        if cta.lower() not in original_content.lower():
+            cta_html = f'<tr><td style="padding:20px 30px;text-align:center"><a href="#" style="background:#2563eb;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;display:inline-block">{cta}</a></td></tr>'
+            new_content = re.sub(r'(</body>)', cta_html + '\n' + r'\1', new_content, count=1, flags=re.IGNORECASE)
 
     elif data.action == "personalize":
-        greeting = "<p>Hi there,</p>\n" if "<" in original_content else "Hi there, "
-        closing = f"\n<p>Best regards,<br>The {brand} Team</p>" if "<" in original_content else f"\n\nBest regards,\nThe {brand} Team"
-        personalized = greeting + plain + closing
-        new_content = _rebuild_html(personalized)
+        greeting = '<tr><td style="padding:20px 30px 10px"><p style="margin:0;font-size:16px;color:#333">Hi there,</p></td></tr>'
+        closing = f'<tr><td style="padding:10px 30px 20px"><p style="margin:0;font-size:14px;color:#666">Best regards,<br><strong>The {brand} Team</strong></p></td></tr>'
+        new_content = original_content
+        if "Hi there" not in original_content:
+            new_content = re.sub(r'(<body[^>]*>)', r'\1\n' + greeting, new_content, count=1, flags=re.IGNORECASE)
+        if "Best regards" not in original_content:
+            new_content = re.sub(r'(</body>)', closing + '\n' + r'\1', new_content, count=1, flags=re.IGNORECASE)
 
     elif data.action == "translate":
         word_map = {
-            "amazing": "incroyable", "great": "formidable", "best": "meilleur",
-            "welcome": "bienvenue", "discover": "découvrez", "today": "aujourd'hui",
-            "offer": "offre", "free": "gratuit", "new": "nouveau", "click": "cliquez",
+            "welcome": "bienvenue", "hello": "bonjour", "thank you": "merci",
+            "discover": "découvrez", "today": "aujourd'hui", "new": "nouveau",
+            "offer": "offre", "free": "gratuit", "click": "cliquez",
+            "learn more": "en savoir plus", "get started": "commencer",
+            "sign up": "s'inscrire", "contact us": "contactez-nous",
         }
-        translated = plain
-        for en, fr in word_map.items():
-            translated = re.sub(r'\b' + en + r'\b', fr, translated, flags=re.IGNORECASE)
-        new_content = _rebuild_html(translated)
+
+        def _translate(text):
+            result = text
+            for en, fr in word_map.items():
+                result = re.sub(r'\b' + re.escape(en) + r'\b', fr, result, flags=re.IGNORECASE)
+            return result
+        new_content = _transform_text(original_content, _translate)
 
     elif data.action == "grammar-fix":
-        fixed = plain
-        fixed = re.sub(r'\s+', ' ', fixed)
-        fixed = fixed.replace(" .", ".").replace(" ,", ",").replace(" !", "!").replace(" ?", "?")
-        fixed = fixed.replace(" i ", " I ").replace(" i'", " I'")
-        fixed = re.sub(r'(?<=[.!?])\s*([a-z])', lambda m: ' ' + m.group(1).upper(), fixed)
-        new_content = _rebuild_html(fixed)
+        def _grammar(text):
+            result = text
+            result = re.sub(r'\s+', ' ', result)
+            result = result.replace(" .", ".").replace(" ,", ",").replace(" !", "!").replace(" ?", "?")
+            result = re.sub(r'\bi\b', 'I', result)
+            result = re.sub(r"\bi'", "I'", result)
+            return result
+        new_content = _transform_text(original_content, _grammar)
 
     else:
         new_content = original_content
