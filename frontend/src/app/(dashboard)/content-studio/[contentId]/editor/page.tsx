@@ -117,10 +117,6 @@ export default function ContentEditorPage() {
         const kw = (data.seo_data as Record<string, unknown>).keywords;
         setMetaKeywords(Array.isArray(kw) ? kw.join(", ") : "");
       }
-      const html = data?.html_body || data?.plain_body || "";
-      if (editorRef.current && html) {
-        editorRef.current.innerHTML = html;
-      }
     } catch (err) {
       console.error("Failed to load content:", err);
     } finally {
@@ -141,6 +137,12 @@ export default function ContentEditorPage() {
     loadContent();
     loadVersions();
   }, [loadContent, loadVersions]);
+
+  useEffect(() => {
+    if (!loading && item && editorRef.current && !editorRef.current.innerHTML.trim()) {
+      editorRef.current.innerHTML = item.html_body || item.plain_body || "";
+    }
+  }, [loading, item]);
 
   const pushUndo = () => {
     if (editorRef.current) {
