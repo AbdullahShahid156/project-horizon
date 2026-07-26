@@ -77,6 +77,8 @@ const EMAIL_TYPES = [
   { value: "discount", label: "Discount" },
   { value: "re-engagement", label: "Re-engagement" },
   { value: "announcement", label: "Announcement" },
+  { value: "transactional", label: "Transactional" },
+  { value: "nurture", label: "Nurture" },
 ];
 
 const STATUS_OPTIONS = [
@@ -115,6 +117,8 @@ const typeColors: Record<string, string> = {
   discount: "bg-lime-100 text-lime-800 border-lime-200",
   "re-engagement": "bg-violet-100 text-violet-800 border-violet-200",
   announcement: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  transactional: "bg-slate-100 text-slate-800 border-slate-200",
+  nurture: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
 };
 
 const categoryColors: Record<string, string> = {

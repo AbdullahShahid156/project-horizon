@@ -112,7 +112,8 @@ export default function EmailCampaignEditorPage() {
   const handleSend = async () => {
     if (!campaign) return;
     try {
-      await emailStudioService.sendCampaign(campaignId);
+      const updated = await emailStudioService.sendCampaign(campaignId);
+      setCampaign(updated);
       addToast({ title: "Success", description: "Campaign sent" });
     } catch {
       addToast({
@@ -167,9 +168,11 @@ export default function EmailCampaignEditorPage() {
       const result = await emailStudioService.aiAction({
         campaign_id: campaignId,
         action,
-        context: aiContext || htmlContent,
+        context: aiContext || undefined,
       });
-      setHtmlContent(result.updated);
+      if (result.updated) {
+        setHtmlContent(result.updated);
+      }
       setHistory((prev) => [
         {
           id: Date.now().toString(),

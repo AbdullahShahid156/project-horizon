@@ -68,6 +68,18 @@ class EmailTemplateCreateRequest(BaseModel):
     variables: list[str] | None = None
 
 
+class EmailTemplateUpdateRequest(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    category: str | None = None
+    email_type: str | None = None
+    subject: str | None = None
+    preview_text: str | None = None
+    html_content: str | None = None
+    markdown_content: str | None = None
+    variables: list[str] | None = None
+
+
 class EmailCampaignResponse(BaseModel):
     id: str
     workspace_id: str

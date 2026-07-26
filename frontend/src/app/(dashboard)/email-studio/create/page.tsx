@@ -53,6 +53,8 @@ const EMAIL_TYPES = [
   { value: "discount", label: "Discount", icon: Tag, description: "Share exclusive discount codes" },
   { value: "re-engagement", label: "Re-engagement", icon: UserPlus, description: "Win back inactive subscribers" },
   { value: "announcement", label: "Announcement", icon: PartyPopper, description: "Share important company news" },
+  { value: "transactional", label: "Transactional", icon: Send, description: "Order confirmations, receipts, and notifications" },
+  { value: "nurture", label: "Nurture", icon: Mail, description: "Build relationships and trust over time" },
 ];
 
 const GOALS = [
