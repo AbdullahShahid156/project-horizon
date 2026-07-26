@@ -733,180 +733,458 @@ async def get_campaign_history(campaign_id: str, user: str = Depends(get_current
 
 
 def _generate_fallback_email(data: EmailGenerateRequest) -> dict:
-    """Generate template-based email when AI is unavailable."""
+    """Generate extraordinary template-based email when AI is unavailable."""
     brand = data.brand or "your brand"
     audience = data.audience or "valued customers"
     product = data.product or "our products"
-    cta = data.cta or "Learn More"
+    cta = data.cta or "Get Started"
+
+    _THEMES = {
+        "promotional": {
+            "gradient": "linear-gradient(135deg,#ff6b35 0%,#f7931e 50%,#ffd700 100%)",
+            "accent": "#ff6b35", "accent2": "#f7931e", "bg_alt": "#fff8f0",
+            "hero_emoji": "🔥", "badge_color": "#ff6b35",
+            "features_icon": ["⚡", "🎁", "💎", "🚀"],
+        },
+        "transactional": {
+            "gradient": "linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)",
+            "accent": "#2c5364", "accent2": "#203a43", "bg_alt": "#f0f7fa",
+            "hero_emoji": "✅", "badge_color": "#2c5364",
+            "features_icon": ["🔒", "📦", "💳", "📞"],
+        },
+        "newsletter": {
+            "gradient": "linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
+            "accent": "#667eea", "accent2": "#764ba2", "bg_alt": "#f4f0ff",
+            "hero_emoji": "📰", "badge_color": "#667eea",
+            "features_icon": ["💡", "📊", "🎯", "🏆"],
+        },
+        "welcome": {
+            "gradient": "linear-gradient(135deg,#11998e 0%,#38ef7d 100%)",
+            "accent": "#11998e", "accent2": "#38ef7d", "bg_alt": "#f0faf6",
+            "hero_emoji": "👋", "badge_color": "#11998e",
+            "features_icon": ["🌟", "🎯", "💎", "🎁"],
+        },
+        "product-launch": {
+            "gradient": "linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%)",
+            "accent": "#7c3aed", "accent2": "#a855f7", "bg_alt": "#f5f3ff",
+            "hero_emoji": "🚀", "badge_color": "#7c3aed",
+            "features_icon": ["⚡", "🎨", "📊", "🔗"],
+        },
+        "cold-outreach": {
+            "gradient": "linear-gradient(135deg,#1e3c72 0%,#2a5298 100%)",
+            "accent": "#1e3c72", "accent2": "#2a5298", "bg_alt": "#eef4fb",
+            "hero_emoji": "🤝", "badge_color": "#1e3c72",
+            "features_icon": ["📈", "🏆", "💼", "🎯"],
+        },
+        "follow-up": {
+            "gradient": "linear-gradient(135deg,#f093fb 0%,#f5576c 100%)",
+            "accent": "#f5576c", "accent2": "#f093fb", "bg_alt": "#fef0f5",
+            "hero_emoji": "💬", "badge_color": "#f5576c",
+            "features_icon": ["📋", "📊", "💡", "🤝"],
+        },
+        "announcement": {
+            "gradient": "linear-gradient(135deg,#fc4a1a 0%,#f7b733 100%)",
+            "accent": "#fc4a1a", "accent2": "#f7b733", "bg_alt": "#fff8f0",
+            "hero_emoji": "📢", "badge_color": "#fc4a1a",
+            "features_icon": ["🆕", "⭐", "🔥", "🎯"],
+        },
+        "nurture": {
+            "gradient": "linear-gradient(135deg,#56ab2f 0%,#a8e063 100%)",
+            "accent": "#56ab2f", "accent2": "#a8e063", "bg_alt": "#f2f9ec",
+            "hero_emoji": "🌱", "badge_color": "#56ab2f",
+            "features_icon": ["📖", "💡", "🎓", "🌟"],
+        },
+        "re-engagement": {
+            "gradient": "linear-gradient(135deg,#e44d26 0%,#f16529 50%,#e44d26 100%)",
+            "accent": "#e44d26", "accent2": "#f16529", "bg_alt": "#fef2ee",
+            "hero_emoji": "❤️", "badge_color": "#e44d26",
+            "features_icon": ["🆕", "⚡", "🎁", "🚀"],
+        },
+        "abandoned-cart": {
+            "gradient": "linear-gradient(135deg,#eb3349 0%,#f45c43 100%)",
+            "accent": "#eb3349", "accent2": "#f45c43", "bg_alt": "#fef0f0",
+            "hero_emoji": "🛒", "badge_color": "#eb3349",
+            "features_icon": ["⏰", "💰", "🚚", "🔒"],
+        },
+        "thank-you": {
+            "gradient": "linear-gradient(135deg,#a18cd1 0%,#fbc2eb 100%)",
+            "accent": "#a18cd1", "accent2": "#fbc2eb", "bg_alt": "#f9f3fd",
+            "hero_emoji": "🙏", "badge_color": "#a18cd1",
+            "features_icon": ["❤️", "🌟", "🎁", "💎"],
+        },
+        "event-invitation": {
+            "gradient": "linear-gradient(135deg,#7f00ff 0%,#e100ff 100%)",
+            "accent": "#7f00ff", "accent2": "#e100ff", "bg_alt": "#f8f0ff",
+            "hero_emoji": "🎉", "badge_color": "#7f00ff",
+            "features_icon": ["🎤", "💡", "🤝", "📝"],
+        },
+        "discount": {
+            "gradient": "linear-gradient(135deg,#f7971e 0%,#ffd200 100%)",
+            "accent": "#f7971e", "accent2": "#ffd200", "bg_alt": "#fffbf0",
+            "hero_emoji": "🏷️", "badge_color": "#f7971e",
+            "features_icon": ["💰", "⚡", "🎁", "⏰"],
+        },
+    }
+    theme = _THEMES.get(data.email_type, _THEMES["promotional"])
 
     subjects = {
-        "promotional": f"Don't Miss Out - Special Offer from {brand}!",
-        "transactional": f"Your {brand} Order Confirmation",
-        "newsletter": f"{brand} Newsletter - What's New This Month",
-        "welcome": f"Welcome to {brand} - Let's Get Started!",
-        "product-launch": f"Introducing Something New from {brand}",
-        "cold-outreach": f"A Quick Question About Your {brand} Strategy",
-        "follow-up": f"Following Up from {brand}",
-        "announcement": f"Important Update from {brand}",
-        "nurture": f"Valuable Insights from {brand}",
-        "re-engagement": f"We Miss You at {brand}!",
-        "abandoned-cart": f"You Left Something Behind at {brand}!",
-        "thank-you": f"Thank You from {brand}!",
-        "event-invitation": f"You're Invited - {brand} Event",
-        "discount": f"Exclusive Discount from {brand}!",
+        "promotional": f"🔥 Don't Miss Out — Exclusive Offer from {brand}!",
+        "transactional": f"✅ Your {brand} Order is Confirmed!",
+        "newsletter": f"📰 {brand} Weekly — What's Hot This Month",
+        "welcome": f"👋 Welcome to {brand} — Let's Go!",
+        "product-launch": f"🚀 Introducing {product} — Be the First!",
+        "cold-outreach": f"🤝 Let's Grow Together, {brand} + You",
+        "follow-up": f"💬 Quick Follow-Up from {brand}",
+        "announcement": f"📢 Big News from {brand}!",
+        "nurture": f"🌱 Your Success Blueprint from {brand}",
+        "re-engagement": f"❤️ We Miss You at {brand}!",
+        "abandoned-cart": "🛒 Your Cart Misses You — Complete Your Order!",
+        "thank-you": f"🙏 Thank You from {brand}!",
+        "event-invitation": f"🎉 You're Invited — {brand} Exclusive Event",
+        "discount": f"🏷️ Save Big Today at {brand}!",
     }
     previews = {
-        "promotional": f"Exclusive deal for {audience} - limited time only",
-        "transactional": "We've received your order and are processing it now",
-        "newsletter": f"Latest updates, tips, and insights from {brand}",
-        "welcome": "We're thrilled to have you on board",
-        "product-launch": f"Be the first to experience {product}",
-        "cold-outreach": f"Helping {audience} achieve more with {product}",
-        "follow-up": "Just checking in on our previous conversation",
-        "announcement": f"News about {product} from {brand}",
-        "nurture": f"Resources to help you succeed with {product}",
-        "re-engagement": f"Come back and see what's new with {product}",
-        "abandoned-cart": f"Complete your order for {product} before it's gone",
+        "promotional": f"Exclusive deal for {audience} — limited time only!",
+        "transactional": "Your order details and next steps inside",
+        "newsletter": f"Tips, updates, and insights from {brand}",
+        "welcome": "Your journey with us starts now",
+        "product-launch": f"The future of {product} is here",
+        "cold-outreach": f"How {brand} helps {audience} achieve 3x results",
+        "follow-up": "A quick thought from our last conversation",
+        "announcement": f"Important update about {product}",
+        "nurture": "3 tips to accelerate your success",
+        "re-engagement": "See what you've been missing — plus a gift",
+        "abandoned-cart": "Your items are selling fast — don't miss out",
         "thank-you": "We truly appreciate your support",
-        "event-invitation": f"Join us for an exclusive event from {brand}",
-        "discount": f"Save big on {product} - limited time only",
+        "event-invitation": "Reserve your spot before it's gone",
+        "discount": "Your exclusive discount is waiting inside",
     }
 
-    subject = subjects.get(data.email_type, f"Message from {brand}")
-    preview = previews.get(data.email_type, f"An important update from {brand}")
-
-    headline = {
-        "promotional": f"Special Offer Just for {audience}",
-        "transactional": "Order Confirmed",
-        "newsletter": f"{brand} Monthly Update",
-        "welcome": f"Welcome to the {brand} Family!",
-        "product-launch": f"Introducing {product}",
-        "cold-outreach": "Let's Start a Conversation",
-        "follow-up": "Just Following Up",
-        "announcement": f"Big News from {brand}",
-        "nurture": "Tips for Your Success",
-        "re-engagement": "We'd Love to See You Again",
-        "abandoned-cart": "Your Selection Is Waiting",
-        "thank-you": f"From the Heart at {brand}",
-        "event-invitation": "You're Invited!",
-        "discount": "Exclusive Savings Inside",
-    }.get(data.email_type, f"Hello from {brand}")
-
-    body_paragraphs = {
-        "promotional": [
-            f"We're thrilled to offer {audience} an exclusive opportunity to experience {product} at a special price.",
-            f"For a limited time, enjoy premium access to everything {brand} has to offer. Our customers consistently report improved efficiency, satisfaction, and results after switching to {product}.",
-            f"This offer won't last forever. Take advantage of it today and see why hundreds of {audience} trust {brand} for their needs.",
-        ],
-        "transactional": [
-            f"Thank you for your order with {brand}. We've received your request and our team is already working on it.",
-            f"Your order includes access to {product}, which will be activated within the next few minutes. You'll receive a separate email with all the details.",
-            "If you have any questions about your order, please don't hesitate to contact our support team. We're here to help.",
-        ],
-        "newsletter": [
-            f"Here are the latest updates from {brand} that we think you'll find valuable.",
-            f"We've been busy working on new features and improvements for {product}. Here's what's new this month: enhanced performance, new integrations, and improved user experience.",
-            f"We've also published a new guide on getting the most out of {product}. Check it out and let us know what you think!",
-        ],
-        "welcome": [
-            f"Welcome to {brand}! We're absolutely thrilled to have you join our community of {audience} who are transforming their experience with {product}.",
-            "Here's what you can expect as a member: personalized recommendations, priority support, exclusive content, and early access to new features.",
-            f"Your first step is simple. Log in to your dashboard and explore everything that {brand} has to offer. Our onboarding guide will walk you through each feature.",
-        ],
-        "product-launch": [
-            f"We're excited to announce the launch of {product} - designed specifically for {audience} who demand excellence.",
-            "This represents months of development, testing, and refinement based on feedback from our earliest users. The result is a product that truly understands your needs.",
-            "Key features include: a streamlined interface, powerful analytics, seamless integrations, and 24/7 support. Everything you need to achieve your goals is built right in.",
-        ],
-        "cold-outreach": [
-            f"I'm reaching out because I believe {brand} can help you achieve your goals more effectively. We specialize in {product} and have helped many {audience} achieve measurable results.",
-            "Our clients typically see a 40% improvement in efficiency within the first 90 days. We'd love to show you how.",
-            f"Would you be open to a quick 15-minute call to discuss how {brand} might be able to help? No pressure, just a conversation.",
-        ],
-        "follow-up": [
-            f"I wanted to follow up on our previous conversation. We're still very much interested in helping you with {product}.",
-            f"I've put together some additional information that I think you'll find valuable. It includes case studies from similar {audience} and a detailed breakdown of our approach.",
-            "Let me know if you have any questions or if there's anything else I can help with. I'm here whenever you're ready.",
-        ],
-        "announcement": [
-            f"We have some exciting news to share with you. {brand} is making important updates to {product} that will benefit you directly.",
-            "These changes include improved performance, new features based on your feedback, and enhanced security. We've been working on this for months and can't wait for you to try it.",
-            "Stay tuned for more details in the coming days. In the meantime, if you have any questions, please don't hesitate to reach out.",
-        ],
-        "nurture": [
-            f"At {brand}, we're committed to your success. That's why we've put together some valuable resources to help you get the most out of {product}.",
-            "Here are three tips from our experts: First, start with clear goals in mind. Second, leverage our resources and support. Third, track your progress regularly.",
-            f"We're always here to help you succeed. If you need guidance on any aspect of {product}, our team is just a click away.",
-        ],
-        "re-engagement": [
-            f"It's been a while since we've heard from you, and we wanted to reach out. A lot has changed at {brand}, and we think you'll love what's new.",
-            f"We've added powerful new features to {product}, improved performance, and introduced new integrations that make everything easier.",
-            "Come back and see what's new. We have a special welcome-back offer waiting for you.",
-        ],
-        "abandoned-cart": [
-            "We noticed you left something in your cart. Your selection is still saved, but we can't guarantee it'll stay available for long.",
-            f"Your cart includes {product} - a great choice that many {audience} have already benefited from.",
-            f"Complete your order today and enjoy {product} delivered right to your door. If you have any questions, our support team is ready to help.",
-        ],
-        "thank-you": [
-            f"We just wanted to take a moment to say thank you. Your support means the world to us at {brand}.",
-            f"Because of customers like you, we continue to grow and improve {product}. We're committed to delivering the best experience possible.",
-            "If there's anything we can do better, please don't hesitate to reach out. We're always here to listen and improve.",
-        ],
-        "event-invitation": [
-            f"We're thrilled to invite you to our upcoming event. This is an exclusive opportunity to connect with our team and learn about the latest in {product}.",
-            "You'll hear from industry experts, see live demos, and have the chance to ask questions. It's the perfect way to stay ahead of the curve.",
-            "Spaces are limited, so reserve your spot today. We can't wait to see you there!",
-        ],
-        "discount": [
-            f"We're offering an exclusive discount on {product} just for you. This is a limited-time offer, so don't miss out!",
-            f"With this discount, you'll get access to everything {brand} has to offer at a fraction of the regular price. It's our way of saying thank you for being a valued {audience}.",
-            f"Use this offer before it expires and start experiencing the difference that {product} can make for you.",
-        ],
+    _CONTENT = {
+        "promotional": {
+            "headline": f"Special Offer Just for {audience}!",
+            "subheadline": f"Save big on {product} — this week only",
+            "body": [
+                f"For a limited time, we're giving {audience} exclusive access to {product} at an incredible price.",
+                f"Whether you're just getting started or looking to level up, {brand} has everything you need to succeed.",
+                f"This is the moment to take action. Hundreds of {audience} have already made the switch.",
+            ],
+            "quote": f"\"{brand} completely transformed how we do business. Best decision we ever made.\" — Sarah K., CEO",
+            "stat": ("500+", "Happy Customers"),
+            "urgency": "⏰ Offer expires in 48 hours — don't wait!",
+        },
+        "transactional": {
+            "headline": "Order Confirmed!",
+            "subheadline": "We're already working on your order",
+            "body": [
+                f"Thank you for your purchase with {brand}. Your order has been received and is being processed.",
+                f"You'll receive a confirmation email shortly with tracking details for {product}.",
+                "If you have any questions about your order, our support team is available 24/7.",
+            ],
+            "quote": "\"Super fast delivery and amazing quality. Will order again!\" — Michael R.",
+            "stat": ("99.9%", "Orders On Time"),
+            "urgency": "📦 Estimated delivery: 2-3 business days",
+        },
+        "newsletter": {
+            "headline": f"{brand} Weekly Digest",
+            "subheadline": "Your curated dose of insights and inspiration",
+            "body": [
+                "Here's what's trending this week in our community. We've handpicked the best content just for you.",
+                f"From expert tips to product updates, {brand} is committed to keeping you informed and inspired.",
+                "Don't miss our featured story this week — it's a game-changer for your strategy.",
+            ],
+            "quote": "\"I look forward to this newsletter every week. Always packed with value.\" — Priya M.",
+            "stat": ("10K+", "Subscribers"),
+            "urgency": "📖 Read time: 3 minutes — worth every second",
+        },
+        "welcome": {
+            "headline": f"Welcome to the {brand} Family!",
+            "subheadline": "Your journey to excellence starts now",
+            "body": [
+                f"We're thrilled to have you join {brand}. You're now part of a community of {audience} who are transforming their results.",
+                f"As a {brand} member, you'll get exclusive access to {product}, expert resources, and priority support.",
+                "Start by exploring your personalized dashboard — it's designed to help you hit the ground running.",
+            ],
+            "quote": "\"Joining {brand} was the best decision I made this year. The support is incredible.\" — Alex T.",
+            "stat": ("100%", "Welcome Rate"),
+            "urgency": "🎁 Your welcome gift is waiting inside your dashboard",
+        },
+        "product-launch": {
+            "headline": f"Introducing {product}",
+            "subheadline": "The future of innovation is here",
+            "body": [
+                f"After months of development, we're thrilled to unveil {product} — built from the ground up for {audience}.",
+                f"Packed with cutting-edge features, {product} delivers unmatched performance, design, and reliability.",
+                f"Be among the first to experience the next generation of {brand}. Early adopters get exclusive benefits.",
+            ],
+            "quote": "\"This is exactly what we've been waiting for. {product} is a game-changer.\" — James L.",
+            "stat": ("10x", "Faster Performance"),
+            "urgency": "🚀 Launch offer: 20% off for the first 100 customers",
+        },
+        "cold-outreach": {
+            "headline": "Let's Grow Together",
+            "subheadline": f"How {brand} helps {audience} achieve 3x results",
+            "body": [
+                f"I'm reaching out because I believe {brand} can make a real difference for your team.",
+                f"We've helped similar {audience} increase their efficiency by 40% within the first 90 days.",
+                f"Would you be open to a quick 15-minute call to explore how {brand} and {product} can help you?",
+            ],
+            "quote": "\"{brand} helped us scale from 10 to 100 customers in 6 months.\" — David Chen, Founder",
+            "stat": ("40%", "Efficiency Gain"),
+            "urgency": "📞 Reply to this email to schedule your free consultation",
+        },
+        "follow-up": {
+            "headline": "Just Checking In",
+            "subheadline": "A quick follow-up from our conversation",
+            "body": [
+                f"I wanted to follow up on our previous chat about how {product} can help your team.",
+                f"I've prepared a personalized demo just for you — it takes 10 minutes and shows exactly how {brand} works.",
+                "No pressure at all. I'm here whenever you're ready to take the next step.",
+            ],
+            "quote": "\"{brand} made the onboarding process seamless. We were up and running in a day.\" — Lisa W.",
+            "stat": ("24hr", "Avg. Setup Time"),
+            "urgency": "📅 Your personalized demo link expires in 7 days",
+        },
+        "announcement": {
+            "headline": f"Big News from {brand}!",
+            "subheadline": "An exciting update you won't want to miss",
+            "body": [
+                f"We have some exciting news to share. {brand} is making major moves to serve {audience} better.",
+                f"This update brings powerful new features, improved performance, and a redesigned experience for {product}.",
+                "We can't wait for you to try it. Stay tuned for the full rollout details.",
+            ],
+            "quote": "\"{brand} never stops innovating. This is why we're loyal customers.\" — Rachel P.",
+            "stat": ("New", "Version 3.0"),
+            "urgency": "🆕 Rolling out to all users this week",
+        },
+        "nurture": {
+            "headline": "Your Success Blueprint",
+            "subheadline": "3 expert tips to level up your game",
+            "body": [
+                f"At {brand}, we're committed to helping you succeed. Here are 3 expert tips to get more from {product}.",
+                "Start with clear goals, leverage our resources, and track your progress. Simple but powerful.",
+                f"Our community of {audience} is growing fast — join the conversation and learn from peers.",
+            ],
+            "quote": "\"The resources at {brand} are top-notch. Changed how I approach my work.\" — Karen S.",
+            "stat": ("50+", "Expert Resources"),
+            "urgency": "📚 New guide: \"10 Strategies for Success\" — free download",
+        },
+        "re-engagement": {
+            "headline": f"We Miss You at {brand}!",
+            "subheadline": "A lot has changed since you've been gone",
+            "body": [
+                f"It's been a while, and we wanted to reach out. {brand} has been busy — and we think you'll love what's new.",
+                f"We've added powerful new features to {product}, improved performance, and introduced new integrations.",
+                "Come back and see what's new. We have a special welcome-back offer waiting for you.",
+            ],
+            "quote": "\"I came back and was blown away by the improvements. So glad I gave it another try.\" — Tom H.",
+            "stat": ("3x", "More Features"),
+            "urgency": "🎁 Welcome-back gift: 30% off your next purchase",
+        },
+        "abandoned-cart": {
+            "headline": "Your Cart Misses You!",
+            "subheadline": "Don't let your favorites slip away",
+            "body": [
+                f"We noticed you left something in your cart. Your selection of {product} is still saved — but not for long.",
+                f"Thousands of {audience} have already chosen {product}. Here's what they're saying about it.",
+                "Complete your order today and enjoy fast, secure checkout with free shipping on all orders.",
+            ],
+            "quote": "\"Best purchase I've made this year. The quality is outstanding.\" — Emma L.",
+            "stat": ("95%", "Customer Satisfaction"),
+            "urgency": "⏰ Your cart expires in 24 hours — complete your order now!",
+        },
+        "thank-you": {
+            "headline": f"Thank You from {brand}!",
+            "subheadline": "We truly appreciate your support",
+            "body": [
+                f"We just wanted to take a moment to say a heartfelt thank you. Your support means the world to us at {brand}.",
+                f"Because of customers like you, we continue to grow and improve {product}. You make it all possible.",
+                "If there's anything we can do better, please don't hesitate to reach out. We're always here for you.",
+            ],
+            "quote": "\"{brand} has the best customer service I've ever experienced. Truly exceptional.\" — Nina K.",
+            "stat": ("10K+", "Happy Customers"),
+            "urgency": "🎁 As a thank-you, enjoy 15% off your next order",
+        },
+        "event-invitation": {
+            "headline": "You're Invited!",
+            "subheadline": f"Exclusive {brand} event — {product} deep dive",
+            "body": [
+                f"We're thrilled to invite you to our exclusive event. Join us for an in-depth look at {product} with live demos.",
+                "You'll hear from industry experts, see real-world case studies, and have the chance to ask questions live.",
+                "Spaces are limited and filling fast. Reserve your spot today to guarantee your seat.",
+            ],
+            "quote": "\"Best virtual event I attended this year. Packed with actionable insights.\" — George M.",
+            "stat": ("500+", "Registered"),
+            "urgency": "📅 Event date: Next Friday — only 20 spots left!",
+        },
+        "discount": {
+            "headline": "Exclusive Discount Inside!",
+            "subheadline": f"Save 30% on {product} — today only",
+            "body": [
+                f"We're offering an exclusive discount on {product} just for you. This is our biggest sale of the season!",
+                f"With this discount, you'll get full access to everything {brand} offers at a fraction of the price.",
+                f"Don't miss this limited-time offer. Use it before it expires and start seeing results with {product}.",
+            ],
+            "quote": "\"Saved $200 with this deal. {product} is absolutely worth every penny.\" — Chris B.",
+            "stat": ("30%", "Off Today"),
+            "urgency": "⏰ Sale ends at midnight — use code SAVE30 at checkout",
+        },
     }
+    c = _CONTENT.get(data.email_type, _CONTENT["promotional"])
 
-    features = {
-        "promotional": ["Premium quality products", "24/7 customer support", "Money-back guarantee", "Fast delivery"],
-        "transactional": ["Secure processing", "Instant confirmation", "Easy returns", "24/7 support"],
-        "newsletter": ["Industry insights", "Expert tips", "Product updates", "Community stories"],
-        "welcome": ["Personalized dashboard", "Priority support", "Exclusive content", "Early access"],
-        "product-launch": ["Streamlined interface", "Powerful analytics", "Seamless integrations", "24/7 support"],
-        "cold-outreach": ["Proven results", "Custom solutions", "No long-term contracts", "Free consultation"],
-        "follow-up": ["Case studies", "Detailed breakdown", "Expert guidance", "Flexible scheduling"],
-        "announcement": ["Improved performance", "New features", "Enhanced security", "Better UX"],
-        "nurture": ["Actionable tips", "Expert insights", "Resource library", "Community access"],
-        "re-engagement": ["New features", "Better performance", "Welcome-back offer", "Priority support"],
-        "abandoned-cart": ["Still available", "Secure checkout", "Free support", "Easy returns"],
-        "thank-you": ["Exclusive perks", "Priority support", "Early access", "Community membership"],
-        "event-invitation": ["Expert speakers", "Live demos", "Networking", "Q&A sessions"],
-        "discount": ["Limited-time offer", "Premium access", "Full features", "No hidden fees"],
+    _FEATURES = {
+        "promotional": ["Premium Quality Products", "24/7 Expert Support", "Money-Back Guarantee", "Free Express Shipping"],
+        "transactional": ["Secure Payment Processing", "Instant Order Confirmation", "Easy Returns Policy", "24/7 Customer Support"],
+        "newsletter": ["Curated Industry Insights", "Expert Tips & Tricks", "Exclusive Product Updates", "Community Highlights"],
+        "welcome": ["Personalized Dashboard", "Priority Support Access", "Exclusive Member Content", "Early Feature Access"],
+        "product-launch": ["Streamlined Interface", "Powerful Analytics", "Seamless Integrations", "24/7 Dedicated Support"],
+        "cold-outreach": ["Proven Track Record", "Custom Solutions", "No Long-Term Contracts", "Free Initial Consultation"],
+        "follow-up": ["Detailed Case Studies", "Custom Breakdown", "Expert Guidance", "Flexible Scheduling"],
+        "announcement": ["Improved Performance", "New Features", "Enhanced Security", "Better User Experience"],
+        "nurture": ["Actionable Expert Tips", "In-Depth Insights", "Full Resource Library", "Vibrant Community"],
+        "re-engagement": ["Brand-New Features", "Lightning Performance", "Welcome-Back Bonus", "VIP Priority Support"],
+        "abandoned-cart": ["Still Available for You", "Secure 1-Click Checkout", "Free Live Support", "Hassle-Free Returns"],
+        "thank-you": ["Exclusive Member Perks", "Priority Support Line", "Early Feature Access", "VIP Community"],
+        "event-invitation": ["World-Class Speakers", "Live Product Demos", "Networking Opportunities", "Interactive Q&A"],
+        "discount": ["Limited-Time Offer", "Full Premium Access", "All Features Included", "No Hidden Fees"],
     }
+    features = _FEATURES.get(data.email_type, _FEATURES["promotional"])
+    icons = theme["features_icon"]
 
-    type_features = features.get(data.email_type, ["Quality", "Support", "Value", "Results"])
-    feature_html = "".join(
-        f'<tr><td style="padding:12px 0;border-bottom:1px solid #eee"><table cellpadding="0" cellspacing="0"><tr>'
-        f'<td style="width:36px;height:36px;border-radius:50%;background:#667eea;text-align:center;color:#fff;font-size:16px;vertical-align:middle">{chr(8710 + i)}</td>'
-        f'<td style="padding-left:12px;font-size:15px;color:#333">{f}</td></tr></table></td></tr>'
-        for i, f in enumerate(type_features)
-    )
+    feature_rows = ""
+    for i, f in enumerate(features):
+        ic = icons[i % len(icons)]
+        bg = theme["accent"] if i % 2 == 0 else theme["accent2"]
+        feature_rows += (
+            f'<tr><td style="padding:14px 0;border-bottom:1px solid #e8e8e8">'
+            f'<table cellpadding="0" cellspacing="0" width="100%"><tr>'
+            f'<td width="48" style="vertical-align:top"><div style="width:44px;height:44px;border-radius:12px;background:{bg};text-align:center;line-height:44px;font-size:20px;color:#fff">{ic}</div></td>'
+            f'<td style="padding-left:14px;vertical-align:top"><div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:3px">{f}</div>'
+            f'<div style="font-size:13px;color:#666;line-height:1.4">Premium quality and reliability you can count on</div></td>'
+            f'</tr></table></td></tr>'
+        )
 
-    paragraphs = body_paragraphs.get(data.email_type, [
-        f"We're excited to share this update with you. At {brand}, we're always working to improve {product} for {audience}.",
-        "This is just the beginning of something special, and we want you to be part of it.",
-        "If you have any questions, please don't hesitate to reach out. We're here to help.",
-    ])
-
+    paragraphs = c["body"]
     body_html = "".join(
-        f'<p style="font-size:16px;line-height:1.7;color:#444;margin:0 0 18px">{p}</p>' for p in paragraphs
+        f'<p style="font-size:16px;line-height:1.8;color:#444;margin:0 0 16px">{p}</p>' for p in paragraphs
     )
 
-    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)"><tr><td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:48px 40px;text-align:center"><h1 style="color:#ffffff;margin:0 0 8px;font-size:30px;font-weight:700">{headline}</h1><p style="color:rgba(255,255,255,0.9);margin:0;font-size:16px">{brand}</p></td></tr><tr><td style="padding:40px 40px 20px"><p style="font-size:16px;line-height:1.7;color:#444;margin:0 0 18px">Hi {audience},</p>{body_html}</td></tr><tr><td style="padding:0 40px 20px"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:8px"><tr><td style="padding:24px 28px"><h3 style="margin:0 0 14px;font-size:17px;color:#333">What You Get</h3><table width="100%" cellpadding="0" cellspacing="0">{feature_html}</table></td></tr></table></td></tr><tr><td style="padding:20px 40px 40px;text-align:center"><table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:8px;padding:16px 44px"><a href="#" style="color:#ffffff;text-decoration:none;font-size:17px;font-weight:bold;display:inline-block">{cta}</a></td></tr></table></td></tr><tr><td style="padding:24px 40px;background:#f8f9fa;border-top:1px solid #eee"><p style="font-size:13px;color:#999;margin:0;text-align:center">This email was sent by {brand}. If you no longer wish to receive these emails, you can <a href="#" style="color:#667eea">unsubscribe</a>.<br>&copy; 2026 {brand}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>"""
+    quote_author = c["quote"].split("—")[-1].strip() if "—" in c["quote"] else "Happy Customer"
+    quote_text = c["quote"].split('"')[1] if '"' in c["quote"] else c["quote"]
+
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f0f0;font-family:'Segoe UI',Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;padding:40px 20px">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.12)">
+
+<!-- HERO -->
+<tr><td style="background:{theme['gradient']};padding:52px 44px;text-align:center">
+<div style="font-size:48px;margin-bottom:12px">{c['hero_emoji']}</div>
+<h1 style="color:#ffffff;margin:0 0 10px;font-size:32px;font-weight:800;letter-spacing:-0.5px;text-shadow:0 2px 8px rgba(0,0,0,0.15)">{c['headline']}</h1>
+<p style="color:rgba(255,255,255,0.92);margin:0;font-size:17px;font-weight:400">{c['subheadline']}</p>
+<div style="margin-top:20px"><a href="#" style="display:inline-block;background:#ffffff;color:{theme['accent']};padding:14px 40px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15)">{cta}</a></div>
+</td></tr>
+
+<!-- STAT BANNER -->
+<tr><td style="background:{theme['accent']};padding:18px 40px;text-align:center">
+<table cellpadding="0" cellspacing="0" width="100%"><tr>
+<td width="33%" align="center"><div style="color:#fff;font-size:28px;font-weight:800">{c['stat'][0]}</div><div style="color:rgba(255,255,255,0.85);font-size:12px;text-transform:uppercase;letter-spacing:1px">{c['stat'][1]}</div></td>
+<td width="33%" align="center"><div style="color:#fff;font-size:28px;font-weight:800">★★★★★</div><div style="color:rgba(255,255,255,0.85);font-size:12px;text-transform:uppercase;letter-spacing:1px">Top Rated</div></td>
+<td width="33%" align="center"><div style="color:#fff;font-size:28px;font-weight:800">24/7</div><div style="color:rgba(255,255,255,0.85);font-size:12px;text-transform:uppercase;letter-spacing:1px">Always On</div></td>
+</tr></table>
+</td></tr>
+
+<!-- BODY -->
+<tr><td style="padding:40px 44px 24px">
+<p style="font-size:17px;line-height:1.8;color:#333;margin:0 0 20px">Hi {audience},</p>
+{body_html}
+</td></tr>
+
+<!-- FEATURES -->
+<tr><td style="padding:0 44px 24px">
+<div style="background:{theme['bg_alt']};border-radius:14px;padding:28px 28px;border:1px solid #e8e8e8">
+<h3 style="margin:0 0 18px;font-size:19px;color:#1a1a2e;font-weight:700">✨ What You Get</h3>
+<table width="100%" cellpadding="0" cellspacing="0">{feature_rows}</table>
+</div>
+</td></tr>
+
+<!-- TESTIMONIAL -->
+<tr><td style="padding:0 44px 24px">
+<div style="background:linear-gradient(135deg,#fafafa,#f5f5f5);border-radius:14px;padding:32px;border-left:5px solid {theme['accent']};position:relative">
+<div style="font-size:40px;color:{theme['accent']};opacity:0.3;margin-bottom:-10px">❝</div>
+<p style="font-size:16px;line-height:1.7;color:#555;font-style:italic;margin:0 0 14px">{quote_text}</p>
+<table cellpadding="0" cellspacing="0"><tr>
+<td><div style="width:42px;height:42px;border-radius:50%;background:{theme['gradient']};text-align:center;line-height:42px;color:#fff;font-weight:700;font-size:16px">{quote_author[0]}</div></td>
+<td style="padding-left:12px"><div style="font-size:14px;font-weight:700;color:#1a1a2e">{quote_author}</div><div style="font-size:12px;color:#999">Verified Customer</div></td>
+</tr></table>
+</div>
+</td></tr>
+
+<!-- URGENCY BANNER -->
+<tr><td style="padding:0 44px 24px">
+<div style="background:{theme['bg_alt']};border:2px dashed {theme['accent']};border-radius:12px;padding:20px 24px;text-align:center">
+<div style="font-size:17px;font-weight:700;color:{theme['accent']}">{c['urgency']}</div>
+</div>
+</td></tr>
+
+<!-- CTA -->
+<tr><td style="padding:10px 44px 40px;text-align:center">
+<table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr>
+<td style="background:{theme['gradient']};border-radius:50px;padding:18px 52px;box-shadow:0 6px 20px rgba(0,0,0,0.15)">
+<a href="#" style="color:#ffffff;text-decoration:none;font-size:18px;font-weight:700;display:inline-block;letter-spacing:0.5px">{cta} →</a>
+</td></tr></table>
+</td></tr>
+
+<!-- DIVIDER -->
+<tr><td style="padding:0 44px"><div style="height:1px;background:linear-gradient(90deg,transparent,{theme['accent']},transparent)"></div></td></tr>
+
+<!-- SOCIAL PROOF -->
+<tr><td style="padding:30px 44px;text-align:center">
+<p style="margin:0 0 12px;font-size:14px;color:#999;text-transform:uppercase;letter-spacing:2px">Trusted by</p>
+<div style="font-size:28px;letter-spacing:8px;color:{theme['accent']}">★ ★ ★ ★ ★</div>
+<p style="margin:10px 0 0;font-size:13px;color:#999">Rated 4.9/5 by 2,000+ customers</p>
+</td></tr>
+
+<!-- FOOTER -->
+<tr><td style="background:#1a1a2e;padding:36px 44px">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr><td align="center">
+<div style="font-size:22px;font-weight:800;color:#ffffff;margin-bottom:8px">{brand}</div>
+<div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:16px">Innovation • Quality • Trust</div>
+<table cellpadding="0" cellspacing="0"><tr>
+<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">𝕏</a></td>
+<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">in</a></td>
+<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">f</a></td>
+<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">ig</a></td>
+</tr></table>
+</td></tr>
+<tr><td align="center" style="padding-top:20px">
+<p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0">This email was sent by {brand}. <a href="#" style="color:rgba(255,255,255,0.5)">Unsubscribe</a> | <a href="#" style="color:rgba(255,255,255,0.5)">Manage Preferences</a></p>
+<p style="font-size:11px;color:rgba(255,255,255,0.3);margin:6px 0 0">&copy; 2026 {brand}. All rights reserved.</p>
+</td></tr>
+</table>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>"""
 
     paragraphs_md = "\n\n".join(paragraphs)
-    features_md = "\n".join(f"- {f}" for f in type_features)
-    markdown = f"# {headline}\n\nHi {audience},\n\n{paragraphs_md}\n\n## What You Get\n\n{features_md}\n\n**{cta}**\n\n---\n*{brand}. All rights reserved.*"
+    features_md = "\n".join(f"- {ic} **{f}**" for ic, f in zip(icons, features))
+    markdown = (
+        f"# {c['hero_emoji']} {c['headline']}\n\n"
+        f"*{c['subheadline']}*\n\n"
+        f"Hi {audience},\n\n{paragraphs_md}\n\n"
+        f"## ✨ What You Get\n\n{features_md}\n\n"
+        f"> {quote_text}\n> — *{quote_author}*\n\n"
+        f"### {c['urgency']}\n\n"
+        f"**[{cta} →](#)**\n\n"
+        f"---\n*{brand} — Innovation • Quality • Trust*\n"
+    )
 
-    return {"subject": subject, "preview_text": preview, "html": html, "markdown": markdown}
+    return {"subject": subjects.get(data.email_type, f"Message from {brand}"), "preview_text": previews.get(data.email_type, f"An important update from {brand}"), "html": html, "markdown": markdown}
 
 
 # ─── AI GENERATE ─────────────────────────────────────────────────────────────
