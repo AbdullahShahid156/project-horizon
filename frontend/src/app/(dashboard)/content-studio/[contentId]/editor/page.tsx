@@ -88,6 +88,25 @@ export default function ContentEditorPage() {
   const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "editor");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const skipSyncRef = useRef(false);
+  const savedRangeRef = useRef<Range | null>(null);
+
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    if (savedRangeRef.current && editorRef.current) {
+      editorRef.current.focus();
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedRangeRef.current);
+      }
+    }
+  };
 
   const loadContent = useCallback(async () => {
     try {
@@ -165,12 +184,65 @@ export default function ContentEditorPage() {
   };
 
   const execCommand = (cmd: string, value?: string) => {
-    if (editorRef.current) {
-      editorRef.current.focus();
-    }
     pushUndo();
-    document.execCommand(cmd, false, value);
+    if (cmd === "formatBlock" && value) {
+      restoreSelection();
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+      const tag = value.replace(/[<>]/g, "").toLowerCase();
+      let node: HTMLElement | null = sel.anchorNode as HTMLElement;
+      if (node?.nodeType === Node.TEXT_NODE) node = node.parentElement;
+      while (node && node !== editorRef.current) {
+        const t = node.tagName?.toLowerCase();
+        if (["p","div","h1","h2","h3","h4","h5","h6","blockquote","pre","li","span"].includes(t || "")) break;
+        node = node.parentElement;
+      }
+      if (node && node !== editorRef.current && node.parentElement !== editorRef.current) {
+        const el = document.createElement(tag);
+        el.innerHTML = node.innerHTML;
+        node.parentNode?.replaceChild(el, node);
+      } else if (node && node !== editorRef.current) {
+        const el = document.createElement(tag);
+        el.innerHTML = node.innerHTML;
+        node.parentNode?.replaceChild(el, node);
+      } else {
+        const el = document.createElement(tag);
+        el.innerHTML = sel.toString() || "<br>";
+        sel.deleteFromDocument();
+        sel.getRangeAt(0).insertNode(el);
+      }
+    } else if (cmd === "insertUnorderedList" || cmd === "insertOrderedList") {
+      restoreSelection();
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+      const tag = cmd === "insertUnorderedList" ? "ul" : "ol";
+      let node: HTMLElement | null = sel.anchorNode as HTMLElement;
+      if (node?.nodeType === Node.TEXT_NODE) node = node.parentElement;
+      while (node && node !== editorRef.current) {
+        if (node.tagName?.toLowerCase() === "li") break;
+        if (node.tagName?.toLowerCase() === tag) {
+          const p = document.createElement("p");
+          p.innerHTML = node.innerHTML;
+          node.parentNode?.replaceChild(p, node);
+          break;
+        }
+        node = node.parentElement;
+      }
+      if (node && node.tagName?.toLowerCase() !== tag && node !== editorRef.current) {
+        const list = document.createElement(tag);
+        const li = document.createElement("li");
+        const range = sel.getRangeAt(0);
+        const content = range.extractContents();
+        li.appendChild(content);
+        list.appendChild(li);
+        range.insertNode(list);
+      }
+    } else {
+      restoreSelection();
+      document.execCommand(cmd, false, value);
+    }
     if (editorRef.current) {
+      skipSyncRef.current = true;
       setEditorContent(editorRef.current.innerHTML);
     }
   };
@@ -428,47 +500,47 @@ export default function ContentEditorPage() {
           <Card>
             <CardContent className="p-2">
               <div className="flex items-center gap-1 flex-wrap border-b pb-2 mb-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("bold"); }} aria-label="Bold">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("bold"); }} aria-label="Bold">
                   <Bold className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("italic"); }} aria-label="Italic">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("italic"); }} aria-label="Italic">
                   <Italic className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("underline"); }} aria-label="Underline">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("underline"); }} aria-label="Underline">
                   <Underline className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<h1>"); }} aria-label="Heading 1">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("formatBlock", "<h1>"); }} aria-label="Heading 1">
                   <Heading1 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<h2>"); }} aria-label="Heading 2">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("formatBlock", "<h2>"); }} aria-label="Heading 2">
                   <Heading2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<h3>"); }} aria-label="Heading 3">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("formatBlock", "<h3>"); }} aria-label="Heading 3">
                   <Heading3 className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("insertUnorderedList"); }} aria-label="Bullet list">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("insertUnorderedList"); }} aria-label="Bullet list">
                   <List className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("insertOrderedList"); }} aria-label="Numbered list">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("insertOrderedList"); }} aria-label="Numbered list">
                   <ListOrdered className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
                 <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => {
-                  e.preventDefault();
+                  e.preventDefault(); saveSelection();
                   const url = prompt("Enter URL:");
                   if (url) execCommand("createLink", url);
                 }} aria-label="Insert link">
                   <Link2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<blockquote>"); }} aria-label="Quote">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("formatBlock", "<blockquote>"); }} aria-label="Quote">
                   <Quote className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("formatBlock", "<pre>"); }} aria-label="Code block">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("formatBlock", "<pre>"); }} aria-label="Code block">
                   <Code className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); execCommand("insertHorizontalRule"); }} aria-label="Horizontal rule">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => { e.preventDefault(); saveSelection(); execCommand("insertHorizontalRule"); }} aria-label="Horizontal rule">
                   <Minus className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />

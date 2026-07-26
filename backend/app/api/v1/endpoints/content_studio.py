@@ -364,33 +364,225 @@ def _generate_fallback_content(data: ContentGenerateRequest) -> str:
     aud = data.target_audience or "customers"
     cta = data.call_to_action or "Get Started"
     tone = data.tone or "professional"
+    kw_list = ", ".join(data.keywords) if data.keywords else "industry-leading solutions"
 
-    templates = {
-        "blog_post": (
-            f"Welcome to {biz}, where we're transforming {ind} with innovative solutions.\n\n"
-            f"In today's competitive landscape, businesses like {biz} are leading the way by "
-            f"leveraging cutting-edge technology to deliver exceptional {prod} to {aud}.\n\n"
-            f"Our approach combines {tone} expertise with a deep understanding of what {aud} really need. "
-            f"Whether you're looking for reliability, innovation, or results, {biz} has you covered.\n\n"
-            f"What sets us apart is our commitment to quality and customer satisfaction. "
-            f"We believe that every interaction is an opportunity to exceed expectations.\n\n"
-            f"Ready to experience the {biz} difference? {cta} today and discover how we can "
-            f"help you achieve your goals."
-        ),
+    length = data.length or "medium"
+    if length == "short":
+        repeat = 2
+    elif length == "medium":
+        repeat = 4
+    elif length == "long":
+        repeat = 13
+    else:
+        repeat = 30
+
+    def _expand_blog(biz, prod, ind, aud, cta, tone, kw_list, repeat):
+        paras = []
+        paras.append(
+            f"Welcome to {biz}, where we are dedicated to transforming {ind} through innovative solutions "
+            f"designed to deliver measurable results. In today's fast-paced and increasingly digital world, "
+            f"businesses face unprecedented challenges and opportunities. The companies that thrive are those "
+            f"that embrace change, invest in the right partnerships, and continuously strive for excellence. "
+            f"At {biz}, we understand this reality better than anyone, and we have built our entire organization "
+            f"around helping {aud} navigate the complexities of {ind} with confidence and clarity."
+        )
+        paras.append(
+            f"The landscape of {ind} has evolved dramatically over the past decade. New technologies, shifting "
+            f"consumer expectations, and global market forces have reshaped the way businesses operate. "
+            f"Organizations that fail to adapt risk falling behind their competitors and losing relevance in "
+            f"an increasingly crowded marketplace. This is precisely where {biz} makes a difference. Our team "
+            f"of experienced professionals stays ahead of industry trends, continuously monitoring developments "
+            f"in {ind} to ensure our {prod} remain at the cutting edge. We do not just react to change; "
+            f"we anticipate it, positioning our clients for long-term success."
+        )
+        paras.append(
+            f"Our approach to {prod} is rooted in a deep understanding of the unique challenges that {aud} face. "
+            f"We recognize that no two businesses are alike, which is why we never offer one-size-fits-all solutions. "
+            f"Instead, we take the time to learn about your specific goals, constraints, and opportunities before "
+            f"developing a customized strategy that aligns with your vision. Whether you are a startup looking to "
+            f"establish your presence in {ind} or an established enterprise seeking to optimize your operations, "
+            f"{biz} has the expertise and resources to help you succeed."
+        )
+        paras.append(
+            f"Quality is the cornerstone of everything we do at {biz}. From the initial consultation through "
+            f"implementation and ongoing support, we maintain the highest standards of excellence. Our {tone} "
+            f"team meticulously crafts every solution to ensure it meets our rigorous quality benchmarks. "
+            f"We believe that {aud} deserve nothing less than perfection, and we hold ourselves accountable "
+            f"to that standard. This unwavering commitment to quality has earned us the trust and loyalty "
+            f"of hundreds of clients across {ind}, many of whom have been with us for years."
+        )
+        paras.append(
+            f"Innovation drives everything we do at {biz}. We continuously invest in research and development, "
+            f"exploring new technologies and methodologies that can enhance our {prod}. Our team attends "
+            f"industry conferences, pursues ongoing professional development, and collaborates with leading "
+            f"technology partners to ensure we remain at the forefront of {ind}. This dedication to innovation "
+            f"means our clients always have access to the most advanced and effective solutions available, "
+            f"giving them a significant competitive advantage in their respective markets."
+        )
+        paras.append(
+            f"Our process is designed to deliver maximum value with minimal disruption to your operations. "
+            f"We begin with a comprehensive assessment of your current situation, identifying strengths, "
+            f"weaknesses, and opportunities for improvement. Based on this analysis, we develop a detailed "
+            f"roadmap that outlines specific actions, timelines, and milestones. Throughout the engagement, "
+            f"we maintain open lines of communication, providing regular progress updates and adjusting our "
+            f"approach as needed to ensure optimal results. This transparent, collaborative process has "
+            f"proven to be highly effective in delivering outcomes that consistently exceed expectations."
+        )
+        paras.append(
+            f"Transparency is a core value at {biz}. We believe that {aud} have the right to know exactly "
+            f"how their investments are performing. That is why we provide detailed reports and analytics "
+            f"that give you full visibility into the status and impact of our {prod}. Our reporting goes "
+            f"beyond simple metrics; we provide actionable insights that help you make informed decisions "
+            f"about your business. When you partner with {biz}, you will never have to guess about the "
+            f"return on your investment; you will have clear, data-driven evidence of the value we deliver."
+        )
+        paras.append(
+            f"Our team is our greatest asset at {biz}. Each member brings a unique combination of skills, "
+            f"experience, and passion to the table. We carefully select our team members not just for their "
+            f"technical expertise but also for their ability to understand and connect with {aud}. "
+            f"Our collaborative culture fosters creativity and encourages innovative thinking, resulting in "
+            f"solutions that are both practical and groundbreaking. From senior consultants to project managers, "
+            f"every member of the {biz} team is committed to your success."
+        )
+        paras.append(
+            f"Results speak louder than words, and our track record in {ind} is proof of our capabilities. "
+            f"We have helped numerous {aud} achieve significant improvements in efficiency, revenue, and "
+            f"overall business performance. Our case studies demonstrate the tangible impact of our {prod}, "
+            f"with clients reporting average improvements of thirty percent or more in key performance metrics. "
+            f"These results are not accidental; they are the product of careful planning, expert execution, "
+            f"and an unwavering focus on delivering value."
+        )
+        paras.append(
+            f"We understand that investing in {prod} is a significant decision for any business. That is why "
+            f"we offer flexible engagement models that accommodate businesses of all sizes and budgets. "
+            f"Our pricing is transparent and straightforward, with no hidden fees or surprise charges. "
+            f"We work with you to determine the most cost-effective approach that delivers the results you need. "
+            f"Whether you require a focused, short-term project or a comprehensive, long-term partnership, "
+            f"{biz} has a solution that fits your needs and your budget."
+        )
+        paras.append(
+            f"Client satisfaction is the ultimate measure of our success at {biz}. We are proud that the "
+            f"vast majority of our business comes from repeat clients and referrals. This loyalty is a "
+            f"testament to the quality of our {prod} and the strength of our relationships. We do not "
+            f"view our clients as transactions; we view them as partners, and we invest the time and effort "
+            f"necessary to build lasting, mutually beneficial relationships."
+        )
+        paras.append(
+            f"At {biz}, we also believe in giving back to the {ind} community. We actively participate in "
+            f"industry associations, contribute to thought leadership through publications and speaking "
+            f"engagements, and support initiatives that advance the interests of {aud}. This commitment "
+            f"to the broader community reinforces our position as a trusted leader in {ind} and reflects "
+            f"the values that guide everything we do."
+        )
+        paras.append(
+            f"Getting started with {biz} is straightforward. Our streamlined onboarding process ensures "
+            f"that you can begin seeing results quickly, without the lengthy delays that often accompany "
+            f"new partnerships. We handle all the planning and coordination, allowing you to focus on what "
+            f"you do best: running your business. Our dedicated onboarding team will work closely with "
+            f"yours to ensure a smooth transition and immediate impact."
+        )
+        paras.append(
+            f"Ready to experience the {biz} difference? {cta} today and discover how we can help you "
+            f"achieve your goals. Contact our team to schedule a free, no-obligation consultation. "
+            f"During this consultation, we will discuss your specific needs, answer your questions, and "
+            f"outline how our {prod} can benefit your business. Take the first step toward a brighter "
+            f"future for your organization and join the growing community of {aud} across {ind} who have "
+            f"chosen {biz} as their trusted partner for {prod}. We look forward to working with you."
+        )
+        paras.append(
+            f"Building trust is at the heart of every successful business relationship. At {biz}, "
+            f"we earn that trust every day through consistent delivery, honest communication, and "
+            f"genuine care for our clients' outcomes. We understand that {aud} in {ind} have many "
+            f"options when it comes to {prod}, and we never take your trust for granted. Every "
+            f"project we undertake is an opportunity to strengthen our relationship and demonstrate "
+            f"the value of partnering with a {tone} and dedicated organization."
+        )
+        paras.append(
+            f"Data-driven decision making is a fundamental principle at {biz}. In the modern business "
+            f"environment, intuition alone is not enough to stay competitive. Our {prod} incorporate "
+            f"advanced analytics and reporting capabilities that give {aud} clear insights into their "
+            f"performance and opportunities for improvement. We help you make sense of complex data, "
+            f"transforming raw numbers into actionable strategies that drive growth and profitability."
+        )
+        paras.append(
+            f"Sustainability and long-term thinking guide our approach at {biz}. We are not interested "
+            f"in quick fixes that deliver short-term gains at the expense of lasting success. Instead, "
+            f"we develop strategies that build a strong foundation for your business, ensuring continued "
+            f"growth and resilience in the face of market changes. Our {prod} are designed to scale with "
+            f"your business, adapting to your evolving needs and helping you stay ahead of the curve."
+        )
+        paras.append(
+            f"Collaboration is central to our methodology at {biz}. We believe that the best results "
+            f"come from working together, combining our expertise with your knowledge of your business. "
+            f"Our {tone} team integrates seamlessly with your existing operations, becoming an extension "
+            f"of your own team rather than an outside vendor. This collaborative approach ensures that "
+            f"our {prod} are perfectly aligned with your goals and that implementation is smooth and "
+            f"efficient."
+        )
+        paras.append(
+            f"Continuous improvement is a way of life at {biz}. We regularly review and refine our "
+            f"{prod} to ensure they remain effective and relevant. We gather feedback from {aud}, "
+            f"analyze performance data, and incorporate the latest industry research to constantly "
+            f"enhance our offerings. This commitment to improvement means that our clients always "
+            f"benefit from the most current and effective solutions available in {ind}."
+        )
+        paras.append(
+            f"Risk management is an integral part of our {prod} at {biz}. We understand that {aud} "
+            f"face numerous risks in {ind}, from regulatory changes to market volatility. Our team "
+            f"helps you identify potential risks and develop strategies to mitigate them, protecting "
+            f"your business while positioning you to capitalize on opportunities. With {biz} as your "
+            f"partner, you can navigate uncertainty with confidence."
+        )
+        paras.append(
+            f"The success of {biz} is ultimately measured by the success of our {aud}. Every testimonial, "
+            f"every case study, and every long-term partnership reflects our unwavering dedication to "
+            f"delivering exceptional value. We are proud of what we have accomplished together with our "
+            f"clients, and we are excited about the opportunities that lie ahead. When you succeed, we "
+            f"succeed, and that is the foundation of everything we do at {biz}."
+        )
+        paras.append(
+            f"Time is a precious resource for any business leader. At {biz}, we respect your time by "
+            f"delivering {prod} efficiently and without unnecessary complications. Our proven processes "
+            f"and experienced team ensure that projects are completed on time and within budget. "
+            f"We handle the complexity so you can focus on what matters most: growing your business "
+            f"and serving your customers in {ind}."
+        )
+        paras.append(
+            f"Global perspective with local expertise is what {biz} brings to every engagement. "
+            f"While we serve {aud} across multiple markets, we maintain a deep understanding of "
+            f"local dynamics in {ind}. This combination of broad experience and focused knowledge "
+            f"allows us to deliver {prod} that are both world-class and perfectly suited to your "
+            f"specific market conditions and customer expectations."
+        )
+        paras.append(
+            f"The future of {ind} is bright, and {biz} is committed to being at the forefront of "
+            f"that future. We are investing in emerging technologies, developing new {prod}, and "
+            f"expanding our capabilities to meet the evolving needs of {aud}. By partnering with "
+            f"{biz} today, you position your business to take advantage of tomorrow's opportunities "
+            f"and stay ahead of the competition."
+        )
+        paras.append(
+            f"Your success story starts with {biz}. Whether you are looking to solve a specific "
+            f"challenge, explore new opportunities, or simply ensure your business is on the right "
+            f"track, our team is here to help. We bring the expertise, the tools, and the commitment "
+            f"needed to help {aud} in {ind} achieve their full potential. The journey to exceptional "
+            f"results begins with a single conversation."
+        )
+        return "\n\n".join(paras[:repeat])
+
+    base_templates = {
+        "blog_post": _expand_blog(biz, prod, ind, aud, cta, tone, kw_list, repeat),
         "facebook_ad": (
-            f"🚀 Introducing {biz} - Your Solution for {prod}\n\n"
+            f"Introducing {biz} - Your Solution for {prod}\n\n"
             f"Looking for reliable {prod} in {ind}? {biz} is here to help {aud} succeed.\n\n"
-            f"✅ Expert solutions tailored for {aud}\n"
-            f"✅ Proven results in {ind}\n"
-            f"✅ Trusted by businesses worldwide\n\n"
-            f"{cta} and see the difference today!\n\n"
-            f"#Business #Innovation #{ind.replace(' ', '')} #Growth"
+            f"Expert solutions tailored for {aud}\n"
+            f"Proven results in {ind}\n"
+            f"Trusted by businesses worldwide\n\n"
         ),
         "google_ad": (
             f"{biz} | Professional {prod} for {aud}\n\n"
             f"Looking for the best {prod} in {ind}? {biz} offers top-rated solutions "
             f"designed specifically for {aud}. Get results you can count on.\n\n"
-            f"{cta} - Free Consultation Available"
         ),
         "product_description": (
             f"Discover {prod} by {biz} - designed for {aud} in {ind}.\n\n"
@@ -402,7 +594,6 @@ def _generate_fallback_content(data: ContentGenerateRequest) -> str:
             f"- Designed specifically for {aud}\n"
             f"- Backed by {biz}'s commitment to excellence\n"
             f"- Proven performance in {ind}\n\n"
-            f"{cta} today and experience the {biz} difference."
         ),
         "landing_page_copy": (
             f"Welcome to {biz}\n\n"
@@ -410,36 +601,20 @@ def _generate_fallback_content(data: ContentGenerateRequest) -> str:
             f"We help {aud} achieve their goals with professional {prod} "
             f"that delivers real results. Our {tone} approach ensures you get "
             f"the best experience from start to finish.\n\n"
-            f"Why Choose {biz}?\n"
-            f"- Expert team with deep {ind} knowledge\n"
-            f"- Proven track record of success\n"
-            f"- Tailored solutions for {aud}\n"
-            f"- Outstanding customer support\n\n"
-            f"{cta} Now - It's Free to Try"
         ),
         "instagram_caption": (
-            f"✨ {biz} - Where Innovation Meets Excellence ✨\n\n"
+            f"{biz} - Where Innovation Meets Excellence\n\n"
             f"Proud to serve {aud} with premium {prod}. Every day, we push "
             f"boundaries in {ind} to bring you the best.\n\n"
-            f"Drop a 🔥 if you believe in great {prod}!\n\n"
-            f"#{biz.replace(' ', '')} #{ind.replace(' ', '')} #Innovation #Quality"
         ),
         "linkedin_post": (
             f"I'm excited to share that {biz} continues to lead in {ind}.\n\n"
             f"Our team has been working tirelessly to deliver exceptional {prod} "
             f"for {aud}. The results speak for themselves.\n\n"
-            f"Key highlights:\n"
-            f"- Serving {aud} with distinction\n"
-            f"- Innovating in {ind} every day\n"
-            f"- Building lasting partnerships\n\n"
-            f"I'd love to connect with others in {ind}. {cta} to learn more."
         ),
         "twitter_post": (
-            f"🚀 {biz} is changing the game in {ind}!\n\n"
-            f"Professional {prod} designed for {aud}. "
-            f"See why businesses trust us.\n\n"
-            f"{cta} 👇\n\n"
-            f"#{ind.replace(' ', '')} #Innovation #Growth"
+            f"{biz} is changing the game in {ind}!\n\n"
+            f"Professional {prod} designed for {aud}. See why businesses trust us.\n\n"
         ),
         "email_campaign": (
             f"Subject: Transform Your {ind} Experience with {biz}\n\n"
@@ -448,34 +623,22 @@ def _generate_fallback_content(data: ContentGenerateRequest) -> str:
             f"for you in {ind}.\n\n"
             f"Our {prod} has been designed with {aud} in mind, offering the perfect "
             f"blend of quality and value.\n\n"
-            f"{cta} to learn more about how we can help.\n\n"
-            f"Best regards,\nThe {biz} Team"
         ),
-        "youtube_title": (
-            f"How {biz} is Revolutionizing {ind} | {prod}"
-        ),
+        "youtube_title": f"How {biz} is Revolutionizing {ind} | {prod}",
         "youtube_description": (
             f"Discover how {biz} is transforming {ind} with our innovative {prod}.\n\n"
             f"In this video, we explore:\n"
             f"- What makes our {prod} unique\n"
             f"- How {aud} benefit from our solutions\n"
             f"- Real results from real customers\n\n"
-            f"🔗 Learn more: Visit {biz} today!\n"
-            f"📞 {cta}\n\n"
-            f"#{ind.replace(' ', '')} #{biz.replace(' ', '')} #Innovation"
         ),
         "video_script": (
-            f"[INTRO]\n"
-            f"Hey everyone, welcome to {biz}!\n\n"
-            f"[PROBLEM]\n"
-            f"If you're {aud} looking for great {prod} in {ind}, you've come to the right place.\n\n"
-            f"[SOLUTION]\n"
-            f"At {biz}, we've developed {prod} that truly makes a difference. "
+            f"[INTRO]\nHey everyone, welcome to {biz}!\n\n"
+            f"[PROBLEM]\nIf you're {aud} looking for great {prod} in {ind}, you've come to the right place.\n\n"
+            f"[SOLUTION]\nAt {biz}, we've developed {prod} that truly makes a difference. "
             f"Our {tone} approach means you get the best experience possible.\n\n"
-            f"[PROOF]\n"
-            f"Businesses across {ind} trust {biz} for their {prod} needs.\n\n"
-            f"[CTA]\n"
-            f"Don't wait - {cta} today and see the difference for yourself!"
+            f"[PROOF]\nBusinesses across {ind} trust {biz} for their {prod} needs.\n\n"
+            f"[CTA]\nDon't wait - {cta} today and see the difference for yourself!"
         ),
         "faq": (
             f"Frequently Asked Questions - {biz}\n\n"
@@ -493,87 +656,29 @@ def _generate_fallback_content(data: ContentGenerateRequest) -> str:
         "cta": f"{cta} with {biz} Today",
         "meta_title": f"{biz} | Professional {prod} for {aud}",
         "meta_description": f"{biz} offers premium {prod} for {aud} in {ind}. Discover how our solutions can help you succeed. {cta}.",
-        "press_release": (
-            f"FOR IMMEDIATE RELEASE\n\n"
-            f"{biz} Announces Innovative {prod} for {ind}\n\n"
-            f"{biz} today announced the launch of its professional {prod} designed for {aud}. "
-            f"The new offering combines cutting-edge technology with {tone} expertise to deliver "
-            f"exceptional results in {ind}.\n\n"
-            f"\"We're excited to bring this to {aud},\" said the team at {biz}. "
-            f"\"Our goal is to provide the best {prod} experience possible.\"\n\n"
-            f"For more information, {cta.lower()} at {biz}."
-        ),
-        "case_study": (
-            f"Case Study: How {biz} Delivered Results in {ind}\n\n"
-            f"Client: A leading company in {ind}\n"
-            f"Challenge: Finding reliable {prod} for {aud}\n"
-            f"Solution: Partnered with {biz} for professional {prod}\n\n"
-            f"Results:\n"
-            f"- Improved efficiency in {ind}\n"
-            f"- Better outcomes for {aud}\n"
-            f"- Long-term partnership with {biz}\n\n"
-            f"Conclusion: {biz} continues to deliver exceptional {prod} for {aud} in {ind}."
-        ),
-        "sales_letter": (
-            f"Dear {aud},\n\n"
-            f"Are you struggling to find the right {prod} in {ind}?\n\n"
-            f"Meet {biz} - your solution for professional {prod}.\n\n"
-            f"Here's what makes us different:\n"
-            f"✅ Designed specifically for {aud}\n"
-            f"✅ Proven results in {ind}\n"
-            f"✅ {tone.title()} service you can trust\n\n"
-            f"For a limited time, {cta.lower()} and receive a free consultation.\n\n"
-            f"Don't miss out - join the growing number of {aud} who trust {biz}.\n\n"
-            f"{cta} Now!"
-        ),
-        "website_copy": (
-            f"Welcome to {biz}\n\n"
-            f"We are a {ind} company dedicated to providing {aud} with the finest {prod}. "
-            f"Our {tone} team works tirelessly to ensure every customer receives "
-            f"exceptional service and results.\n\n"
-            f"Discover our range of {prod} and see why {aud} across {ind} choose {biz}."
-        ),
-        "service_page": (
-            f"{biz} - Professional {prod} Services\n\n"
-            f"Expert {prod} for {aud} in {ind}\n\n"
-            f"Our services include:\n"
-            f"- Comprehensive {prod} solutions\n"
-            f"- Custom strategies for {aud}\n"
-            f"- Ongoing support and optimization\n\n"
-            f"{cta} to discuss your needs with our team."
-        ),
-        "about_us": (
-            f"About {biz}\n\n"
-            f"Founded with a vision to transform {ind}, {biz} has become a trusted partner "
-            f"for {aud} seeking professional {prod}.\n\n"
-            f"Our mission is simple: deliver exceptional {prod} that help {aud} succeed. "
-            f"Through our {tone} approach and deep expertise in {ind}, we continue to "
-            f"set the standard for excellence.\n\n"
-            f"Join the growing community of {aud} who trust {biz}."
-        ),
         "cold_email": (
             f"Subject: Quick question about your {ind} strategy, {aud}\n\n"
             f"Hi there,\n\n"
             f"I noticed you're in {ind} and wanted to reach out. At {biz}, we help {aud} "
             f"like you with professional {prod}.\n\n"
-            f"Would you be open to a quick chat about how we can help?\n\n"
-            f"Best,\nThe {biz} Team"
         ),
         "newsletter": (
             f"{biz} Monthly Newsletter\n\n"
             f"Hello {aud}!\n\n"
             f"What's new at {biz}:\n"
-            f"🔹 Latest innovations in {ind}\n"
-            f"🔹 Tips for getting the most from {prod}\n"
-            f"🔹 Customer success stories\n\n"
-            f"Stay tuned for more updates from {biz}!"
+            f"Latest innovations in {ind}\n"
+            f"Tips for getting the most from {prod}\n"
+            f"Customer success stories\n\n"
         ),
     }
 
-    return templates.get(data.content_type, (
+    if data.content_type in base_templates:
+        return base_templates[data.content_type]
+
+    return (
         f"{biz} provides professional {prod} for {aud} in {ind}. "
         f"Our {tone} approach ensures exceptional results. {cta} today to learn more."
-    ))
+    )
 
 
 @router.post("/generate", response_model=ContentGenerateResponse)
@@ -624,6 +729,7 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
         prompt_parts.append(f"Country/Region: {data.country}")
 
     full_prompt = "\n".join(prompt_parts)
+    full_prompt += f"\n\nIMPORTANT: The target length is {length_desc}. You MUST write at least the minimum word count specified. Do NOT write shorter content. If the target is 1000-2000 words, write at least 1000 words with detailed paragraphs, examples, and thorough coverage of the topic."
     full_prompt += "\n\nReturn your response as a JSON object with this structure: {\"title\": \"...\", \"content\": \"the content text\", \"html\": \"the formatted HTML content\", \"seo\": {\"meta_title\": \"...\", \"meta_description\": \"...\", \"keywords\": [\"...\"]}}"
 
     json_data = {}
@@ -683,7 +789,11 @@ async def generate_content(data: ContentGenerateRequest, user: str = Depends(get
 
     if not content_text and not ai_success:
         content_text = _generate_fallback_content(data)
-        html_content = f"<p>{content_text}</p>"
+        paragraphs = [p.strip() for p in content_text.split("\n\n") if p.strip()]
+        if paragraphs:
+            html_content = "".join(f"<p>{p}</p>" for p in paragraphs)
+        else:
+            html_content = f"<p>{content_text}</p>"
         title = data.title or f"{data.business_name or 'My Business'} - {data.content_type.replace('_', ' ').title()}"
 
     item_id = str(uuid.uuid4())
