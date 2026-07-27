@@ -1051,16 +1051,25 @@ def _generate_fallback_email(data: EmailGenerateRequest) -> dict:
     features = _FEATURES.get(data.email_type, _FEATURES["promotional"])
     icons = theme["features_icon"]
 
-    feature_rows = ""
+    feature_cards = ""
     for i, f in enumerate(features):
         ic = icons[i % len(icons)]
-        bg = theme["accent"] if i % 2 == 0 else theme["accent2"]
-        feature_rows += (
-            f'<tr><td style="padding:14px 0;border-bottom:1px solid #e8e8e8">'
+        feature_cards += (
+            f'<td width="25%" valign="top" style="padding:8px">'
+            f'<div style="background:#fff;border-radius:12px;padding:20px 16px;text-align:center;border:1px solid #e8e8e8;box-shadow:0 2px 8px rgba(0,0,0,0.04)">'
+            f'<div style="width:52px;height:52px;border-radius:14px;background:{theme["gradient"]};margin:0 auto 12px;line-height:52px;font-size:24px;color:#fff">{ic}</div>'
+            f'<div style="font-size:14px;font-weight:700;color:#1a1a2e;line-height:1.3">{f}</div>'
+            f'</div></td>'
+        )
+
+    feature_list = ""
+    for i, f in enumerate(features):
+        ic = icons[i % len(icons)]
+        feature_list += (
+            f'<tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0"">'
             f'<table cellpadding="0" cellspacing="0" width="100%"><tr>'
-            f'<td width="48" style="vertical-align:top"><div style="width:44px;height:44px;border-radius:12px;background:{bg};text-align:center;line-height:44px;font-size:20px;color:#fff">{ic}</div></td>'
-            f'<td style="padding-left:14px;vertical-align:top"><div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:3px">{f}</div>'
-            f'<div style="font-size:13px;color:#666;line-height:1.4">Premium quality and reliability you can count on</div></td>'
+            f'<td width="36" style="vertical-align:middle"><div style="width:32px;height:32px;border-radius:8px;background:{theme["bg_alt"]};text-align:center;line-height:32px;font-size:16px">{ic}</div></td>'
+            f'<td style="padding-left:12px;vertical-align:middle;font-size:15px;color:#333;font-weight:500">{f}</td>'
             f'</tr></table></td></tr>'
         )
 
@@ -1072,96 +1081,217 @@ def _generate_fallback_email(data: EmailGenerateRequest) -> dict:
     quote_author = c["quote"].split("—")[-1].strip() if "—" in c["quote"] else "Happy Customer"
     quote_text = c["quote"].split('"')[1] if '"' in c["quote"] else c["quote"]
 
-    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f0f0f0;font-family:'Segoe UI',Arial,Helvetica,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;padding:40px 20px">
+    steps = [
+        ("01", "Sign Up", "Create your free account in 30 seconds"),
+        ("02", "Set Up", "Customize your workspace and preferences"),
+        ("03", "Launch", "Go live and start seeing results today"),
+    ]
+    steps_html = ""
+    for num, title, desc in steps:
+        steps_html += (
+            f'<td width="33%" valign="top" style="padding:8px">'
+            f'<div style="text-align:center">'
+            f'<div style="width:48px;height:48px;border-radius:50%;background:{theme["gradient"]};margin:0 auto 10px;line-height:48px;color:#fff;font-size:18px;font-weight:800">{num}</div>'
+            f'<div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">{title}</div>'
+            f'<div style="font-size:13px;color:#888;line-height:1.4">{desc}</div>'
+            f'</div></td>'
+        )
+
+    social_links = [
+        ("𝕏", "Twitter"), ("in", "LinkedIn"), ("f", "Facebook"), ("ig", "Instagram"), ("▶", "YouTube")
+    ]
+    social_html = ""
+    for icon, name in social_links:
+        social_html += (
+            f'<td style="padding:0 6px"><a href="#" style="display:inline-block;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.08);text-align:center;line-height:40px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:15px;font-weight:600;border:1px solid rgba(255,255,255,0.1)">{icon}</a></td>'
+        )
+
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="light"></head>
+<body style="margin:0;padding:0;background:#e8e8e8;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#e8e8e8;padding:32px 16px">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.12)">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.12)">
 
-<!-- HERO -->
-<tr><td style="background:{theme['gradient']};padding:52px 44px;text-align:center">
-<div style="font-size:48px;margin-bottom:12px">{theme['hero_emoji']}</div>
-<h1 style="color:#ffffff;margin:0 0 10px;font-size:32px;font-weight:800;letter-spacing:-0.5px;text-shadow:0 2px 8px rgba(0,0,0,0.15)">{c['headline']}</h1>
-<p style="color:rgba(255,255,255,0.92);margin:0;font-size:17px;font-weight:400">{c['subheadline']}</p>
-<div style="margin-top:20px"><a href="#" style="display:inline-block;background:#ffffff;color:{theme['accent']};padding:14px 40px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15)">{cta}</a></div>
-</td></tr>
-
-<!-- STAT BANNER -->
-<tr><td style="background:{theme['accent']};padding:18px 40px;text-align:center">
-<table cellpadding="0" cellspacing="0" width="100%"><tr>
-<td width="33%" align="center"><div style="color:#fff;font-size:28px;font-weight:800">{c['stat'][0]}</div><div style="color:rgba(255,255,255,0.85);font-size:12px;text-transform:uppercase;letter-spacing:1px">{c['stat'][1]}</div></td>
-<td width="33%" align="center"><div style="color:#fff;font-size:28px;font-weight:800">★★★★★</div><div style="color:rgba(255,255,255,0.85);font-size:12px;text-transform:uppercase;letter-spacing:1px">Top Rated</div></td>
-<td width="33%" align="center"><div style="color:#fff;font-size:28px;font-weight:800">24/7</div><div style="color:rgba(255,255,255,0.85);font-size:12px;text-transform:uppercase;letter-spacing:1px">Always On</div></td>
+<!-- ═══════ HERO ═══════ -->
+<tr><td style="background:{theme['gradient']};padding:56px 48px 48px;text-align:center;position:relative">
+<div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:3px;margin-bottom:16px">{brand}</div>
+<div style="font-size:56px;margin-bottom:16px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.2))">{theme['hero_emoji']}</div>
+<h1 style="color:#ffffff;margin:0 0 12px;font-size:36px;font-weight:900;letter-spacing:-1px;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,0.2)">{c['headline']}</h1>
+<p style="color:rgba(255,255,255,0.9);margin:0 0 28px;font-size:18px;font-weight:400;line-height:1.5">{c['subheadline']}</p>
+<table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr>
+<td style="background:#ffffff;border-radius:50px;padding:16px 44px;box-shadow:0 6px 24px rgba(0,0,0,0.2)">
+<a href="#" style="color:{theme['accent']};text-decoration:none;font-size:17px;font-weight:800;display:inline-block;letter-spacing:0.3px">{cta} →</a>
+</td>
+<td style="width:12px"></td>
+<td style="background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:50px;padding:14px 28px">
+<a href="#" style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;display:inline-block">Learn More</a>
+</td>
 </tr></table>
 </td></tr>
 
-<!-- BODY -->
-<tr><td style="padding:40px 44px 24px">
-<p style="font-size:17px;line-height:1.8;color:#333;margin:0 0 20px">Hi {audience},</p>
+<!-- ═══════ STATS BAR ═══════ -->
+<tr><td style="background:{theme['accent']};padding:20px 48px">
+<table cellpadding="0" cellspacing="0" width="100%"><tr>
+<td width="25%" align="center" style="border-right:1px solid rgba(255,255,255,0.2)"><div style="color:#fff;font-size:26px;font-weight:800">{c['stat'][0]}</div><div style="color:rgba(255,255,255,0.8);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px">{c['stat'][1]}</div></td>
+<td width="25%" align="center" style="border-right:1px solid rgba(255,255,255,0.2)"><div style="color:#fff;font-size:26px;font-weight:800">★★★★★</div><div style="color:rgba(255,255,255,0.8);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px">Top Rated</div></td>
+<td width="25%" align="center" style="border-right:1px solid rgba(255,255,255,0.2)"><div style="color:#fff;font-size:26px;font-weight:800">24/7</div><div style="color:rgba(255,255,255,0.8);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px">Support</div></td>
+<td width="25%" align="center"><div style="color:#fff;font-size:26px;font-weight:800">100%</div><div style="color:rgba(255,255,255,0.8);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px">Satisfaction</div></td>
+</tr></table>
+</td></tr>
+
+<!-- ═══════ BODY ═══════ -->
+<tr><td style="padding:44px 48px 28px">
+<p style="font-size:17px;line-height:1.6;color:#666;margin:0 0 4px;font-weight:500">Hi {audience},</p>
 {body_html}
 </td></tr>
 
-<!-- FEATURES -->
-<tr><td style="padding:0 44px 24px">
-<div style="background:{theme['bg_alt']};border-radius:14px;padding:28px 28px;border:1px solid #e8e8e8">
-<h3 style="margin:0 0 18px;font-size:19px;color:#1a1a2e;font-weight:700">✨ What You Get</h3>
-<table width="100%" cellpadding="0" cellspacing="0">{feature_rows}</table>
+<!-- ═══════ 2-COLUMN FEATURE CARDS ═══════ -->
+<tr><td style="padding:0 40px 32px">
+<div style="background:{theme['bg_alt']};border-radius:18px;padding:32px 24px">
+<div style="text-align:center;margin-bottom:24px">
+<div style="font-size:13px;font-weight:600;color:{theme['accent']};text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">Why Choose Us</div>
+<h3 style="margin:0;font-size:22px;color:#1a1a2e;font-weight:800">Everything You Need</h3>
+</div>
+<table cellpadding="0" cellspacing="0" width="100%"><tr>{feature_cards}</tr></table>
 </div>
 </td></tr>
 
-<!-- TESTIMONIAL -->
-<tr><td style="padding:0 44px 24px">
-<div style="background:linear-gradient(135deg,#fafafa,#f5f5f5);border-radius:14px;padding:32px;border-left:5px solid {theme['accent']};position:relative">
-<div style="font-size:40px;color:{theme['accent']};opacity:0.3;margin-bottom:-10px">❝</div>
-<p style="font-size:16px;line-height:1.7;color:#555;font-style:italic;margin:0 0 14px">{quote_text}</p>
+<!-- ═══════ HOW IT WORKS — 3 STEPS ═══════ -->
+<tr><td style="padding:0 48px 32px">
+<div style="text-align:center;margin-bottom:24px">
+<div style="font-size:13px;font-weight:600;color:{theme['accent']};text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">How It Works</div>
+<h3 style="margin:0;font-size:22px;color:#1a1a2e;font-weight:800">Get Started in 3 Steps</h3>
+</div>
+<table cellpadding="0" cellspacing="0" width="100%"><tr>{steps_html}</tr></table>
+<table cellpadding="0" cellspacing="0" width="100%" style="margin-top:16px"><tr>
+<td style="padding:0 16px"><div style="height:3px;background:{theme['gradient']};border-radius:2px"></div></td>
+</tr></table>
+</td></tr>
+
+<!-- ═══════ PRODUCT SHOWCASE ═══════ -->
+<tr><td style="padding:0 48px 32px">
+<div style="background:#f8f9fa;border-radius:16px;overflow:hidden;border:1px solid #e8e8e8">
+<div style="background:linear-gradient(135deg,#f0f0f0,#e8e8e8);padding:48px;text-align:center">
+<div style="font-size:64px;margin-bottom:8px">📱</div>
+<div style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:2px">Product Preview</div>
+</div>
+<div style="padding:24px 28px">
+<div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px">{product}</div>
+<div style="font-size:14px;color:#666;line-height:1.6">See how {product} can transform your workflow. Beautiful design, powerful features, and seamless performance — all in one place.</div>
+</div>
+</div>
+</td></tr>
+
+<!-- ═══════ FEATURE LIST ═══════ -->
+<tr><td style="padding:0 48px 32px">
+<table cellpadding="0" cellspacing="0" width="100%">
+<tr><td style="padding:0 0 12px"><div style="font-size:13px;font-weight:600;color:{theme['accent']};text-transform:uppercase;letter-spacing:2px">Included</div></td></tr>
+{feature_list}
+</table>
+</td></tr>
+
+<!-- ═══════ TESTIMONIAL ═══════ -->
+<tr><td style="padding:0 48px 32px">
+<div style="background:#fff;border-radius:16px;padding:0;border:1px solid #e8e8e8;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.04)">
+<div style="background:{theme['gradient']};padding:20px 28px">
+<div style="font-size:36px;line-height:1;color:rgba(255,255,255,0.4)">❝</div>
+</div>
+<div style="padding:28px">
+<p style="font-size:17px;line-height:1.7;color:#333;margin:0 0 20px;font-style:italic">"{quote_text}"</p>
 <table cellpadding="0" cellspacing="0"><tr>
-<td><div style="width:42px;height:42px;border-radius:50%;background:{theme['gradient']};text-align:center;line-height:42px;color:#fff;font-weight:700;font-size:16px">{quote_author[0]}</div></td>
-<td style="padding-left:12px"><div style="font-size:14px;font-weight:700;color:#1a1a2e">{quote_author}</div><div style="font-size:12px;color:#999">Verified Customer</div></td>
+<td><div style="width:48px;height:48px;border-radius:50%;background:{theme['gradient']};text-align:center;line-height:48px;color:#fff;font-weight:800;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,0.15)">{quote_author[0]}</div></td>
+<td style="padding-left:14px"><div style="font-size:15px;font-weight:700;color:#1a1a2e">{quote_author}</div><div style="font-size:13px;color:{theme['accent']};font-weight:500">Verified Customer</div></td>
 </tr></table>
 </div>
-</td></tr>
-
-<!-- URGENCY BANNER -->
-<tr><td style="padding:0 44px 24px">
-<div style="background:{theme['bg_alt']};border:2px dashed {theme['accent']};border-radius:12px;padding:20px 24px;text-align:center">
-<div style="font-size:17px;font-weight:700;color:{theme['accent']}">{c['urgency']}</div>
 </div>
 </td></tr>
 
-<!-- CTA -->
-<tr><td style="padding:10px 44px 40px;text-align:center">
+<!-- ═══════ URGENCY + CTA ═══════ -->
+<tr><td style="padding:0 48px 32px">
+<div style="background:{theme['gradient']};border-radius:18px;padding:40px 36px;text-align:center">
+<div style="font-size:40px;margin-bottom:12px">{theme['hero_emoji']}</div>
+<div style="font-size:22px;font-weight:800;color:#ffffff;margin-bottom:8px">{c['urgency']}</div>
+<p style="font-size:15px;color:rgba(255,255,255,0.85);margin:0 0 24px">Don't miss your chance. Join thousands of {audience} already benefiting.</p>
 <table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr>
-<td style="background:{theme['gradient']};border-radius:50px;padding:18px 52px;box-shadow:0 6px 20px rgba(0,0,0,0.15)">
-<a href="#" style="color:#ffffff;text-decoration:none;font-size:18px;font-weight:700;display:inline-block;letter-spacing:0.5px">{cta} →</a>
+<td style="background:#ffffff;border-radius:50px;padding:16px 48px;box-shadow:0 6px 24px rgba(0,0,0,0.2)">
+<a href="#" style="color:{theme['accent']};text-decoration:none;font-size:17px;font-weight:800;display:inline-block">{cta} Now →</a>
+</td></tr></table>
+</div>
+</td></tr>
+
+<!-- ═══════ TRUST BAR ═══════ -->
+<tr><td style="padding:0 48px 32px">
+<table cellpadding="0" cellspacing="0" width="100%">
+<tr>
+<td width="25%" align="center" style="padding:12px 4px">
+<div style="font-size:24px;color:{theme['accent']}">✓</div>
+<div style="font-size:12px;color:#666;font-weight:600;margin-top:4px">Free Shipping</div>
+</td>
+<td width="25%" align="center" style="padding:12px 4px;border-left:1px solid #eee;border-right:1px solid #eee">
+<div style="font-size:24px;color:{theme['accent']}">🔒</div>
+<div style="font-size:12px;color:#666;font-weight:600;margin-top:4px">Secure Payment</div>
+</td>
+<td width="25%" align="center" style="padding:12px 4px;border-right:1px solid #eee">
+<div style="font-size:24px;color:{theme['accent']}">↩</div>
+<div style="font-size:12px;color:#666;font-weight:600;margin-top:4px">Easy Returns</div>
+</td>
+<td width="25%" align="center" style="padding:12px 4px">
+<div style="font-size:24px;color:{theme['accent']}">💬</div>
+<div style="font-size:12px;color:#666;font-weight:600;margin-top:4px">24/7 Support</div>
+</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- ═══════ SOCIAL PROOF ═══════ -->
+<tr><td style="padding:0 48px 32px;text-align:center">
+<div style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">Trusted by industry leaders</div>
+<div style="font-size:32px;letter-spacing:12px;color:{theme['accent']};margin-bottom:8px">★ ★ ★ ★ ★</div>
+<div style="font-size:14px;color:#888">Rated 4.9/5 by 2,000+ customers worldwide</div>
+</td></tr>
+
+<!-- ═══════ FINAL CTA ═══════ -->
+<tr><td style="padding:0 48px 40px;text-align:center">
+<p style="font-size:16px;color:#555;margin:0 0 20px">Ready to transform your experience?</p>
+<table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr>
+<td style="background:{theme['gradient']};border-radius:50px;padding:18px 56px;box-shadow:0 8px 28px {theme['accent']}44">
+<a href="#" style="color:#ffffff;text-decoration:none;font-size:18px;font-weight:800;display:inline-block;letter-spacing:0.3px">{cta} — It's Free →</a>
 </td></tr></table>
 </td></tr>
 
-<!-- DIVIDER -->
-<tr><td style="padding:0 44px"><div style="height:1px;background:linear-gradient(90deg,transparent,{theme['accent']},transparent)"></div></td></tr>
+<!-- ═══════ DIVIDER ═══════ -->
+<tr><td style="padding:0 48px"><div style="height:1px;background:linear-gradient(90deg,transparent,{theme['accent']}40,transparent)"></div></td></tr>
 
-<!-- SOCIAL PROOF -->
-<tr><td style="padding:30px 44px;text-align:center">
-<p style="margin:0 0 12px;font-size:14px;color:#999;text-transform:uppercase;letter-spacing:2px">Trusted by</p>
-<div style="font-size:28px;letter-spacing:8px;color:{theme['accent']}">★ ★ ★ ★ ★</div>
-<p style="margin:10px 0 0;font-size:13px;color:#999">Rated 4.9/5 by 2,000+ customers</p>
+<!-- ═══════ NEWSLETTER PREVIEW ═══════ -->
+<tr><td style="padding:32px 48px">
+<div style="background:#f8f9fa;border-radius:14px;padding:28px;border:1px solid #e8e8e8">
+<div style="display:flex;align-items:center;margin-bottom:16px">
+<div style="width:44px;height:44px;border-radius:12px;background:{theme['gradient']};text-align:center;line-height:44px;font-size:20px;color:#fff;float:left;margin-right:14px">📬</div>
+<div><div style="font-size:16px;font-weight:700;color:#1a1a2e">Stay in the loop</div><div style="font-size:13px;color:#888">Get weekly insights delivered to your inbox</div></div>
+</div>
+<table cellpadding="0" cellspacing="0" width="100%"><tr>
+<td><input type="email" placeholder="your@email.com" style="width:100%;padding:12px 16px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box" /></td>
+<td style="width:8px"></td>
+<td style="background:{theme['gradient']};border-radius:8px;padding:12px 20px"><a href="#" style="color:#fff;text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap">Subscribe</a></td>
+</tr></table>
+</div>
 </td></tr>
 
-<!-- FOOTER -->
-<tr><td style="background:#1a1a2e;padding:36px 44px">
+<!-- ═══════ FOOTER ═══════ -->
+<tr><td style="background:#0f0f1a;padding:44px 48px 36px;border-radius:0 0 20px 20px">
 <table width="100%" cellpadding="0" cellspacing="0">
 <tr><td align="center">
-<div style="font-size:22px;font-weight:800;color:#ffffff;margin-bottom:8px">{brand}</div>
-<div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:16px">Innovation • Quality • Trust</div>
-<table cellpadding="0" cellspacing="0"><tr>
-<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">𝕏</a></td>
-<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">in</a></td>
-<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">f</a></td>
-<td style="padding:0 8px"><a href="#" style="display:inline-block;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:36px;color:#fff;text-decoration:none;font-size:14px">ig</a></td>
-</tr></table>
+<div style="font-size:24px;font-weight:900;color:#ffffff;margin-bottom:4px;letter-spacing:-0.5px">{brand}</div>
+<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase">Innovation · Quality · Trust</div>
+<table cellpadding="0" cellspacing="0"><tr>{social_html}</tr></table>
 </td></tr>
-<tr><td align="center" style="padding-top:20px">
-<p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0">This email was sent by {brand}. <a href="#" style="color:rgba(255,255,255,0.5)">Unsubscribe</a> | <a href="#" style="color:rgba(255,255,255,0.5)">Manage Preferences</a></p>
-<p style="font-size:11px;color:rgba(255,255,255,0.3);margin:6px 0 0">&copy; 2026 {brand}. All rights reserved.</p>
+<tr><td style="padding-top:24px;text-align:center">
+<div style="height:1px;background:rgba(255,255,255,0.08);margin-bottom:20px"></div>
+<p style="font-size:12px;color:rgba(255,255,255,0.35);margin:0;line-height:1.8">
+You received this email because you signed up at {brand}.<br>
+<a href="#" style="color:rgba(255,255,255,0.5);text-decoration:underline">Unsubscribe</a> · <a href="#" style="color:rgba(255,255,255,0.5);text-decoration:underline">Preferences</a> · <a href="#" style="color:rgba(255,255,255,0.5);text-decoration:underline">View Online</a>
+</p>
+<p style="font-size:11px;color:rgba(255,255,255,0.2);margin:8px 0 0">&copy; 2026 {brand}. All rights reserved.</p>
 </td></tr>
 </table>
 </td></tr>
