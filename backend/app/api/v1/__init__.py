@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     email_studio,
     health,
     image_studio,
+    integrations,
     landing_pages,
     organizations,
     performance_studio,
@@ -37,5 +38,6 @@ api_router.include_router(brand_studio.router, prefix="/brands", tags=["brand-st
 api_router.include_router(image_studio.router, prefix="/images", tags=["image-studio"])
 api_router.include_router(social_studio.router, prefix="/social", tags=["social-studio"])
 api_router.include_router(email_studio.router, prefix="/email", tags=["email-studio"])
+api_router.include_router(integrations.router, prefix="/integrations", tags=["integrations"])
 api_router.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
 api_router.include_router(workspaces.router, prefix="/workspaces", tags=["workspaces"])

@@ -18,6 +18,7 @@ import {
   Image,
   Send,
   Mail,
+  Link2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -49,6 +50,7 @@ export const dashboardNavItems: NavSection[] = [
       { title: 'Projects', href: '/projects', icon: Layers },
       { title: 'Landing Pages', href: '/landing-pages', icon: Wand2 },
       { title: 'Content Studio', href: '/content-studio', icon: PenTool },
+      { title: 'Integrations', href: '/integrations', icon: Link2 },
     ],
   },
   {
