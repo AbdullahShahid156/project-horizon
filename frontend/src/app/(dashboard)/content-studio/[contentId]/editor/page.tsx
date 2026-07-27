@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/toast";
 import {
   ArrowLeft,
   Save,
@@ -65,6 +66,7 @@ export default function ContentEditorPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
+  const { addToast } = useToast();
   const contentId = params.contentId as string;
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -119,10 +121,11 @@ export default function ContentEditorPage() {
       }
     } catch (err) {
       console.error("Failed to load content:", err);
+      addToast({ title: "Error", description: "Failed to load content", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [contentId]);
+  }, [contentId, addToast]);
 
   const loadVersions = useCallback(async () => {
     try {
@@ -130,8 +133,9 @@ export default function ContentEditorPage() {
       setVersions(data ?? []);
     } catch (err) {
       console.error("Failed to load versions:", err);
+      addToast({ title: "Error", description: "Failed to load version history", variant: "destructive" });
     }
-  }, [contentId]);
+  }, [contentId, addToast]);
 
   useEffect(() => {
     loadContent();
@@ -151,18 +155,28 @@ export default function ContentEditorPage() {
     }
   };
 
+  const undoStackRef = useRef<string[]>([]);
+  const redoStackRef = useRef<string[]>([]);
+
+  useEffect(() => { undoStackRef.current = undoStack; }, [undoStack]);
+  useEffect(() => { redoStackRef.current = redoStack; }, [redoStack]);
+
   const handleUndo = () => {
-    if (undoStack.length === 0 || !editorRef.current) return;
-    const prev = undoStack[undoStack.length - 1];
-    setRedoStack((r) => [...r, editorRef.current!.innerHTML]);
+    const stack = undoStackRef.current;
+    if (stack.length === 0 || !editorRef.current) return;
+    const prev = stack[stack.length - 1];
+    const current = editorRef.current.innerHTML;
+    setRedoStack((r) => [...r, current]);
     setUndoStack((u) => u.slice(0, -1));
     editorRef.current.innerHTML = prev;
   };
 
   const handleRedo = () => {
-    if (redoStack.length === 0 || !editorRef.current) return;
-    const next = redoStack[redoStack.length - 1];
-    setUndoStack((u) => [...u, editorRef.current!.innerHTML]);
+    const stack = redoStackRef.current;
+    if (stack.length === 0 || !editorRef.current) return;
+    const next = stack[stack.length - 1];
+    const current = editorRef.current.innerHTML;
+    setUndoStack((u) => [...u, current]);
     setRedoStack((r) => r.slice(0, -1));
     editorRef.current.innerHTML = next;
   };
@@ -199,6 +213,7 @@ export default function ContentEditorPage() {
       setLastSaved(new Date());
     } catch (err) {
       console.error("Auto-save failed:", err);
+      addToast({ title: "Error", description: "Auto-save failed", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -224,6 +239,7 @@ export default function ContentEditorPage() {
       await loadVersions();
     } catch (err) {
       console.error("Save failed:", err);
+      addToast({ title: "Error", description: "Failed to save content", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -315,6 +331,7 @@ export default function ContentEditorPage() {
       await loadVersions();
     } catch (err) {
       console.error("Restore failed:", err);
+      addToast({ title: "Error", description: "Failed to restore version", variant: "destructive" });
     }
   };
 

@@ -1,6 +1,7 @@
 import time
 import uuid
 from datetime import datetime, timezone
+from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -734,10 +735,10 @@ async def get_campaign_history(campaign_id: str, user: str = Depends(get_current
 
 def _generate_fallback_email(data: EmailGenerateRequest) -> dict:
     """Generate extraordinary template-based email when AI is unavailable."""
-    brand = data.brand or "your brand"
-    audience = data.audience or "valued customers"
-    product = data.product or "our products"
-    cta = data.cta or "Get Started"
+    brand = html_escape(data.brand or "your brand")
+    audience = html_escape(data.audience or "valued customers")
+    product = html_escape(data.product or "our products")
+    cta = html_escape(data.cta or "Get Started")
 
     _THEMES = {
         "promotional": {

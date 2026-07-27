@@ -4,6 +4,7 @@ import time
 import urllib.parse
 import uuid
 from datetime import datetime, timezone
+from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -358,13 +359,13 @@ async def create_content(data: ContentCreateRequest, user: str = Depends(get_cur
 
 def _generate_fallback_content(data: ContentGenerateRequest) -> str:
     """Generate template-based content when AI is unavailable."""
-    biz = data.business_name or "your business"
-    prod = data.product or "products and services"
-    ind = data.industry or "the industry"
-    aud = data.target_audience or "customers"
-    cta = data.call_to_action or "Get Started"
-    tone = data.tone or "professional"
-    kw_list = ", ".join(data.keywords) if data.keywords else "industry-leading solutions"
+    biz = html_escape(data.business_name or "your business")
+    prod = html_escape(data.product or "products and services")
+    ind = html_escape(data.industry or "the industry")
+    aud = html_escape(data.target_audience or "customers")
+    cta = html_escape(data.call_to_action or "Get Started")
+    tone = html_escape(data.tone or "professional")
+    kw_list = html_escape(", ".join(data.keywords)) if data.keywords else "industry-leading solutions"
 
     length = data.length or "medium"
     if length == "short":
@@ -1691,10 +1692,11 @@ async def export_content_item(item_id: str, format: str = "html", user: str = De
         raise HTTPException(status_code=404, detail="Content not found")
 
     item = _items[item_id]
-    title = item["title"]
+    raw_title = item["title"]
+    title = html_escape(raw_title)
     html = item.get("htmlBody", "")
     plain = item.get("plainBody", "")
-    image_url = item.get("imageUrl")
+    image_url = html_escape(item.get("imageUrl") or "")
 
     if format == "html":
         image_html = f'\n<div style="text-align:center;margin:20px 0;"><img src="{image_url}" alt="{title}" style="max-width:100%;border-radius:8px;" /></div>\n' if image_url else ""
@@ -1710,17 +1712,17 @@ async def export_content_item(item_id: str, format: str = "html", user: str = De
 {image_html}{html}
 </body>
 </html>"""
-        filename = f"{slugify(title)}.html"
+        filename = f"{slugify(raw_title)}.html"
     elif format == "markdown":
         content = f"# {title}\n\n{plain}"
-        filename = f"{slugify(title)}.md"
+        filename = f"{slugify(raw_title)}.md"
     elif format == "txt":
         content = f"{title}\n\n{plain}"
-        filename = f"{slugify(title)}.txt"
+        filename = f"{slugify(raw_title)}.txt"
     elif format == "json":
         import json
         content = json.dumps(item, indent=2, default=str)
-        filename = f"{slugify(title)}.json"
+        filename = f"{slugify(raw_title)}.json"
     else:
         raise HTTPException(status_code=400, detail="Unsupported format")
 
