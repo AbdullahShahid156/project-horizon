@@ -68,7 +68,7 @@ export const dashboardNavItems: NavSection[] = [
     title: 'Organization',
     items: [
       { title: 'Members', href: '/organizations', icon: Users },
-      { title: 'Activity Log', href: '/dashboard/activity', icon: ScrollText, disabled: true },
+      { title: 'Activity Log', href: '/activity', icon: ScrollText },
     ],
   },
   {

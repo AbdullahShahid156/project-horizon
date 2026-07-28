@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    activity_log,
     ai,
     ai_engine,
     analytics,
@@ -42,4 +43,5 @@ api_router.include_router(email_studio.router, prefix="/email", tags=["email-stu
 api_router.include_router(integrations.router, prefix="/integrations", tags=["integrations"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 api_router.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
+api_router.include_router(activity_log.router, prefix="/activity", tags=["activity-log"])
 api_router.include_router(workspaces.router, prefix="/workspaces", tags=["workspaces"])

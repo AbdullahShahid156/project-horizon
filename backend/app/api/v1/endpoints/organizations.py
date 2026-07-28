@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from app.core.security import Depends, get_current_user
 from app.schemas.organization import (
     MemberInviteRequest,
+    MemberRoleUpdateRequest,
     OrganizationCreateRequest,
     OrganizationUpdateRequest,
 )
@@ -146,3 +147,38 @@ async def remove_member(org_id: str, member_id: str, user: str = Depends(get_cur
         raise HTTPException(status_code=400, detail="Cannot remove the owner")
     m["deleted"] = True
     return {"detail": "Member removed"}
+
+
+@router.put("/{org_id}/members/{member_id}/role")
+async def update_member_role(
+    org_id: str, member_id: str, data: MemberRoleUpdateRequest, user: str = Depends(get_current_user)
+):
+    if org_id not in _org_store or _org_store[org_id].get("deleted"):
+        raise HTTPException(status_code=404, detail="Organization not found")
+    if member_id not in _membership_store:
+        raise HTTPException(status_code=404, detail="Member not found")
+    m = _membership_store[member_id]
+    if m["organizationId"] != org_id:
+        raise HTTPException(status_code=404, detail="Member not found in this organization")
+    if m["role"] == "owner":
+        raise HTTPException(status_code=400, detail="Cannot change owner role")
+    if data.role not in ("admin", "member", "viewer"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+    m["role"] = data.role
+    return {"detail": f"Role updated to {data.role}", "member": m}
+
+
+@router.get("/{org_id}/stats")
+async def org_stats(org_id: str, user: str = Depends(get_current_user)):
+    if org_id not in _org_store or _org_store[org_id].get("deleted"):
+        raise HTTPException(status_code=404, detail="Organization not found")
+    members = [m for m in _membership_store.values() if m["organizationId"] == org_id and not m.get("deleted")]
+    return {
+        "total_members": len(members),
+        "roles": {
+            "owner": sum(1 for m in members if m["role"] == "owner"),
+            "admin": sum(1 for m in members if m["role"] == "admin"),
+            "member": sum(1 for m in members if m["role"] == "member"),
+            "viewer": sum(1 for m in members if m["role"] == "viewer"),
+        },
+    }
