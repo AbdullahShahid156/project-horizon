@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     ai,
     ai_engine,
+    analytics,
     brand_studio,
     content_studio,
     email_studio,
@@ -39,5 +40,6 @@ api_router.include_router(image_studio.router, prefix="/images", tags=["image-st
 api_router.include_router(social_studio.router, prefix="/social", tags=["social-studio"])
 api_router.include_router(email_studio.router, prefix="/email", tags=["email-studio"])
 api_router.include_router(integrations.router, prefix="/integrations", tags=["integrations"])
+api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 api_router.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
 api_router.include_router(workspaces.router, prefix="/workspaces", tags=["workspaces"])

@@ -41,7 +41,7 @@ export const dashboardNavItems: NavSection[] = [
     items: [
       { title: 'Dashboard', href: '/dashboard', icon: Grid },
       { title: 'AI Usage', href: '/usage', icon: Activity },
-      { title: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, disabled: true },
+      { title: 'Analytics', href: '/analytics', icon: BarChart3 },
     ],
   },
   {
