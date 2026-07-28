@@ -6,18 +6,24 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { projectsService } from '@/services/projects';
+import { analyticsService, type AnalyticsOverview } from '@/services/analytics';
 import type { Project } from '@/types';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
     setError(null);
     try {
-      const data = await projectsService.list();
-      setProjects(data ?? []);
+      const [projData, analyticsData] = await Promise.all([
+        projectsService.list(),
+        analyticsService.getDashboard('30d').catch(() => null),
+      ]);
+      setProjects(projData ?? []);
+      if (analyticsData) setAnalytics(analyticsData.overview);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
@@ -31,11 +37,13 @@ export default function DashboardPage() {
   const publishedProjects = projects.filter((p) => p.status === 'published').length;
   const recentProjects = [...projects].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5);
 
+  const formatNum = (n: number) => n >= 1000 ? (n / 1000).toFixed(1) + 'K' : String(n);
+
   const stats = [
     { title: 'Total Projects', value: String(totalProjects), change: `${publishedProjects} published`, icon: FileText, color: 'text-violet-500', bg: 'bg-violet-500/10' },
     { title: 'Active Websites', value: String(publishedProjects), change: 'Live sites', icon: Globe, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { title: 'Team Members', value: '—', change: 'N/A', icon: Users, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { title: 'Monthly Visitors', value: '—', change: 'Analytics coming soon', icon: BarChart3, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { title: 'Monthly Visitors', value: analytics ? formatNum(analytics.total_visitors) : '—', change: analytics ? `${analytics.visitors_change >= 0 ? '+' : ''}${analytics.visitors_change}% vs last month` : 'Connect GA4 for data', icon: BarChart3, color: 'text-amber-500', bg: 'bg-amber-500/10' },
   ];
 
   const quickActions = [
