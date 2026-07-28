@@ -335,6 +335,12 @@ async def improve_copy(request: CopyImproveRequest, user: str = Depends(get_curr
         return CopyImproveResponse(original=request.text, improved=request.text)
 
 
+@router.get("/")
+async def list_all_landing_pages(user: str = Depends(get_current_user)):
+    check_rate_limit(f"list:{user}")
+    return list(_lp_store.values())
+
+
 @router.get("/project/{project_id}")
 async def list_landing_pages(project_id: str, user: str = Depends(get_current_user)):
     check_rate_limit(f"list:{user}")

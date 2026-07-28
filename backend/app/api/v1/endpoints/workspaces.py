@@ -11,6 +11,11 @@ router = APIRouter()
 _workspace_store: dict[str, dict] = {}
 
 
+@router.get("/")
+async def list_all_workspaces(user: str = Depends(get_current_user)):
+    return [ws for ws in _workspace_store.values() if not ws.get("deleted")]
+
+
 @router.get("/{workspace_id}")
 async def get_workspace(workspace_id: str, user: str = Depends(get_current_user)):
     if workspace_id not in _workspace_store or _workspace_store[workspace_id].get("deleted"):
