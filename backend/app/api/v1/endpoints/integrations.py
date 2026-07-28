@@ -887,6 +887,24 @@ async def list_provider_categories(user: str = Depends(get_current_user)):
     return list(categories.values())
 
 
+@router.get("/providers/{provider_id}", response_model=ProviderResponse)
+async def get_provider(provider_id: str, user: str = Depends(get_current_user)):
+    _check_rate_limit(f"providers:{user}")
+    if provider_id not in _PROVIDER_DEFINITIONS:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    pdef = _PROVIDER_DEFINITIONS[provider_id]
+    fields = [ProviderFieldResponse(**f) for f in pdef["fields"]]
+    return ProviderResponse(
+        id=pdef["id"],
+        name=pdef["name"],
+        category=pdef["category"],
+        description=pdef["description"],
+        color=pdef["color"],
+        fields=fields,
+        is_available=provider_id in PROVIDERS,
+    )
+
+
 # ─── STATS ───────────────────────────────────────────────────────────────────
 
 
@@ -1019,7 +1037,8 @@ async def connect_integration(
         "name": data.name,
         "status": initial_status,
         "healthStatus": initial_health,
-        "credentials": masked_creds,
+        "credentials": data.credentials,
+        "maskedCredentials": masked_creds,
         "config": data.config,
         "autoSync": False,
         "syncIntervalMinutes": 60,
@@ -1259,7 +1278,8 @@ async def update_integration(
     if data.name is not None:
         ig["name"] = data.name
     if data.credentials is not None:
-        ig["credentials"] = {k: _mask_credential(v) for k, v in data.credentials.items()}
+        ig["credentials"] = data.credentials
+        ig["maskedCredentials"] = {k: _mask_credential(v) for k, v in data.credentials.items()}
     if data.config is not None:
         ig["config"] = data.config
     if data.auto_sync is not None:
@@ -1382,12 +1402,18 @@ async def reconnect_integration(integration_id: str, user: str = Depends(get_cur
         result = await provider.test_connection(ig.get("credentials", {}), ig.get("config"))
         elapsed = (time.time() - start_time) * 1000
 
-        ig["status"] = "connected"
-        ig["healthStatus"] = "healthy"
-        ig["errorMessage"] = None
-        ig["updatedAt"] = now
+        if result.get("status") == "connected":
+            ig["status"] = "connected"
+            ig["healthStatus"] = "healthy"
+            ig["errorMessage"] = None
+            _log_event(integration_id, "reconnect", "success", message=result.get("message"), duration_ms=elapsed)
+        else:
+            ig["status"] = "failed"
+            ig["healthStatus"] = "error"
+            ig["errorMessage"] = result.get("message", "Reconnection failed")
+            _log_event(integration_id, "reconnect", "error", message=result.get("message"), duration_ms=elapsed)
 
-        _log_event(integration_id, "reconnect", "success", message=result.get("message"), duration_ms=elapsed)
+        ig["updatedAt"] = now
     except Exception as e:
         elapsed = (time.time() - start_time) * 1000
         ig["status"] = "failed"
@@ -1419,10 +1445,14 @@ async def check_health(integration_id: str, user: str = Depends(get_current_user
         result = await provider.test_connection(ig.get("credentials", {}), ig.get("config"))
         elapsed = (time.time() - start_time) * 1000
 
-        ig["healthStatus"] = "healthy"
-        _log_event(integration_id, "health_check", "success", duration_ms=elapsed)
-
-        return {"status": "healthy", "message": result.get("message"), "latency_ms": elapsed}
+        if result.get("status") == "connected":
+            ig["healthStatus"] = "healthy"
+            _log_event(integration_id, "health_check", "success", duration_ms=elapsed)
+            return {"status": "healthy", "message": result.get("message"), "latency_ms": elapsed}
+        else:
+            ig["healthStatus"] = "error"
+            _log_event(integration_id, "health_check", "error", message=result.get("message"), duration_ms=elapsed)
+            return {"status": "error", "message": result.get("message"), "latency_ms": elapsed}
     except Exception as e:
         elapsed = (time.time() - start_time) * 1000
         ig["healthStatus"] = "error"
