@@ -19,9 +19,9 @@ import {
   Loader2,
   Link2,
   Globe,
-  ShoppingCart,
   Send,
-  MessageSquare,
+  Bell,
+  Share2,
   BarChart3,
 } from "lucide-react";
 
@@ -29,9 +29,9 @@ const WORKSPACE_ID = "ws-default";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   cms: Globe,
-  ecommerce: ShoppingCart,
   marketing: Send,
-  productivity: MessageSquare,
+  notifications: Bell,
+  social: Share2,
   analytics: BarChart3,
 };
 

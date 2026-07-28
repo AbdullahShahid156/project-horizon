@@ -18,18 +18,18 @@ import {
   ArrowLeft,
   Search,
   Globe,
-  ShoppingCart,
   Send,
-  MessageSquare,
+  Bell,
+  Share2,
   BarChart3,
   Plus,
 } from "lucide-react";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   cms: Globe,
-  ecommerce: ShoppingCart,
   marketing: Send,
-  productivity: MessageSquare,
+  notifications: Bell,
+  social: Share2,
   analytics: BarChart3,
 };
 

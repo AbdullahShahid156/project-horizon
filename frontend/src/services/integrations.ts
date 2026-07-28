@@ -282,9 +282,9 @@ export const integrationsService = new IntegrationsService();
 
 export const INTEGRATION_CATEGORIES = [
   { id: "cms", label: "CMS", icon: "Globe" },
-  { id: "ecommerce", label: "E-Commerce", icon: "ShoppingCart" },
   { id: "marketing", label: "Email Marketing", icon: "Send" },
-  { id: "productivity", label: "Productivity", icon: "MessageSquare" },
+  { id: "notifications", label: "Notifications", icon: "Bell" },
+  { id: "social", label: "Social Media", icon: "Share2" },
   { id: "analytics", label: "Analytics", icon: "BarChart3" },
 ] as const;
 

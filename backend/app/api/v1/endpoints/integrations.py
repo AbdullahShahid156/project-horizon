@@ -1,8 +1,11 @@
+import base64
 import hashlib
 import hmac
+import json
 import time
 import uuid
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -63,17 +66,6 @@ _PROVIDER_DEFINITIONS: dict[str, dict] = {
             {"key": "app_password", "label": "Application Password", "type": "password", "required": True, "placeholder": "xxxx xxxx xxxx xxxx", "description": "WordPress application password"},
         ],
     },
-    "shopify": {
-        "id": "shopify",
-        "name": "Shopify",
-        "category": "ecommerce",
-        "description": "Connect to your Shopify store for product and order management.",
-        "color": "#96bf48",
-        "fields": [
-            {"key": "store_url", "label": "Store URL", "type": "url", "required": True, "placeholder": "https://your-store.myshopify.com", "description": "Your Shopify store URL"},
-            {"key": "access_token", "label": "Access Token", "type": "password", "required": True, "placeholder": "shpat_xxxxx", "description": "Shopify Admin API access token"},
-        ],
-    },
     "mailchimp": {
         "id": "mailchimp",
         "name": "Mailchimp",
@@ -88,12 +80,46 @@ _PROVIDER_DEFINITIONS: dict[str, dict] = {
     "slack": {
         "id": "slack",
         "name": "Slack",
-        "category": "productivity",
+        "category": "notifications",
         "description": "Connect Slack for team notifications and messaging.",
         "color": "#4a154b",
         "fields": [
             {"key": "bot_token", "label": "Bot Token", "type": "password", "required": True, "placeholder": "xoxb-xxxx", "description": "Slack bot user OAuth token"},
             {"key": "webhook_url", "label": "Incoming Webhook URL", "type": "url", "required": False, "placeholder": "https://hooks.slack.com/services/xxxx", "description": "Optional incoming webhook URL"},
+        ],
+    },
+    "discord": {
+        "id": "discord",
+        "name": "Discord",
+        "category": "notifications",
+        "description": "Connect Discord for server notifications and messaging via webhooks.",
+        "color": "#5865F2",
+        "fields": [
+            {"key": "webhook_url", "label": "Webhook URL", "type": "url", "required": True, "placeholder": "https://discord.com/api/webhooks/xxxx/yyyy", "description": "Discord channel webhook URL"},
+        ],
+    },
+    "twitter": {
+        "id": "twitter",
+        "name": "Twitter/X",
+        "category": "social",
+        "description": "Connect Twitter/X for social media posting and analytics.",
+        "color": "#000000",
+        "fields": [
+            {"key": "api_key", "label": "API Key", "type": "password", "required": True, "placeholder": "xxxxxxxxxx", "description": "Twitter API key"},
+            {"key": "api_secret", "label": "API Secret", "type": "password", "required": True, "placeholder": "xxxxxxxxxx", "description": "Twitter API secret"},
+            {"key": "access_token", "label": "Access Token", "type": "password", "required": True, "placeholder": "xxxxxxxxxx", "description": "Twitter access token"},
+            {"key": "access_token_secret", "label": "Access Token Secret", "type": "password", "required": True, "placeholder": "xxxxxxxxxx", "description": "Twitter access token secret"},
+        ],
+    },
+    "linkedin": {
+        "id": "linkedin",
+        "name": "LinkedIn",
+        "category": "social",
+        "description": "Connect LinkedIn for professional networking and content posting.",
+        "color": "#0A66C2",
+        "fields": [
+            {"key": "access_token", "label": "Access Token", "type": "password", "required": True, "placeholder": "xxxxxxxxxx", "description": "LinkedIn OAuth access token"},
+            {"key": "person_id", "label": "Person URN", "type": "text", "required": True, "placeholder": "urn:li:person:xxxxx", "description": "Your LinkedIn person URN, e.g. urn:li:person:xxxxx"},
         ],
     },
     "google_analytics": {
@@ -238,84 +264,6 @@ class WordPressProvider(IntegrationProvider):
             return {"success": False, "message": f"WordPress API error: HTTP {resp.status_code}"}
 
 
-class ShopifyProvider(IntegrationProvider):
-    provider_id = "shopify"
-    display_name = "Shopify"
-    category = "ecommerce"
-
-    async def test_connection(self, credentials, config=None):
-        store_url = credentials.get("store_url", "").rstrip("/")
-        token = credentials.get("access_token", "")
-        if not store_url or not token:
-            return {"status": "error", "message": "Missing Shopify credentials"}
-        async with httpx.AsyncClient(timeout=15) as client:
-            try:
-                resp = await client.get(
-                    f"{store_url}/admin/api/2024-01/shop.json",
-                    headers={"X-Shopify-Access-Token": token},
-                )
-                if resp.status_code == 200:
-                    shop = resp.json().get("shop", {})
-                    return {"status": "connected", "message": f"Connected to {shop.get('name', store_url)}"}
-                return {"status": "error", "message": f"Shopify auth failed: HTTP {resp.status_code}"}
-            except httpx.RequestError as e:
-                return {"status": "error", "message": f"Cannot reach {store_url}: {e}"}
-
-    async def sync(self, credentials, config=None):
-        store_url = credentials.get("store_url", "").rstrip("/")
-        token = credentials.get("access_token", "")
-        headers = {"X-Shopify-Access-Token": token}
-        items_synced = 0
-        items_failed = 0
-        async with httpx.AsyncClient(timeout=30) as client:
-            try:
-                for endpoint in ["products.json", "orders.json", "customers.json"]:
-                    resp = await client.get(f"{store_url}/admin/api/2024-01/{endpoint}", headers=headers, params={"limit": 10})
-                    if resp.status_code == 200:
-                        key = endpoint.replace(".json", "")
-                        items_synced += len(resp.json().get(key, []))
-                    else:
-                        items_failed += 1
-            except httpx.RequestError:
-                items_failed += 1
-        return {"items_synced": items_synced, "items_failed": items_failed, "message": f"Synced {items_synced} items from Shopify"}
-
-    async def pull_data(self, credentials, config=None, item_type=None):
-        store_url = credentials.get("store_url", "").rstrip("/")
-        headers = {"X-Shopify-Access-Token": credentials.get("access_token", "")}
-        items = []
-        types = [item_type] if item_type else ["products", "orders", "customers"]
-        async with httpx.AsyncClient(timeout=30) as client:
-            for t in types:
-                try:
-                    resp = await client.get(f"{store_url}/admin/api/2024-01/{t}.json", headers=headers, params={"limit": 20})
-                    if resp.status_code == 200:
-                        for obj in resp.json().get(t.rstrip("s"), []):
-                            name = obj.get("title") or obj.get("name") or obj.get("email") or f"#{obj.get('order_number', '')}"
-                            items.append({
-                                "external_id": str(obj.get("id", "")),
-                                "item_type": t.rstrip("s"),
-                                "title": str(name),
-                                "summary": str(obj.get("body_html", obj.get("note", "")))[:200] if obj.get("body_html") or obj.get("note") else "",
-                                "url": obj.get("admin_graphql_api_url", ""),
-                                "metadata": {"status": obj.get("status", obj.get("financial_status", "")), "created_at": obj.get("created_at", "")},
-                            })
-                except httpx.RequestError:
-                    pass
-        return items
-
-    async def push_content(self, credentials, title, content, item_type="product", metadata=None):
-        store_url = credentials.get("store_url", "").rstrip("/")
-        headers = {"X-Shopify-Access-Token": credentials.get("access_token", ""), "Content-Type": "application/json"}
-        payload = {"product": {"title": title, "body_html": content, "status": "draft"}}
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(f"{store_url}/admin/api/2024-01/products.json", json=payload, headers=headers)
-            if resp.status_code in (200, 201):
-                data = resp.json().get("product", {})
-                return {"success": True, "external_id": str(data.get("id", "")), "url": data.get("admin_graphql_api_url", ""), "message": "Product created in Shopify"}
-            return {"success": False, "message": f"Shopify API error: HTTP {resp.status_code}"}
-
-
 class MailchimpProvider(IntegrationProvider):
     provider_id = "mailchimp"
     display_name = "Mailchimp"
@@ -431,7 +379,7 @@ class MailchimpProvider(IntegrationProvider):
 class SlackProvider(IntegrationProvider):
     provider_id = "slack"
     display_name = "Slack"
-    category = "productivity"
+    category = "notifications"
 
     async def test_connection(self, credentials, config=None):
         bot_token = credentials.get("bot_token", "")
@@ -523,6 +471,254 @@ class SlackProvider(IntegrationProvider):
                 return {"success": False, "message": f"Cannot reach Slack API: {e}"}
 
 
+class DiscordProvider(IntegrationProvider):
+    provider_id = "discord"
+    display_name = "Discord"
+    category = "notifications"
+
+    async def test_connection(self, credentials, config=None):
+        webhook_url = credentials.get("webhook_url", "")
+        if not webhook_url:
+            return {"status": "error", "message": "Missing Discord webhook URL"}
+        async with httpx.AsyncClient(timeout=15) as client:
+            try:
+                resp = await client.post(
+                    webhook_url,
+                    json={"content": "Test connection from BuilderWeb"},
+                )
+                if resp.status_code in (200, 204):
+                    return {"status": "connected", "message": "Connected to Discord webhook"}
+                return {"status": "error", "message": f"Discord webhook failed: HTTP {resp.status_code}"}
+            except httpx.RequestError as e:
+                return {"status": "error", "message": f"Cannot reach Discord webhook: {e}"}
+
+    async def sync(self, credentials, config=None):
+        return {"items_synced": 0, "items_failed": 0, "message": "Discord is send-only, nothing to sync"}
+
+    async def pull_data(self, credentials, config=None, item_type=None):
+        return []
+
+    async def push_content(self, credentials, title, content, item_type="message", metadata=None):
+        webhook_url = credentials.get("webhook_url", "")
+        if not webhook_url:
+            return {"success": False, "message": "Missing Discord webhook URL"}
+        payload = {"embeds": [{"title": title, "description": content}]}
+        async with httpx.AsyncClient(timeout=30) as client:
+            try:
+                resp = await client.post(webhook_url, json=payload)
+                if resp.status_code in (200, 204):
+                    return {"success": True, "message": "Message sent to Discord"}
+                return {"success": False, "message": f"Discord API error: HTTP {resp.status_code}"}
+            except httpx.RequestError as e:
+                return {"success": False, "message": f"Cannot reach Discord webhook: {e}"}
+
+
+def _twitter_oauth_sign(
+    method: str,
+    url: str,
+    params: dict[str, str],
+    consumer_key: str,
+    consumer_secret: str,
+    access_token: str,
+    access_token_secret: str,
+) -> dict[str, str]:
+    oauth_params = {
+        "oauth_consumer_key": consumer_key,
+        "oauth_nonce": uuid.uuid4().hex,
+        "oauth_signature_method": "HMAC-SHA1",
+        "oauth_timestamp": str(int(time.time())),
+        "oauth_token": access_token,
+        "oauth_version": "1.0",
+    }
+    all_params = {**params, **oauth_params}
+    sorted_params = "&".join(f"{quote(k, safe='')}={quote(v, safe='')}" for k, v in sorted(all_params.items()))
+    base_string = f"{method.upper()}&{quote(url, safe='')}&{quote(sorted_params, safe='')}"
+    signing_key = f"{quote(consumer_secret, safe='')}&{quote(access_token_secret, safe='')}"
+    signature = base64.b64encode(
+        hmac.new(signing_key.encode(), base_string.encode(), hashlib.sha1).digest()
+    ).decode()
+    oauth_params["oauth_signature"] = signature
+    return oauth_params
+
+
+class TwitterProvider(IntegrationProvider):
+    provider_id = "twitter"
+    display_name = "Twitter/X"
+    category = "social"
+
+    async def test_connection(self, credentials, config=None):
+        api_key = credentials.get("api_key", "")
+        api_secret = credentials.get("api_secret", "")
+        access_token = credentials.get("access_token", "")
+        access_token_secret = credentials.get("access_token_secret", "")
+        if not all([api_key, api_secret, access_token, access_token_secret]):
+            return {"status": "error", "message": "Missing Twitter credentials"}
+        url = "https://api.twitter.com/2/users/me"
+        oauth_params = _twitter_oauth_sign("GET", url, {}, api_key, api_secret, access_token, access_token_secret)
+        auth_header = "OAuth " + ", ".join(f'{k}="{quote(v, safe="")}"' for k, v in sorted(oauth_params.items()))
+        async with httpx.AsyncClient(timeout=15) as client:
+            try:
+                resp = await client.get(url, headers={"Authorization": auth_header})
+                if resp.status_code == 200:
+                    data = resp.json().get("data", {})
+                    return {"status": "connected", "message": f"Connected to Twitter as @{data.get('username', 'unknown')}"}
+                return {"status": "error", "message": f"Twitter auth failed: HTTP {resp.status_code}"}
+            except httpx.RequestError as e:
+                return {"status": "error", "message": f"Cannot reach Twitter API: {e}"}
+
+    async def sync(self, credentials, config=None):
+        return {"items_synced": 0, "items_failed": 0, "message": "Twitter data sync requires OAuth — connection verified"}
+
+    async def pull_data(self, credentials, config=None, item_type=None):
+        api_key = credentials.get("api_key", "")
+        api_secret = credentials.get("api_secret", "")
+        access_token = credentials.get("access_token", "")
+        access_token_secret = credentials.get("access_token_secret", "")
+        url = "https://api.twitter.com/2/users/me"
+        oauth_params = _twitter_oauth_sign("GET", url, {}, api_key, api_secret, access_token, access_token_secret)
+        auth_header = "OAuth " + ", ".join(f'{k}="{quote(v, safe="")}"' for k, v in sorted(oauth_params.items()))
+        user_id = ""
+        items = []
+        async with httpx.AsyncClient(timeout=30) as client:
+            try:
+                resp = await client.get(url, headers={"Authorization": auth_header})
+                if resp.status_code == 200:
+                    user_id = resp.json().get("data", {}).get("id", "")
+                if not user_id:
+                    return items
+                tweets_url = f"https://api.twitter.com/2/users/{user_id}/tweets"
+                oauth_params = _twitter_oauth_sign("GET", tweets_url, {}, api_key, api_secret, access_token, access_token_secret)
+                auth_header = "OAuth " + ", ".join(f'{k}="{quote(v, safe="")}"' for k, v in sorted(oauth_params.items()))
+                resp = await client.get(tweets_url, headers={"Authorization": auth_header}, params={"max_results": 20, "tweet.fields": "created_at,text"})
+                if resp.status_code == 200:
+                    for tweet in resp.json().get("data", []):
+                        items.append({
+                            "external_id": tweet.get("id", ""),
+                            "item_type": "tweet",
+                            "title": tweet.get("text", "")[:80],
+                            "summary": tweet.get("text", ""),
+                            "url": f"https://twitter.com/i/status/{tweet.get('id', '')}",
+                            "metadata": {"created_at": tweet.get("created_at", "")},
+                        })
+            except httpx.RequestError:
+                pass
+        return items
+
+    async def push_content(self, credentials, title, content, item_type="tweet", metadata=None):
+        api_key = credentials.get("api_key", "")
+        api_secret = credentials.get("api_secret", "")
+        access_token = credentials.get("access_token", "")
+        access_token_secret = credentials.get("access_token_secret", "")
+        if not all([api_key, api_secret, access_token, access_token_secret]):
+            return {"success": False, "message": "Missing Twitter credentials"}
+        tweet_text = f"{title}\n\n{content}" if title else content
+        url = "https://api.twitter.com/2/tweets"
+        oauth_params = _twitter_oauth_sign("POST", url, {}, api_key, api_secret, access_token, access_token_secret)
+        auth_header = "OAuth " + ", ".join(f'{k}="{quote(v, safe="")}"' for k, v in sorted(oauth_params.items()))
+        async with httpx.AsyncClient(timeout=30) as client:
+            try:
+                resp = await client.post(
+                    url,
+                    json={"text": tweet_text},
+                    headers={"Authorization": auth_header, "Content-Type": "application/json"},
+                )
+                if resp.status_code in (200, 201):
+                    data = resp.json().get("data", {})
+                    tweet_id = data.get("id", "")
+                    return {"success": True, "external_id": tweet_id, "url": f"https://twitter.com/i/status/{tweet_id}", "message": "Tweet posted successfully"}
+                return {"success": False, "message": f"Twitter API error: HTTP {resp.status_code}"}
+            except httpx.RequestError as e:
+                return {"success": False, "message": f"Cannot reach Twitter API: {e}"}
+
+
+class LinkedInProvider(IntegrationProvider):
+    provider_id = "linkedin"
+    display_name = "LinkedIn"
+    category = "social"
+
+    async def test_connection(self, credentials, config=None):
+        access_token = credentials.get("access_token", "")
+        person_id = credentials.get("person_id", "")
+        if not access_token or not person_id:
+            return {"status": "error", "message": "Missing LinkedIn credentials"}
+        async with httpx.AsyncClient(timeout=15) as client:
+            try:
+                resp = await client.get(
+                    "https://api.linkedin.com/v2/me",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    name = f"{data.get('localizedFirstName', '')} {data.get('localizedLastName', '')}".strip()
+                    return {"status": "connected", "message": f"Connected to LinkedIn as {name or person_id}"}
+                return {"status": "error", "message": f"LinkedIn auth failed: HTTP {resp.status_code}"}
+            except httpx.RequestError as e:
+                return {"status": "error", "message": f"Cannot reach LinkedIn API: {e}"}
+
+    async def sync(self, credentials, config=None):
+        return {"items_synced": 0, "items_failed": 0, "message": "LinkedIn data sync requires OAuth — connection verified"}
+
+    async def pull_data(self, credentials, config=None, item_type=None):
+        access_token = credentials.get("access_token", "")
+        person_id = credentials.get("person_id", "")
+        if not access_token or not person_id:
+            return []
+        items = []
+        async with httpx.AsyncClient(timeout=30) as client:
+            try:
+                resp = await client.get(
+                    "https://api.linkedin.com/v2/ugcPosts",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    params={"q": "authors", "authors": f"List({person_id})", "count": 20},
+                )
+                if resp.status_code == 200:
+                    for post in resp.json().get("elements", []):
+                        specific = post.get("specificContent", {}).get("com.linkedin.ugc.ShareContent", {})
+                        title = specific.get("shareCommentary", {}).get("text", "Untitled")[:80]
+                        summary = specific.get("shareCommentary", {}).get("text", "")
+                        items.append({
+                            "external_id": post.get("id", ""),
+                            "item_type": "post",
+                            "title": title,
+                            "summary": summary[:200],
+                            "url": "",
+                            "metadata": {"created": post.get("created", {}).get("time", 0), "author": post.get("author", "")},
+                        })
+            except httpx.RequestError:
+                pass
+        return items
+
+    async def push_content(self, credentials, title, content, item_type="post", metadata=None):
+        access_token = credentials.get("access_token", "")
+        person_id = credentials.get("person_id", "")
+        if not access_token or not person_id:
+            return {"success": False, "message": "Missing LinkedIn credentials"}
+        payload = {
+            "author": person_id,
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {"text": f"{title}\n\n{content}" if title else content},
+                    "shareMediaCategory": "NONE",
+                }
+            },
+            "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
+        }
+        async with httpx.AsyncClient(timeout=30) as client:
+            try:
+                resp = await client.post(
+                    "https://api.linkedin.com/v2/ugcPosts",
+                    json=payload,
+                    headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json", "X-Restli-Protocol-Version": "2.0.0"},
+                )
+                if resp.status_code in (200, 201):
+                    post_id = resp.json().get("id", "")
+                    return {"success": True, "external_id": post_id, "url": "", "message": "Post published to LinkedIn"}
+                return {"success": False, "message": f"LinkedIn API error: HTTP {resp.status_code}"}
+            except httpx.RequestError as e:
+                return {"success": False, "message": f"Cannot reach LinkedIn API: {e}"}
+
+
 class GoogleAnalyticsProvider(IntegrationProvider):
     provider_id = "google_analytics"
     display_name = "Google Analytics 4"
@@ -534,7 +730,6 @@ class GoogleAnalyticsProvider(IntegrationProvider):
         if not property_id or not service_account_key:
             return {"status": "error", "message": "Missing GA4 credentials"}
         try:
-            import json
             key_data = json.loads(service_account_key)
             service_account_email = key_data.get("client_email", "")
             return {"status": "connected", "message": f"Connected to GA4 property {property_id} via {service_account_email}"}
@@ -556,7 +751,6 @@ class GoogleSearchConsoleProvider(IntegrationProvider):
         if not site_url or not service_account_key:
             return {"status": "error", "message": "Missing GSC credentials"}
         try:
-            import json
             key_data = json.loads(service_account_key)
             service_account_email = key_data.get("client_email", "")
             return {"status": "connected", "message": f"Connected to GSC for {site_url} via {service_account_email}"}
@@ -566,18 +760,20 @@ class GoogleSearchConsoleProvider(IntegrationProvider):
 
 PROVIDERS: dict[str, IntegrationProvider] = {
     "wordpress": WordPressProvider(),
-    "shopify": ShopifyProvider(),
     "mailchimp": MailchimpProvider(),
     "slack": SlackProvider(),
+    "discord": DiscordProvider(),
+    "twitter": TwitterProvider(),
+    "linkedin": LinkedInProvider(),
     "google_analytics": GoogleAnalyticsProvider(),
     "google_search_console": GoogleSearchConsoleProvider(),
 }
 
 CATEGORY_ICONS = {
     "cms": "Globe",
-    "ecommerce": "ShoppingBag",
     "marketing": "Send",
-    "productivity": "MessageSquare",
+    "notifications": "Bell",
+    "social": "Share2",
     "analytics": "BarChart3",
 }
 

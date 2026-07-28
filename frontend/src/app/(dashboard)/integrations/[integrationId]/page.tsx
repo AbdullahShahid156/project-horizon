@@ -222,8 +222,8 @@ export default function IntegrationDetailPage() {
 
   const isConnected = integration.status === "connected";
   const isFailed = integration.status === "failed";
-  const supportsPull = provider && ["wordpress", "shopify", "mailchimp", "slack", "hubspot_crm", "brevo", "webflow", "hubspot_cms"].includes(provider.id);
-  const supportsPush = provider && ["wordpress", "shopify", "mailchimp", "slack", "hubspot_crm", "brevo", "hubspot_cms"].includes(provider.id);
+  const supportsPull = provider && ["wordpress", "mailchimp", "slack", "twitter", "linkedin", "google_analytics", "google_search_console"].includes(provider.id);
+  const supportsPush = provider && ["wordpress", "mailchimp", "slack", "discord", "twitter", "linkedin"].includes(provider.id);
 
   return (
     <div className="space-y-6">
@@ -498,15 +498,12 @@ export default function IntegrationDetailPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Content Type</Label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {provider?.id === "wordpress" && (
                       <>
                         <Button variant={pushType === "post" ? "default" : "outline"} size="sm" onClick={() => setPushType("post")}>Blog Post</Button>
                         <Button variant={pushType === "page" ? "default" : "outline"} size="sm" onClick={() => setPushType("page")}>Page</Button>
                       </>
-                    )}
-                    {provider?.id === "shopify" && (
-                      <Button variant={pushType === "product" ? "default" : "outline"} size="sm" onClick={() => setPushType("product")}>Product</Button>
                     )}
                     {provider?.id === "mailchimp" && (
                       <Button variant={pushType === "campaign" ? "default" : "outline"} size="sm" onClick={() => setPushType("campaign")}>Campaign</Button>
@@ -514,17 +511,14 @@ export default function IntegrationDetailPage() {
                     {provider?.id === "slack" && (
                       <Button variant={pushType === "message" ? "default" : "outline"} size="sm" onClick={() => setPushType("message")}>Message</Button>
                     )}
-                    {provider?.id === "hubspot_crm" && (
-                      <Button variant={pushType === "contact" ? "default" : "outline"} size="sm" onClick={() => setPushType("contact")}>Contact</Button>
+                    {provider?.id === "discord" && (
+                      <Button variant={pushType === "embed" ? "default" : "outline"} size="sm" onClick={() => setPushType("embed")}>Embed</Button>
                     )}
-                    {provider?.id === "brevo" && (
-                      <Button variant={pushType === "contact" ? "default" : "outline"} size="sm" onClick={() => setPushType("contact")}>Contact</Button>
+                    {provider?.id === "twitter" && (
+                      <Button variant={pushType === "tweet" ? "default" : "outline"} size="sm" onClick={() => setPushType("tweet")}>Tweet</Button>
                     )}
-                    {provider?.id === "hubspot_cms" && (
-                      <>
-                        <Button variant={pushType === "page" ? "default" : "outline"} size="sm" onClick={() => setPushType("page")}>Page</Button>
-                        <Button variant={pushType === "blog_post" ? "default" : "outline"} size="sm" onClick={() => setPushType("blog_post")}>Blog Post</Button>
-                      </>
+                    {provider?.id === "linkedin" && (
+                      <Button variant={pushType === "post" ? "default" : "outline"} size="sm" onClick={() => setPushType("post")}>Post</Button>
                     )}
                   </div>
                 </div>
