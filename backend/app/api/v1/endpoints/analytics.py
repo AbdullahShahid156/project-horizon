@@ -162,7 +162,7 @@ def _generate_demo_data(workspace_id: str) -> dict:
 @router.get("/dashboard")
 async def get_analytics_dashboard(
     workspace_id: str = Query(default="ws-default"),
-    period: str = Query(default="30d", regex="^(7d|30d|90d|all)$"),
+    period: str = Query(default="30d", pattern="^(7d|30d|90d|all)$"),
     user: str = Depends(get_current_user),
 ):
     data = _generate_demo_data(workspace_id)
@@ -209,8 +209,8 @@ async def get_analytics_dashboard(
 @router.get("/pages")
 async def get_analytics_pages(
     workspace_id: str = Query(default="ws-default"),
-    sort_by: str = Query(default="pageviews", regex="^(pageviews|unique_visitors|bounce_rate|avg_time)$"),
-    sort_order: str = Query(default="desc", regex="^(asc|desc)$"),
+    sort_by: str = Query(default="pageviews", pattern="^(pageviews|unique_visitors|bounce_rate|avg_time)$"),
+    sort_order: str = Query(default="desc", pattern="^(asc|desc)$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     user: str = Depends(get_current_user),

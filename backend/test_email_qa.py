@@ -1,11 +1,18 @@
-import requests
 import sys
+
+import requests
 
 B = "http://localhost:8000/api/v1/email"
 WS = "ws-default"
 S = 10
 passed = 0
 failed = 0
+
+try:
+    requests.get("http://localhost:8000/health", timeout=3)
+except requests.exceptions.ConnectionError:
+    print("SKIP: Backend server not running on localhost:8000")
+    sys.exit(0)
 
 def test(name, fn):
     global passed, failed

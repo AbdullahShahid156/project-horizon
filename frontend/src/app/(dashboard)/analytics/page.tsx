@@ -296,16 +296,16 @@ export default function AnalyticsPage() {
                     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                   }}
                   labelFormatter={(v) =>
-                    new Date(v).toLocaleDateString('en-US', {
+                    new Date(String(v)).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                     })
                   }
-                  formatter={(value: number, name: string) => [
-                    formatNumber(value),
-                    name === 'visitors' ? 'Visitors' : 'Pageviews',
+                  formatter={(value) => [
+                    formatNumber(Number(value)),
+                    chartMetric === 'visitors' ? 'Visitors' : 'Pageviews',
                   ]}
                 />
                 <Area
@@ -348,8 +348,8 @@ export default function AnalyticsPage() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [
-                    formatNumber(value),
+                      formatter={(value) => [
+                    formatNumber(Number(value)),
                     'Sessions',
                   ]}
                       contentStyle={{
