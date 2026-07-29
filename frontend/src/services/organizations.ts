@@ -32,4 +32,9 @@ export const organizationsService = {
 
   getStats: (id: string) =>
     api.get<{ total_members: number; roles: Record<string, number> }>(`${API_PREFIX}/organizations/${id}/stats`),
+
+  getInvitation: (memberId: string) =>
+    api.get<{ id: string; email: string; role: string; status: string; invitedAt: string; organizationId: string; organizationName: string }>(
+      `${API_PREFIX}/organizations/invitations/${memberId}`
+    ),
 };

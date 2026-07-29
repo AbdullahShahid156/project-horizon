@@ -74,6 +74,25 @@ async def create_organization(data: OrganizationCreateRequest, user: str = Depen
     return org
 
 
+@router.get("/invitations/{member_id}")
+async def get_invitation(member_id: str):
+    if member_id not in _membership_store:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    m = _membership_store[member_id]
+    if m.get("deleted"):
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    org = _org_store.get(m["organizationId"])
+    return {
+        "id": m["id"],
+        "email": m["email"],
+        "role": m["role"],
+        "status": m["status"],
+        "invitedAt": m.get("invitedAt"),
+        "organizationId": m["organizationId"],
+        "organizationName": org["name"] if org else "Unknown Organization",
+    }
+
+
 @router.get("/{org_id}")
 async def get_organization(org_id: str, user: str = Depends(get_current_user)):
     if org_id not in _org_store or _org_store[org_id].get("deleted"):
@@ -141,7 +160,7 @@ async def invite_member(org_id: str, data: MemberInviteRequest, user: str = Depe
     }
     _membership_store[membership_id] = membership
 
-    accept_url = f"http://localhost:3000/organizations?accept={membership_id}"
+    accept_url = f"http://localhost:3000/accept-invite/{membership_id}"
     subject, html = build_invitation_email(
         org_name=org["name"],
         invitee_email=data.email,
