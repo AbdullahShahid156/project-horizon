@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { ToastProvider } from '@/components/ui/toast';
-import { AuthProvider } from '@/lib/auth';
 import '@/styles/globals.css';
 
 const inter = Inter({
@@ -25,19 +25,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full`}>
-      <body className="min-h-full bg-background font-sans text-foreground antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full`}>
+        <body className="min-h-full bg-background font-sans text-foreground antialiased">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
             <ToastProvider>{children}</ToastProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

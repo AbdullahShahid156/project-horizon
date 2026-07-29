@@ -9,10 +9,11 @@ datasource db {
 model User {
   id             String         @id @default(uuid()) @db.Uuid
   email          String         @unique @db.VarChar(255)
+  username       String?        @unique @db.VarChar(30)
   firstName      String?        @db.VarChar(100)
   lastName       String?        @db.VarChar(100)
   imageUrl       String?        @db.VarChar(500)
-  authProvider   String         @default("supabase") @db.VarChar(50)
+  authProvider   String         @default("clerk") @db.VarChar(50)
   authProviderId String?        @db.VarChar(255)
   timezone       String         @default("UTC") @db.VarChar(50)
   language       String         @default("en") @db.VarChar(10)
