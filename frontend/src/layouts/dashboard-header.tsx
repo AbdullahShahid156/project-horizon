@@ -1,12 +1,21 @@
 'use client';
 
-import { Bell, Menu, Search } from 'lucide-react';
+import { Bell, Menu, Search, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/hooks/use-sidebar';
+import { useAuth } from '@/lib/auth';
 
 export function DashboardHeader() {
   const { toggle } = useSidebar();
+  const { signOut } = useAuth();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push('/login');
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/60 px-4 backdrop-blur-xl md:px-6">
@@ -48,6 +57,15 @@ export function DashboardHeader() {
         >
           <Bell className="h-4 w-4" />
           <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-primary" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-foreground h-9 w-9"
+          aria-label="Sign out"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4" />
         </Button>
       </div>
     </header>

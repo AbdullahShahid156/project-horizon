@@ -6,15 +6,29 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/layouts';
+import { useAuth } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    router.push('/dashboard');
+    setError('');
+    setLoading(true);
+
+    const result = await signIn({ email, password });
+
+    if (result.success) {
+      router.push('/dashboard');
+    } else {
+      setError(result.error || 'Failed to sign in');
+      setLoading(false);
+    }
   }
 
   return (
@@ -28,6 +42,7 @@ export default function LoginPage() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
         <div className="space-y-2">
@@ -38,9 +53,15 @@ export default function LoginPage() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
-        <Button type="submit" className="w-full h-11">Sign In</Button>
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
+        <Button type="submit" className="w-full h-11" disabled={loading}>
+          {loading ? 'Signing in...' : 'Sign In'}
+        </Button>
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-primary font-medium hover:underline">Sign up</Link>
