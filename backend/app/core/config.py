@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     AI_MAX_CONCURRENT_JOBS: int = 3
     AI_REQUEST_TIMEOUT: float = 60.0
 
+    # Email settings (Gmail SMTP)
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAIL_FROM: str = ""
+    EMAIL_ENABLED: bool = True
+
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   Building2, Plus, Loader2, AlertCircle, Users,
   MoreHorizontal, Trash2, Crown, Shield, Eye, UserMinus,
-  X,
+  X, Clock, Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,11 +91,18 @@ export default function OrganizationsPage() {
     if (!inviteEmail.trim() || !selectedOrg) return;
     setInviting(true);
     try {
-      await organizationsService.inviteMember(selectedOrg.id, { email: inviteEmail, role: inviteRole });
+      const res = await organizationsService.inviteMember(selectedOrg.id, { email: inviteEmail, role: inviteRole });
       await loadMembers(selectedOrg.id);
       setShowInvite(false);
       setInviteEmail('');
       setInviteRole('member');
+      if (res.email_status === 'sent') {
+        setError(null);
+      } else if (res.email_status === 'error') {
+        setError('Invitation saved but email could not be sent — check SMTP credentials in .env');
+      } else if (res.email_status === 'skipped') {
+        setError('Invitation saved — email sending is disabled');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to invite member');
     } finally {
@@ -310,17 +317,31 @@ export default function OrganizationsPage() {
                   ) : (
                     <div className="space-y-2">
                       {members.map((member) => {
+                        const isPending = member.status === 'pending';
                         const RoleIcon = ROLE_ICONS[member.role] || Users;
-                        const roleColor = ROLE_COLORS[member.role] || ROLE_COLORS.member;
+                        const roleColor = isPending
+                          ? 'bg-muted text-muted-foreground'
+                          : ROLE_COLORS[member.role] || ROLE_COLORS.member;
                         const isOwner = member.role === 'owner';
                         return (
-                          <div key={member.id} className="flex items-center gap-3 rounded-lg border border-border/50 p-3 hover:border-border transition-colors">
+                          <div key={member.id} className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
+                            isPending ? 'border-dashed border-border/60 bg-muted/30' : 'border-border/50 hover:border-border'
+                          }`}>
                             <div className={`flex h-9 w-9 items-center justify-center rounded-full ${roleColor}`}>
-                              <RoleIcon className="h-4 w-4" />
+                              {isPending ? <Mail className="h-4 w-4" /> : <RoleIcon className="h-4 w-4" />}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{member.email || member.userId}</p>
-                              <p className="text-xs text-muted-foreground capitalize">{member.role} · Joined {new Date(member.joinedAt).toLocaleDateString()}</p>
+                              <p className="text-xs text-muted-foreground capitalize">
+                                {member.role}
+                                {isPending ? (
+                                  <span className="ml-1 inline-flex items-center gap-1 text-amber-600">
+                                    <Clock className="h-3 w-3" /> Invited · Awaiting response
+                                  </span>
+                                ) : member.joinedAt ? (
+                                  <span> · Joined {new Date(member.joinedAt).toLocaleDateString()}</span>
+                                ) : null}
+                              </p>
                             </div>
                             {!isOwner && (
                               <Button

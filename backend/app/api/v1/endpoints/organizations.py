@@ -3,8 +3,14 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
+from app.core.email import (
+    build_acceptance_notification_email,
+    build_invitation_email,
+    send_email,
+)
 from app.core.security import Depends, get_current_user
 from app.schemas.organization import (
+    AcceptInviteRequest,
     MemberInviteRequest,
     MemberRoleUpdateRequest,
     OrganizationCreateRequest,
@@ -119,6 +125,7 @@ async def invite_member(org_id: str, data: MemberInviteRequest, user: str = Depe
         if m["organizationId"] == org_id and m.get("email") == data.email and not m.get("deleted"):
             raise HTTPException(status_code=400, detail="Member already invited")
 
+    org = _org_store[org_id]
     membership_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     membership = {
@@ -127,11 +134,27 @@ async def invite_member(org_id: str, data: MemberInviteRequest, user: str = Depe
         "organizationId": org_id,
         "email": data.email,
         "role": data.role,
-        "joinedAt": now,
+        "status": "pending",
+        "invitedAt": now,
+        "joinedAt": None,
         "deleted": False,
     }
     _membership_store[membership_id] = membership
-    return {"detail": f"Invitation sent to {data.email}"}
+
+    accept_url = f"http://localhost:3000/organizations?accept={membership_id}"
+    subject, html = build_invitation_email(
+        org_name=org["name"],
+        invitee_email=data.email,
+        sender_name=user,
+        accept_url=accept_url,
+    )
+    email_result = await send_email(to=data.email, subject=subject, html=html)
+
+    return {
+        "detail": f"Invitation sent to {data.email}",
+        "membership": membership,
+        "email_status": email_result.get("status", "unknown"),
+    }
 
 
 @router.delete("/{org_id}/members/{member_id}")
@@ -147,6 +170,38 @@ async def remove_member(org_id: str, member_id: str, user: str = Depends(get_cur
         raise HTTPException(status_code=400, detail="Cannot remove the owner")
     m["deleted"] = True
     return {"detail": "Member removed"}
+
+
+@router.post("/{org_id}/members/{member_id}/accept")
+async def accept_invitation(
+    org_id: str, member_id: str, data: AcceptInviteRequest, user: str = Depends(get_current_user)
+):
+    if org_id not in _org_store or _org_store[org_id].get("deleted"):
+        raise HTTPException(status_code=404, detail="Organization not found")
+    if member_id not in _membership_store:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    m = _membership_store[member_id]
+    if m["organizationId"] != org_id:
+        raise HTTPException(status_code=404, detail="Invitation not found in this organization")
+    if m["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Invitation already accepted or declined")
+    if m["email"] != data.email:
+        raise HTTPException(status_code=403, detail="Only the invited person can accept this invitation")
+
+    m["userId"] = f"user-{data.email}"
+    m["status"] = "accepted"
+    m["joinedAt"] = datetime.now(timezone.utc).isoformat()
+
+    # Notify inviter
+    org = _org_store[org_id]
+    subject, html = build_acceptance_notification_email(
+        org_name=org["name"],
+        invitee_email=data.email,
+        inviter_name=user,
+    )
+    await send_email(to=user, subject=subject, html=html)
+
+    return {"detail": "Invitation accepted", "member": m}
 
 
 @router.put("/{org_id}/members/{member_id}/role")

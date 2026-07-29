@@ -32,7 +32,6 @@ const ENTITY_COLORS: Record<string, string> = {
   landing_page: 'bg-cyan-500/10 text-cyan-500',
   social_post: 'bg-sky-500/10 text-sky-500',
   image: 'bg-rose-500/10 text-rose-500',
-  campaign: 'bg-yellow-500/10 text-yellow-500',
 };
 
 function timeAgo(dateStr: string): string {

@@ -19,10 +19,13 @@ export const organizationsService = {
   getMembers: (id: string) => api.get<Membership[]>(`${API_PREFIX}/organizations/${id}/members`),
 
   inviteMember: (id: string, data: { email: string; role: string }) =>
-    api.post<{ detail: string }>(`${API_PREFIX}/organizations/${id}/invite`, data),
+    api.post<{ detail: string; email_status?: string }>(`${API_PREFIX}/organizations/${id}/invite`, data),
 
   removeMember: (orgId: string, memberId: string) =>
     api.delete<void>(`${API_PREFIX}/organizations/${orgId}/members/${memberId}`),
+
+  acceptInvitation: (orgId: string, memberId: string, email: string) =>
+    api.post<{ detail: string; member: Membership }>(`${API_PREFIX}/organizations/${orgId}/members/${memberId}/accept`, { email }),
 
   updateMemberRole: (orgId: string, memberId: string, role: string) =>
     api.put<{ detail: string }>(`${API_PREFIX}/organizations/${orgId}/members/${memberId}/role`, { role }),

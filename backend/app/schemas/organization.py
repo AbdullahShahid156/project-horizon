@@ -20,3 +20,7 @@ class MemberInviteRequest(BaseModel):
 
 class MemberRoleUpdateRequest(BaseModel):
     role: str
+
+
+class AcceptInviteRequest(BaseModel):
+    email: str

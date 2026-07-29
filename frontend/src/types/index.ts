@@ -24,8 +24,11 @@ export type Membership = {
   id: string;
   userId: string;
   organizationId: string;
+  email?: string;
   role: Role;
-  joinedAt: string;
+  status?: 'pending' | 'accepted' | 'declined';
+  invitedAt?: string;
+  joinedAt: string | null;
 };
 
 export type Role = 'owner' | 'admin' | 'member' | 'viewer';
