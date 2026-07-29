@@ -30,8 +30,6 @@ Required environment variables:
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `CLERK_SECRET_KEY` | Clerk secret key |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
@@ -103,12 +101,12 @@ The API will be available at `http://localhost:8000`.
 2. Copy the connection string from Project Settings > Database
 3. Update `DATABASE_URL` in both `.env` files
 
-## Clerk Setup
+## Supabase Setup
 
-1. Create an account at [clerk.com](https://clerk.com)
-2. Create a new application
-3. Configure social login providers (Google, GitHub)
-4. Copy API keys to `.env.local`
+1. Create an account at [supabase.com](https://supabase.com)
+2. Create a new project
+3. Copy the Project URL and Anon Key from Project Settings > API
+4. Configure Authentication providers in Authentication > Providers
 
 ## Deployment
 
@@ -138,8 +136,8 @@ npx vercel --prod
 - Check `DATABASE_URL` format
 - Ensure database exists
 
-### Clerk Authentication Issues
+### Authentication Issues
 
-- Verify API keys are correct
-- Check allowed redirect URLs in Clerk dashboard
-- Ensure JWT template is configured
+- Verify Supabase URL and Anon Key are correct
+- Check allowed redirect URLs in Supabase dashboard
+- Ensure RLS policies are configured

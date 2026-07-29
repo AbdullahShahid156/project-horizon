@@ -47,7 +47,7 @@ A production-ready SaaS platform for building and optimizing AI-powered business
 - **Frontend:** Next.js 16, React 19, TypeScript, TailwindCSS v4, shadcn/ui
 - **Backend:** FastAPI (Python), SQLAlchemy, Pydantic
 - **Database:** PostgreSQL (via Supabase)
-- **Authentication:** Clerk
+- **Authentication:** Supabase Auth
 - **AI:** Google Gemini (with provider abstraction)
 - **Storage:** Supabase Storage
 - **Deployment:** Vercel (Frontend), Railway (Backend)
@@ -117,9 +117,9 @@ uvicorn app.main:app --reload
 ### Environment Variables
 
 #### Frontend (.env.local)
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key
-- `CLERK_SECRET_KEY` - Clerk secret key
 - `DATABASE_URL` - PostgreSQL connection string
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
 - `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:8000)
 
 #### Backend (.env)
@@ -131,7 +131,7 @@ uvicorn app.main:app --reload
 ## Project Status
 
 ### Phase 1: Foundation ✅
-- Authentication (Clerk)
+- Authentication (Supabase Auth)
 - User management
 - Organization management
 - Workspace management

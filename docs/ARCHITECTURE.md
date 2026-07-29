@@ -35,7 +35,7 @@ features/
 ### Component Hierarchy
 
 ```
-RootLayout (ClerkProvider + ThemeProvider + ToastProvider)
+RootLayout (AuthProvider + ThemeProvider + ToastProvider)
 ├── Landing Page (public)
 └── AuthGroupLayout
     └── DashboardLayout
@@ -144,10 +144,10 @@ engine/
 
 ## Authentication Flow
 
-1. User authenticates via Clerk (email/password or social login)
-2. Clerk issues JWT session token
-3. Clerk middleware protects routes
-4. Backend validates Clerk session via JWT verification
+1. User authenticates via Supabase Auth (email/password or social login)
+2. Supabase issues JWT session token
+3. Supabase RLS protects database queries
+4. Backend validates Supabase JWT via verification
 5. Role-based access control enforced on API endpoints
 
 ## Design System
