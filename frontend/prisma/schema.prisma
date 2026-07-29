@@ -4,25 +4,30 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
+// ============================================================
+// CORE / IDENTITY
+// ============================================================
+
 model User {
-  id            String   @id @default(uuid()) @db.Uuid
-  email         String   @unique
-  firstName     String?
-  lastName      String?
-  imageUrl      String?
-  timezone      String   @default("UTC")
-  language      String   @default("en")
-  emailVerified Boolean  @default(false)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  deletedAt     DateTime?
+  id             String    @id @default(uuid()) @db.Uuid
+  email          String    @unique @db.VarChar(255)
+  firstName      String?   @db.VarChar(100)
+  lastName       String?   @db.VarChar(100)
+  imageUrl       String?   @db.VarChar(500)
+  authProvider   String    @default("supabase") @db.VarChar(50)
+  authProviderId String?   @db.VarChar(255)
+  timezone       String    @default("UTC") @db.VarChar(50)
+  language       String    @default("en") @db.VarChar(10)
+  emailVerified  Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
 
   memberships   Membership[]
-  ownedOrgs     Organization[]     @relation("OrganizationOwner")
+  ownedOrgs     Organization[] @relation("OrganizationOwner")
   notifications Notification[]
   settings      Settings?
   sessions      Session[]
@@ -34,17 +39,17 @@ model User {
 }
 
 model Organization {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String
-  slug       String   @unique
-  logoUrl    String?
-  plan       String   @default("free")
-  ownerId    String   @db.Uuid
-  owner      User     @relation("OrganizationOwner", fields: [ownerId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deletedAt  DateTime?
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(255)
+  slug      String    @unique @db.VarChar(255)
+  logoUrl   String?   @db.VarChar(500)
+  plan      String    @default("free") @db.VarChar(50)
+  ownerId   String    @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
+  owner       User          @relation("OrganizationOwner", fields: [ownerId], references: [id])
   memberships Membership[]
   workspaces  Workspace[]
   activityLog ActivityLog[]
@@ -56,11 +61,14 @@ model Organization {
 }
 
 model Membership {
-  id             String       @id @default(uuid()) @db.Uuid
-  userId         String       @db.Uuid
-  organizationId String       @db.Uuid
-  role           String       @default("member")
-  joinedAt       DateTime     @default(now())
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  organizationId String    @db.Uuid
+  email          String?   @db.VarChar(255)
+  role           String    @default("member") @db.VarChar(50)
+  status         String    @default("accepted") @db.VarChar(20)
+  invitedAt      DateTime?
+  joinedAt       DateTime  @default(now())
   deletedAt      DateTime?
 
   user         User         @relation(fields: [userId], references: [id])
@@ -69,17 +77,18 @@ model Membership {
   @@unique([userId, organizationId])
   @@index([userId])
   @@index([organizationId])
+  @@index([status])
   @@index([deletedAt])
 }
 
 model Workspace {
-  id             String   @id @default(uuid()) @db.Uuid
-  organizationId String   @db.Uuid
-  name           String
-  slug           String
-  description    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  name           String    @db.VarChar(255)
+  slug           String    @db.VarChar(255)
+  description    String?   @db.VarChar(500)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id])
@@ -91,18 +100,18 @@ model Workspace {
 }
 
 model Project {
-  id          String   @id @default(uuid()) @db.Uuid
-  workspaceId String   @db.Uuid
-  name        String
-  slug        String
-  description String?
-  status      String   @default("draft")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @db.Uuid
+  name        String    @db.VarChar(255)
+  slug        String    @db.VarChar(255)
+  description String?   @db.VarChar(500)
+  status      String    @default("draft") @db.VarChar(50)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  workspace Workspace           @relation(fields: [workspaceId], references: [id])
-  websites  GeneratedWebsite[]
+  workspace    Workspace          @relation(fields: [workspaceId], references: [id])
+  websites     GeneratedWebsite[]
   landingPages LandingPage[]
 
   @@unique([workspaceId, slug])
@@ -111,18 +120,108 @@ model Project {
   @@index([deletedAt])
 }
 
-model GeneratedWebsite {
+model Session {
   id           String   @id @default(uuid()) @db.Uuid
-  projectId    String   @db.Uuid
-  name         String
-  slug         String
-  status       String   @default("draft")
-  currentVersion Int    @default(1)
-  generationPrompt Json?
-  aiResponse   Json?
+  userId       String   @db.Uuid
+  token        String   @unique @db.VarChar(500)
+  ipAddress    String?  @db.VarChar(45)
+  userAgent    String?  @db.VarChar(500)
+  expiresAt    DateTime
+  lastActiveAt DateTime @default(now())
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+  @@index([lastActiveAt])
+}
+
+model Settings {
+  id                 String  @id @default(uuid()) @db.Uuid
+  userId             String  @unique @db.Uuid
+  theme              String  @default("system") @db.VarChar(50)
+  timezone           String  @default("UTC") @db.VarChar(50)
+  language           String  @default("en") @db.VarChar(10)
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(true)
+  data               Json?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  type       String   @default("info") @db.VarChar(50)
+  title      String   @db.VarChar(255)
+  message    String?  @db.Text
+  entityType String?  @db.VarChar(50)
+  entityId   String?  @db.Uuid
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  organizationId String   @db.Uuid
+  action         String   @db.VarChar(50)
+  entityType     String   @db.VarChar(50)
+  entityId       String   @db.Uuid
+  entityName     String   @default("") @db.VarChar(255)
+  description    String?  @db.VarChar(500)
+  icon           String   @default("Activity") @db.VarChar(50)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([userId])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  organizationId String   @db.Uuid
+  action         String   @db.VarChar(50)
+  resource       String   @db.VarChar(50)
+  resourceId     String   @db.Uuid
+  details        Json?
+  ipAddress      String?  @db.VarChar(45)
+  userAgent      String?  @db.VarChar(500)
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([resource, resourceId])
+}
+
+// ============================================================
+// WEBSITE DOMAIN
+// ============================================================
+
+model GeneratedWebsite {
+  id               String    @id @default(uuid()) @db.Uuid
+  projectId        String    @db.Uuid
+  name             String    @db.VarChar(255)
+  slug             String    @db.VarChar(255)
+  status           String    @default("draft") @db.VarChar(50)
+  currentVersion   Int       @default(1)
+  generationPrompt Json?
+  aiResponse       Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
 
   project  Project          @relation(fields: [projectId], references: [id])
   versions WebsiteVersion[]
@@ -134,13 +233,13 @@ model GeneratedWebsite {
 }
 
 model WebsiteVersion {
-  id              String   @id @default(uuid()) @db.Uuid
-  websiteId       String   @db.Uuid
-  versionNumber   Int
-  content         Json
-  changeSummary   String?
-  isAutoSave      Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  websiteId     String   @db.Uuid
+  versionNumber Int
+  content       Json
+  changeSummary String?  @db.VarChar(500)
+  isAutoSave    Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
   website GeneratedWebsite @relation(fields: [websiteId], references: [id])
 
@@ -149,18 +248,23 @@ model WebsiteVersion {
   @@index([createdAt])
 }
 
+// ============================================================
+// LANDING PAGE DOMAIN
+// ============================================================
+
 model LandingPage {
-  id              String   @id @default(uuid()) @db.Uuid
-  projectId       String   @db.Uuid
-  name            String
-  slug            String
-  status          String   @default("draft")
-  currentVersion  Int      @default(1)
+  id               String    @id @default(uuid()) @db.Uuid
+  projectId        String    @db.Uuid
+  name             String    @db.VarChar(255)
+  slug             String    @db.VarChar(255)
+  status           String    @default("draft") @db.VarChar(50)
+  currentVersion   Int       @default(1)
   generationPrompt Json?
-  aiResponse      Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deletedAt       DateTime?
+  aiResponse       Json?
+  seoData          Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
 
   project  Project              @relation(fields: [projectId], references: [id])
   versions LandingPageVersion[]
@@ -172,13 +276,13 @@ model LandingPage {
 }
 
 model LandingPageVersion {
-  id              String   @id @default(uuid()) @db.Uuid
-  landingPageId   String   @db.Uuid
-  versionNumber   Int
-  content         Json
-  changeSummary   String?
-  isAutoSave      Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  landingPageId String   @db.Uuid
+  versionNumber Int
+  content       Json
+  changeSummary String?  @db.VarChar(500)
+  isAutoSave    Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
   landingPage LandingPage @relation(fields: [landingPageId], references: [id])
 
@@ -187,78 +291,1013 @@ model LandingPageVersion {
   @@index([createdAt])
 }
 
-model Notification {
+model LandingPageTemplate {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(255)
+  slug         String   @unique @db.VarChar(255)
+  description  String?  @db.VarChar(500)
+  category     String   @db.VarChar(100)
+  thumbnailUrl String?  @db.VarChar(500)
+  content      Json
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+// ============================================================
+// CONTENT DOMAIN
+// ============================================================
+
+model ContentFolder {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String   @db.VarChar(255)
+  parentId    String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent   ContentFolder?  @relation("FolderTree", fields: [parentId], references: [id])
+  children ContentFolder[] @relation("FolderTree")
+  items    ContentItem[]
+
+  @@index([workspaceId])
+  @@index([parentId])
+}
+
+model ContentItem {
+  id                 String    @id @default(uuid()) @db.Uuid
+  workspaceId        String    @db.Uuid
+  folderId           String?   @db.Uuid
+  title              String    @db.VarChar(500)
+  slug               String    @db.VarChar(500)
+  contentType        String    @db.VarChar(50)
+  status             String    @default("draft") @db.VarChar(50)
+  body               Json?
+  htmlBody           String?
+  plainBody          String?
+  contentMetadata    Json?
+  seoData            Json?
+  promptData         Json?
+  generationSettings Json?
+  currentVersion     Int       @default(1)
+  wordCount          Int       @default(0)
+  isFavorite         Boolean   @default(false)
+  isArchived         Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  folder   ContentFolder?   @relation(fields: [folderId], references: [id])
+  versions ContentVersion[]
+  tags     ContentItemTag[]
+
+  @@index([workspaceId])
+  @@index([contentType])
+  @@index([status])
+  @@index([folderId])
+  @@index([deletedAt])
+}
+
+model ContentVersion {
+  id              String   @id @default(uuid()) @db.Uuid
+  contentId       String   @db.Uuid
+  versionNumber   Int
+  title           String   @db.VarChar(500)
+  body            Json?
+  htmlBody        String?
+  plainBody       String?
+  contentMetadata Json?
+  changeSummary   String?  @db.VarChar(500)
+  isAutoSave      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  content ContentItem @relation(fields: [contentId], references: [id])
+
+  @@unique([contentId, versionNumber])
+  @@index([contentId])
+}
+
+model ContentTemplate {
+  id                 String   @id @default(uuid()) @db.Uuid
+  workspaceId        String   @db.Uuid
+  name               String   @db.VarChar(255)
+  slug               String   @db.VarChar(255)
+  description        String?  @db.VarChar(500)
+  contentType        String   @db.VarChar(50)
+  category           String   @default("general") @db.VarChar(100)
+  body               Json
+  systemPrompt       String?
+  generationSettings Json?
+  isShared           Boolean  @default(false)
+  isFavorite         Boolean  @default(false)
+  useCount           Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([contentType])
+}
+
+model ContentTag {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String   @db.VarChar(100)
+  color       String   @default("#6366F1") @db.VarChar(7)
+  createdAt   DateTime @default(now())
+
+  items ContentItemTag[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+}
+
+model ContentItemTag {
+  contentItemId String @db.Uuid
+  contentTagId  String @db.Uuid
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id])
+  contentTag  ContentTag  @relation(fields: [contentTagId], references: [id])
+
+  @@id([contentItemId, contentTagId])
+}
+
+model ContentExport {
   id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid
-  type      String   @default("info")
-  title     String
-  message   String?
-  read      Boolean  @default(false)
+  contentId String   @db.Uuid
+  format    String   @db.VarChar(20)
+  fileUrl   String?  @db.VarChar(500)
+  fileSize  Int?
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  @@index([contentId])
+}
 
-  @@index([userId, read])
+// ============================================================
+// SEO DOMAIN
+// ============================================================
+
+model SEODomain {
+  id             String    @id @default(uuid()) @db.Uuid
+  workspaceId    String    @db.Uuid
+  url            String    @db.VarChar(500)
+  name           String    @db.VarChar(255)
+  healthScore    Int       @default(0)
+  technicalScore Int       @default(0)
+  contentScore   Int       @default(0)
+  lastAuditedAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  audits          SEOAudit[]
+  keywords        SEOKeyword[]
+  keywordClusters SEOKeywordCluster[]
+  schemas         SEOSchema[]
+  reports         SEOReport[]
+  recommendations SEORecommendation[]
+  competitors     SEOCompetitor[]
+  history         SEOHistory[]
+  internalLinks   SEOInternalLink[]
+
+  @@index([workspaceId])
+}
+
+model SEOAudit {
+  id              String   @id @default(uuid()) @db.Uuid
+  domainId        String   @db.Uuid
+  url             String   @db.VarChar(500)
+  status          String   @default("pending") @db.VarChar(50)
+  overallScore    Int      @default(0)
+  technicalScore  Int      @default(0)
+  contentScore    Int      @default(0)
+  onPageScore     Int      @default(0)
+  offPageScore    Int      @default(0)
+  issues          Json?
+  recommendations Json?
+  metrics         Json?
+  rawData         Json?
+  createdAt       DateTime @default(now())
+
+  domain SEODomain      @relation(fields: [domainId], references: [id])
+  pages  SEOAuditPage[]
+
+  @@index([domainId])
   @@index([createdAt])
 }
 
-model ActivityLog {
+model SEOAuditPage {
+  id               String   @id @default(uuid()) @db.Uuid
+  auditId          String   @db.Uuid
+  url              String   @db.VarChar(500)
+  statusCode       Int?
+  title            String?  @db.VarChar(500)
+  metaDescription  String?  @db.VarChar(500)
+  h1               String?  @db.VarChar(500)
+  wordCount        Int      @default(0)
+  internalLinks    Int      @default(0)
+  externalLinks    Int      @default(0)
+  imagesWithoutAlt Int      @default(0)
+  issues           Json?
+  score            Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  audit SEOAudit @relation(fields: [auditId], references: [id])
+
+  @@index([auditId])
+}
+
+model SEOKeyword {
+  id           String   @id @default(uuid()) @db.Uuid
+  domainId     String   @db.Uuid
+  keyword      String   @db.VarChar(255)
+  searchVolume Int      @default(0)
+  difficulty   Int      @default(0)
+  cpc          Float    @default(0)
+  intent       String   @default("informational") @db.VarChar(50)
+  keywordType  String   @default("primary") @db.VarChar(50)
+  clusterId    String?  @db.Uuid
+  position     Int?
+  url          String?  @db.VarChar(500)
+  isTracked    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  domain   SEODomain           @relation(fields: [domainId], references: [id])
+  cluster  SEOKeywordCluster?  @relation(fields: [clusterId], references: [id])
+  rankings SEOKeywordRanking[]
+
+  @@index([domainId])
+  @@index([clusterId])
+  @@index([keyword])
+}
+
+model SEOKeywordCluster {
+  id            String   @id @default(uuid()) @db.Uuid
+  domainId      String   @db.Uuid
+  name          String   @db.VarChar(255)
+  description   String?  @db.VarChar(500)
+  pillarKeyword String?  @db.VarChar(255)
+  keywordCount  Int      @default(0)
+  avgVolume     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  domain   SEODomain    @relation(fields: [domainId], references: [id])
+  keywords SEOKeyword[]
+
+  @@index([domainId])
+}
+
+model SEOKeywordRanking {
+  id               String   @id @default(uuid()) @db.Uuid
+  keywordId        String   @db.Uuid
+  position         Int
+  url              String?  @db.VarChar(500)
+  previousPosition Int?
+  change           Int      @default(0)
+  checkedAt        DateTime @default(now())
+
+  keyword SEOKeyword @relation(fields: [keywordId], references: [id])
+
+  @@index([keywordId])
+  @@index([checkedAt])
+}
+
+model SEOSchema {
+  id         String   @id @default(uuid()) @db.Uuid
+  domainId   String   @db.Uuid
+  schemaType String   @db.VarChar(50)
+  name       String   @db.VarChar(255)
+  jsonLd     Json
+  url        String?  @db.VarChar(500)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  domain SEODomain @relation(fields: [domainId], references: [id])
+
+  @@index([domainId])
+}
+
+model SEOReport {
+  id                   String    @id @default(uuid()) @db.Uuid
+  domainId             String    @db.Uuid
+  title                String    @db.VarChar(255)
+  reportType           String    @db.VarChar(50)
+  status               String    @default("pending") @db.VarChar(50)
+  summary              Json?
+  data                 Json?
+  score                Int       @default(0)
+  issuesCount          Int       @default(0)
+  recommendationsCount Int       @default(0)
+  fileUrl              String?   @db.VarChar(500)
+  createdAt            DateTime  @default(now())
+  completedAt          DateTime?
+
+  domain SEODomain @relation(fields: [domainId], references: [id])
+
+  @@index([domainId])
+  @@index([createdAt])
+}
+
+model SEORecommendation {
+  id          String    @id @default(uuid()) @db.Uuid
+  domainId    String    @db.Uuid
+  category    String    @db.VarChar(50)
+  priority    String    @default("medium") @db.VarChar(20)
+  title       String    @db.VarChar(500)
+  description String?
+  impact      String?   @db.VarChar(200)
+  effort      String?   @db.VarChar(200)
+  status      String    @default("open") @db.VarChar(50)
+  url         String?   @db.VarChar(500)
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  domain SEODomain @relation(fields: [domainId], references: [id])
+
+  @@index([domainId])
+  @@index([status])
+  @@index([priority])
+}
+
+model SEOCompetitor {
   id             String   @id @default(uuid()) @db.Uuid
-  userId         String   @db.Uuid
-  organizationId String   @db.Uuid
-  action         String
-  entityType     String
-  entityId       String
-  metadata       Json?
+  domainId       String   @db.Uuid
+  competitorUrl  String   @db.VarChar(500)
+  competitorName String   @db.VarChar(255)
+  notes          String?
+  analysis       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  domain SEODomain @relation(fields: [domainId], references: [id])
+
+  @@index([domainId])
+}
+
+model SEOHistory {
+  id        String   @id @default(uuid()) @db.Uuid
+  domainId  String   @db.Uuid
+  eventType String   @db.VarChar(50)
+  data      Json?
+  score     Int?
+  createdAt DateTime @default(now())
+
+  domain SEODomain @relation(fields: [domainId], references: [id])
+
+  @@index([domainId])
+  @@index([createdAt])
+}
+
+model SEOInternalLink {
+  id             String   @id @default(uuid()) @db.Uuid
+  domainId       String   @db.Uuid
+  sourceUrl      String   @db.VarChar(500)
+  targetUrl      String   @db.VarChar(500)
+  anchorText     String?  @db.VarChar(255)
+  suggestionType String   @default("related") @db.VarChar(50)
+  isImplemented  Boolean  @default(false)
   createdAt      DateTime @default(now())
 
-  user         User         @relation(fields: [userId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id])
+  domain SEODomain @relation(fields: [domainId], references: [id])
 
-  @@index([organizationId, createdAt])
-  @@index([userId])
+  @@index([domainId])
 }
 
-model Settings {
-  id                 String  @id @default(uuid()) @db.Uuid
-  userId             String  @unique @db.Uuid
-  theme              String  @default("system")
-  timezone           String  @default("UTC")
-  language           String  @default("en")
-  emailNotifications Boolean @default(true)
-  pushNotifications  Boolean @default(true)
+// ============================================================
+// PERFORMANCE DOMAIN
+// ============================================================
 
-  user User @relation(fields: [userId], references: [id])
+model PerformanceAudit {
+  id                 String    @id @default(uuid()) @db.Uuid
+  projectId          String    @db.Uuid
+  url                String    @db.VarChar(500)
+  status             String    @default("pending") @db.VarChar(50)
+  overallScore       Int       @default(0)
+  performanceScore   Int       @default(0)
+  accessibilityScore Int       @default(0)
+  bestPracticesScore Int       @default(0)
+  seoScore           Int       @default(0)
+  metrics            Json?
+  issues             Json?
+  recommendations    Json?
+  resources          Json?
+  createdAt          DateTime  @default(now())
+  completedAt        DateTime?
+
+  vitals   CoreWebVitals[]
+  perfRecs PerformanceRecommendation[]
+
+  @@index([projectId])
+  @@index([createdAt])
 }
 
-model Session {
+model CoreWebVitals {
+  id               String   @id @default(uuid()) @db.Uuid
+  auditId          String   @db.Uuid
+  url              String   @db.VarChar(500)
+  lcp              Float    @default(0)
+  lcpStatus        String   @default("none") @db.VarChar(20)
+  inp              Float    @default(0)
+  inpStatus        String   @default("none") @db.VarChar(20)
+  cls              Float    @default(0)
+  clsStatus        String   @default("none") @db.VarChar(20)
+  fcp              Float    @default(0)
+  fcpStatus        String   @default("none") @db.VarChar(20)
+  ttfb             Float    @default(0)
+  ttfbStatus       String   @default("none") @db.VarChar(20)
+  speedIndex       Float    @default(0)
+  speedIndexStatus String   @default("none") @db.VarChar(20)
+  tbt              Float    @default(0)
+  tbtStatus        String   @default("none") @db.VarChar(20)
+  rawData          Json?
+  createdAt        DateTime @default(now())
+
+  audit PerformanceAudit @relation(fields: [auditId], references: [id])
+
+  @@index([auditId])
+}
+
+model PerformanceRecommendation {
+  id                   String    @id @default(uuid()) @db.Uuid
+  auditId              String    @db.Uuid
+  category             String    @db.VarChar(50)
+  priority             String    @default("medium") @db.VarChar(20)
+  title                String    @db.VarChar(500)
+  problem              String?
+  impact               String?   @db.VarChar(200)
+  estimatedImprovement String?   @db.VarChar(200)
+  implementationGuide  String?
+  status               String    @default("open") @db.VarChar(50)
+  createdAt            DateTime  @default(now())
+  resolvedAt           DateTime?
+
+  audit PerformanceAudit @relation(fields: [auditId], references: [id])
+
+  @@index([auditId])
+  @@index([status])
+  @@index([priority])
+}
+
+model OptimizationHistory {
   id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @db.Uuid
-  ipAddress   String?
-  userAgent   String?
-  lastActiveAt DateTime @default(now())
+  projectId   String   @db.Uuid
+  eventType   String   @db.VarChar(50)
+  data        Json?
+  scoreBefore Int?
+  scoreAfter  Int?
   createdAt   DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([lastActiveAt])
+  @@index([projectId])
+  @@index([createdAt])
 }
 
-model AuditLog {
+model PerformanceReport {
+  id          String    @id @default(uuid()) @db.Uuid
+  projectId   String    @db.Uuid
+  title       String    @db.VarChar(255)
+  status      String    @default("pending") @db.VarChar(50)
+  summary     Json?
+  data        Json?
+  score       Int       @default(0)
+  fileUrl     String?   @db.VarChar(500)
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model ImageAudit {
+  id                String   @id @default(uuid()) @db.Uuid
+  auditId           String   @db.Uuid
+  url               String   @db.VarChar(500)
+  originalSize      Int      @default(0)
+  optimizedSize     Int?
+  format            String   @default("unknown") @db.VarChar(20)
+  recommendedFormat String?  @db.VarChar(20)
+  width             Int?
+  height            Int?
+  hasLazyLoading    Boolean  @default(false)
+  hasAltText        Boolean  @default(false)
+  issues            Json?
+  savingsBytes      Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  @@index([auditId])
+}
+
+model AssetAudit {
+  id               String   @id @default(uuid()) @db.Uuid
+  auditId          String   @db.Uuid
+  url              String   @db.VarChar(500)
+  assetType        String   @db.VarChar(50)
+  size             Int      @default(0)
+  gzippedSize      Int?
+  isMinified       Boolean  @default(false)
+  isRenderBlocking Boolean  @default(false)
+  isUnused         Boolean  @default(false)
+  cacheControl     String?  @db.VarChar(200)
+  etag             String?  @db.VarChar(200)
+  issues           Json?
+  createdAt        DateTime @default(now())
+
+  @@index([auditId])
+}
+
+// ============================================================
+// EMAIL DOMAIN
+// ============================================================
+
+model EmailCampaign {
+  id              String    @id @default(uuid()) @db.Uuid
+  workspaceId     String    @db.Uuid
+  name            String    @db.VarChar(255)
+  subject         String    @db.VarChar(500)
+  previewText     String?   @db.VarChar(255)
+  emailType       String    @default("promotional") @db.VarChar(50)
+  htmlContent     String?
+  markdownContent String?
+  plainText       String?
+  jsonContent     Json?
+  brand           String?   @db.VarChar(255)
+  audience        String?
+  goal            String?   @db.VarChar(100)
+  tone            String?   @db.VarChar(100)
+  language        String    @default("English") @db.VarChar(50)
+  cta             String?   @db.VarChar(500)
+  product         String?   @db.VarChar(255)
+  keywords        Json?
+  templateId      String?   @db.Uuid
+  status          String    @default("draft") @db.VarChar(20)
+  sentAt          DateTime?
+  openRate        Float?
+  clickRate       Float?
+  unsubscribeRate Float?
+  recipientCount  Int       @default(0)
+  aiGenerated     Boolean   @default(false)
+  aiProvider      String?   @db.VarChar(50)
+  aiLatencyMs     Float?
+  emailMetadata   Json?
+  isDeleted       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  history EmailHistory[]
+
+  @@index([workspaceId])
+  @@index([emailType])
+  @@index([status])
+}
+
+model EmailTemplate {
+  id              String   @id @default(uuid()) @db.Uuid
+  workspaceId     String   @db.Uuid
+  name            String   @db.VarChar(255)
+  description     String?
+  category        String   @default("business") @db.VarChar(50)
+  emailType       String   @db.VarChar(50)
+  subject         String   @db.VarChar(500)
+  previewText     String?  @db.VarChar(255)
+  htmlContent     String
+  markdownContent String?
+  jsonContent     Json?
+  variables       Json?
+  thumbnailUrl    String?  @db.VarChar(500)
+  isSystem        Boolean  @default(false)
+  usageCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([emailType])
+}
+
+model EmailHistory {
+  id            String   @id @default(uuid()) @db.Uuid
+  campaignId    String   @db.Uuid
+  action        String   @db.VarChar(50)
+  contentBefore String?
+  contentAfter  String?
+  aiProvider    String?  @db.VarChar(50)
+  latencyMs     Float?
+  createdAt     DateTime @default(now())
+
+  campaign EmailCampaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// SOCIAL DOMAIN
+// ============================================================
+
+model SocialPost {
+  id               String    @id @default(uuid()) @db.Uuid
+  workspaceId      String    @db.Uuid
+  campaignId       String?   @db.Uuid
+  platform         String    @db.VarChar(50)
+  postType         String    @default("single") @db.VarChar(50)
+  content          String
+  headline         String?   @db.VarChar(500)
+  caption          String?
+  hashtags         Json?
+  cta              String?   @db.VarChar(500)
+  emojis           Json?
+  imageSuggestions Json?
+  imageIds         Json?
+  carouselContent  Json?
+  storyContent     Json?
+  reelScript       String?
+  pollIdeas        Json?
+  business         String?   @db.VarChar(255)
+  brand            String?   @db.VarChar(255)
+  targetAudience   String?
+  goal             String?   @db.VarChar(100)
+  tone             String?   @db.VarChar(100)
+  keywords         Json?
+  status           String    @default("draft") @db.VarChar(20)
+  scheduledDate    String?   @db.VarChar(30)
+  publishedAt      DateTime?
+  performanceScore Float?
+  aiGenerated      Boolean   @default(false)
+  aiProvider       String?   @db.VarChar(50)
+  aiLatencyMs      Float?
+  socialMetadata   Json?
+  isDeleted        Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  campaign SocialCampaign?     @relation(fields: [campaignId], references: [id])
+  history  SocialPostHistory[]
+
+  @@index([workspaceId])
+  @@index([campaignId])
+  @@index([platform])
+  @@index([status])
+}
+
+model SocialCampaign {
   id             String   @id @default(uuid()) @db.Uuid
-  organizationId String   @db.Uuid
-  userId         String   @db.Uuid
-  action         String
-  resource       String
-  resourceId     String
-  changes        Json?
-  ipAddress      String?
+  workspaceId    String   @db.Uuid
+  name           String   @db.VarChar(255)
+  description    String?
+  platforms      Json?
+  startDate      String?  @db.VarChar(30)
+  endDate        String?  @db.VarChar(30)
+  status         String   @default("active") @db.VarChar(20)
+  targetAudience String?
+  goals          Json?
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  user         User         @relation(fields: [userId], references: [id])
+  posts SocialPost[]
 
-  @@index([organizationId, createdAt])
-  @@index([resource, resourceId])
+  @@index([workspaceId])
+}
+
+model SocialCalendar {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  postId      String?  @db.Uuid
+  date        String   @db.VarChar(30)
+  platform    String   @db.VarChar(50)
+  status      String   @default("draft") @db.VarChar(20)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([date])
+}
+
+model SocialHashtag {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  tag         String   @db.VarChar(255)
+  category    String?  @db.VarChar(100)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([tag])
+}
+
+model SocialPostHistory {
+  id            String   @id @default(uuid()) @db.Uuid
+  postId        String   @db.Uuid
+  action        String   @db.VarChar(50)
+  contentBefore String?
+  contentAfter  String?
+  aiProvider    String?  @db.VarChar(50)
+  latencyMs     Float?
+  createdAt     DateTime @default(now())
+
+  post SocialPost @relation(fields: [postId], references: [id])
+
+  @@index([postId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// IMAGE DOMAIN
+// ============================================================
+
+model Image {
+  id               String   @id @default(uuid()) @db.Uuid
+  workspaceId      String   @db.Uuid
+  folderId         String?  @db.Uuid
+  name             String   @db.VarChar(255)
+  description      String?
+  imageType        String   @db.VarChar(50)
+  prompt           String?
+  negativePrompt   String?
+  style            String?  @db.VarChar(100)
+  url              String?  @db.VarChar(500)
+  thumbnailUrl     String?  @db.VarChar(500)
+  localPath        String?  @db.VarChar(500)
+  fileSize         Int?
+  width            Int?
+  height           Int?
+  format           String   @default("png") @db.VarChar(20)
+  mimeType         String?  @db.VarChar(50)
+  imageMetadata    Json?
+  generationParams Json?
+  isFavorite       Boolean  @default(false)
+  isDeleted        Boolean  @default(false)
+  tags             Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  folder  ImageFolder?   @relation(fields: [folderId], references: [id])
+  history ImageHistory[]
+
+  @@index([workspaceId])
+  @@index([folderId])
+  @@index([imageType])
+}
+
+model ImageFolder {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  parentId    String?  @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?
+  color       String?  @db.VarChar(7)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent   ImageFolder?  @relation("ImageFolderTree", fields: [parentId], references: [id])
+  children ImageFolder[] @relation("ImageFolderTree")
+  images   Image[]
+
+  @@index([workspaceId])
+  @@index([parentId])
+}
+
+model ImageHistory {
+  id              String   @id @default(uuid()) @db.Uuid
+  imageId         String   @db.Uuid
+  action          String   @db.VarChar(50)
+  params          Json?
+  resultUrl       String?  @db.VarChar(500)
+  resultLocalPath String?  @db.VarChar(500)
+  provider        String?  @db.VarChar(50)
+  latencyMs       Float?
+  createdAt       DateTime @default(now())
+
+  image Image @relation(fields: [imageId], references: [id])
+
+  @@index([imageId])
+}
+
+// ============================================================
+// BRAND DOMAIN
+// ============================================================
+
+model Brand {
+  id                 String    @id @default(uuid()) @db.Uuid
+  workspaceId        String    @db.Uuid
+  name               String    @db.VarChar(255)
+  slug               String    @db.VarChar(255)
+  tagline            String?   @db.VarChar(500)
+  industry           String?   @db.VarChar(255)
+  description        String?
+  targetAudience     String?
+  brandPersonality   String?
+  toneOfVoice        String?
+  mission            String?
+  vision             String?
+  values             Json?
+  primaryColor       String    @default("#6366F1") @db.VarChar(7)
+  secondaryColor     String    @default("#4F46E5") @db.VarChar(7)
+  accentColor        String    @default("#818CF8") @db.VarChar(7)
+  typography         String?   @db.VarChar(255)
+  logoStyle          String?   @db.VarChar(255)
+  iconStyle          String?   @db.VarChar(255)
+  brandSummary       String?
+  taglineSuggestions Json?
+  brandVoice         String?
+  elevatorPitch      String?
+  usp                String?
+  colorPalette       Json?
+  fontPairings       Json?
+  iconSuggestions    Json?
+  brandKeywords      Json?
+  brandGuidelines    String?
+  aiData             Json?
+  currentVersion     Int       @default(1)
+  isFavorite         Boolean   @default(false)
+  isArchived         Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  versions BrandVersion[]
+  assets   BrandAsset[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@index([deletedAt])
+}
+
+model BrandVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  brandId       String   @db.Uuid
+  versionNumber Int
+  data          Json
+  changeSummary String?  @db.VarChar(500)
+  createdAt     DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id])
+
+  @@unique([brandId, versionNumber])
+  @@index([brandId])
+}
+
+model BrandAsset {
+  id            String   @id @default(uuid()) @db.Uuid
+  brandId       String   @db.Uuid
+  assetType     String   @db.VarChar(50)
+  name          String   @db.VarChar(255)
+  url           String?  @db.VarChar(500)
+  data          Json?
+  assetMetadata Json?
+  createdAt     DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id])
+
+  @@index([brandId])
+}
+
+// ============================================================
+// INTEGRATIONS DOMAIN
+// ============================================================
+
+model Integration {
+  id                  String    @id @default(uuid()) @db.Uuid
+  workspaceId         String    @db.Uuid
+  provider            String    @db.VarChar(50)
+  name                String    @db.VarChar(255)
+  status              String    @db.VarChar(20)
+  healthStatus        String    @default("unknown") @db.VarChar(20)
+  credentials         Json
+  maskedCredentials   Json?
+  config              Json?
+  autoSync            Boolean   @default(false)
+  syncIntervalMinutes Int       @default(60)
+  lastSyncAt          DateTime?
+  lastSyncStatus      String?   @db.VarChar(50)
+  errorMessage        String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  logs     IntegrationLog[]
+  syncJobs SyncJob[]
+  items    SyncedItem[]
+
+  @@index([workspaceId])
+  @@index([provider])
+  @@index([status])
+}
+
+model IntegrationLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  integrationId String   @db.Uuid
+  action        String   @db.VarChar(50)
+  status        String   @db.VarChar(20)
+  message       String?
+  details       Json?
+  durationMs    Float?
+  createdAt     DateTime @default(now())
+
+  integration Integration @relation(fields: [integrationId], references: [id])
+
+  @@index([integrationId])
+  @@index([createdAt])
+}
+
+model SyncJob {
+  id            String    @id @default(uuid()) @db.Uuid
+  integrationId String    @db.Uuid
+  syncType      String    @db.VarChar(20)
+  status        String    @db.VarChar(20)
+  itemsSynced   Int       @default(0)
+  itemsFailed   Int       @default(0)
+  errorMessage  String?
+  startedAt     DateTime
+  completedAt   DateTime?
+  durationMs    Float?
+
+  integration Integration @relation(fields: [integrationId], references: [id])
+
+  @@index([integrationId])
+  @@index([startedAt])
+}
+
+model SyncedItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  integrationId String   @db.Uuid
+  externalId    String   @db.VarChar(255)
+  itemType      String   @db.VarChar(50)
+  title         String   @db.VarChar(500)
+  summary       String?
+  url           String?  @db.VarChar(500)
+  metadata      Json?
+  lastSyncedAt  DateTime
+  createdAt     DateTime @default(now())
+
+  integration Integration @relation(fields: [integrationId], references: [id])
+
+  @@unique([integrationId, externalId])
+  @@index([integrationId])
+  @@index([itemType])
+}
+
+// ============================================================
+// ANALYTICS DOMAIN
+// ============================================================
+
+model AnalyticsTimeseries {
+  id                 String   @id @default(uuid()) @db.Uuid
+  workspaceId        String   @db.Uuid
+  date               DateTime @db.Date
+  visitors           Int
+  pageviews          Int
+  bounceRate         Float
+  avgSessionDuration Float
+
+  @@unique([workspaceId, date])
+  @@index([workspaceId])
+}
+
+model AnalyticsPage {
+  id             String   @id @default(uuid()) @db.Uuid
+  workspaceId    String   @db.Uuid
+  path           String   @db.VarChar(500)
+  title          String   @db.VarChar(500)
+  pageviews      Int
+  uniqueVisitors Int
+  bounceRate     Float
+  avgTime        Float
+  snapshotDate   DateTime @db.Date
+
+  @@index([workspaceId])
+  @@index([snapshotDate])
+}
+
+model AnalyticsTrafficSource {
+  id           String   @id @default(uuid()) @db.Uuid
+  workspaceId  String   @db.Uuid
+  name         String   @db.VarChar(100)
+  sessions     Int
+  percentage   Float
+  snapshotDate DateTime @db.Date
+
+  @@index([workspaceId])
+  @@index([snapshotDate])
+}
+
+model AnalyticsDevice {
+  id           String   @id @default(uuid()) @db.Uuid
+  workspaceId  String   @db.Uuid
+  name         String   @db.VarChar(50)
+  sessions     Int
+  percentage   Float
+  snapshotDate DateTime @db.Date
+
+  @@index([workspaceId])
+  @@index([snapshotDate])
+}
+
+model AnalyticsCountry {
+  id           String   @id @default(uuid()) @db.Uuid
+  workspaceId  String   @db.Uuid
+  name         String   @db.VarChar(100)
+  code         String   @db.VarChar(5)
+  sessions     Int
+  percentage   Float
+  snapshotDate DateTime @db.Date
+
+  @@index([workspaceId])
+  @@index([snapshotDate])
 }
